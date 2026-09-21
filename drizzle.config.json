@@ -1,0 +1,7 @@
+{
+  "dialect": "postgresql",
+  "schema": "./src/db/schema.ts",
+  "dbCredentials": {
+    "url": "postgresql://sohob_app:So7obApp2026!@[2406:da14:311:1501:a43a:b598:e2b1:d834]:5432/postgres"
+  }
+}
