@@ -16,7 +16,24 @@ const url =
   process.env.DATABASE_URL ??
   "postgresql://postgres:postgres@127.0.0.1:5432/app_db";
 
-const db = drizzle(new Pool({ connectionString: url }));
+const match = url.match(/^postgresql?:\/\/([^:]+):([^@]+)@(.+):(\d+)\/(.+)$/);
+let pool: Pool;
+if (match) {
+  let host = decodeURIComponent(match[3]);
+  if (host.startsWith("[") && host.endsWith("]")) host = host.slice(1, -1);
+  pool = new Pool({
+    user: decodeURIComponent(match[1]),
+    password: decodeURIComponent(match[2]),
+    host,
+    port: parseInt(match[4], 10),
+    database: decodeURIComponent(match[5]),
+    ssl: { rejectUnauthorized: false },
+  });
+} else {
+  pool = new Pool({ connectionString: url });
+}
+
+const db = drizzle(pool);
 
 function mulberry32(seed: number) {
   let a = seed;

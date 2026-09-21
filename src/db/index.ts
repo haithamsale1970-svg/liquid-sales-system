@@ -13,15 +13,19 @@ const globalForDb = globalThis as typeof globalThis & {
 
 function createPool(): Pool {
   const match = databaseUrl!.match(
-    /^postgresql?:\/\/([^:]+):([^@]*)@(.+):(\d+)\/(.+)$/,
+    /^postgresql?:\/\/([^:]+):([^@]+)@(.+):(\d+)\/(.+)$/,
   );
   if (match) {
+    let host = decodeURIComponent(match[3]);
+    if (host.startsWith("[") && host.endsWith("]")) {
+      host = host.slice(1, -1);
+    }
     return new Pool({
       user: decodeURIComponent(match[1]),
       password: decodeURIComponent(match[2]),
-      host: match[3],
+      host,
       port: parseInt(match[4], 10),
-      database: match[5],
+      database: decodeURIComponent(match[5]),
       ssl: { rejectUnauthorized: false },
     });
   }
