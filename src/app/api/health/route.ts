@@ -57,6 +57,25 @@ export async function GET() {
     });
   }
 
+  // المخطط الحديث: جدول app_settings + عمودا sales.currency/rate — إن غابوا فالمخطط قديم.
+  // (يفشل الاستعلام بـ 42P01/42703 إذا كان الجدول/العمود غير موجود، فنطلب التهيئة.)
+  try {
+    await db.execute(sql`select 1 from "app_settings" limit 1`);
+    await db.execute(sql`select "currency", "rate" from "sales" limit 1`);
+  } catch (e) {
+    console.error("[health] schema outdated", e);
+    return json({
+      ok: false,
+      database: "متصل",
+      tables: "تحتاج تحديث (مخطط قديم)",
+      envSource: source,
+      error: describeDbError(e),
+      hint: "افتح /api/setup?token=رمز-التهيئة لإنشاء الجداول/الأعمدة الناقصة — العملية آمنة للتكرار ولن تمسح بياناتك.",
+      time: new Date().toISOString(),
+    });
+  }
+
+
   return json({
     ok: true,
     database: "متصل",

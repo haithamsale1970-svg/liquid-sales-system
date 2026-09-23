@@ -7,7 +7,8 @@ export function proxy(req: NextRequest) {
   const isAuthRoute =
     pathname.startsWith("/api/auth/") ||
     pathname === "/login" ||
-    pathname === "/api/health";
+    pathname === "/api/health" ||
+    pathname === "/api/setup";
 
   if (!token && !isAuthRoute) {
     const url = req.nextUrl.clone();

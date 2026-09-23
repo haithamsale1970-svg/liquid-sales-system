@@ -162,12 +162,31 @@ export function databaseEnvKey(preferDirect = false): string | null {
   }
 }
 
+/** خطأ بنيوي قد يحمل كود PostgreSQL داخله أو داخل cause. */
+type DbErrLike = { code?: unknown; message?: unknown; cause?: unknown };
+
+/**
+ * يبحث في سلسلة error.cause (يستخدمها Drizzle/Next) عن الخطأ الذي يحمل
+ * كود PostgreSQL، حتى نترجم الرسالة الأصلية بدل رسالة الغلاف العامة.
+ */
+function deepestDbError(error: unknown): DbErrLike | null | undefined {
+  let current = error as DbErrLike | null | undefined;
+  for (let i = 0; i < 5 && current; i++) {
+    if (typeof current.code === "string" && current.code) return current;
+    const next = current.cause as DbErrLike | undefined;
+    if (!next || next === current) return current;
+    current = next;
+  }
+  return current;
+}
+
+
 /**
  * ترجمة أخطاء قاعدة البيانات إلى رسالة عربية مفهومة لصاحب النظام.
  * التفاصيل التقنية تُطبع في سجلات Vercel (Logs) فقط.
  */
 export function describeDbError(error: unknown): string {
-  const err = error as { code?: unknown; message?: unknown } | null | undefined;
+  const err = deepestDbError(error);
   const code = typeof err?.code === "string" ? err.code : "";
   const message = String(err?.message ?? error ?? "");
   const lower = message.toLowerCase();
