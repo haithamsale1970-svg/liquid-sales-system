@@ -209,6 +209,8 @@ body::after {
   background: rgba(255, 255, 255, 0.065);
 }
 select.inp {
+  color-scheme: dark;
+  color: #ffffff;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2397a4b0' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -219,6 +221,28 @@ textarea.inp {
   resize: vertical;
   min-height: 74px;
 }
+
+/* ---------- select options (native popup) ---------- */
+select.inp option,
+select.inp optgroup {
+  background-color: #101014;
+  color: #ffffff;
+}
+select.inp option:checked,
+select.inp option:hover,
+select.inp option:focus,
+select.inp option:active,
+select.inp option:focus-visible {
+  background-color: rgba(255, 34, 34, 0.35);
+  color: #ffffff;
+}
+select.inp:disabled,
+select.inp option:disabled {
+  color: var(--faint);
+  -webkit-text-fill-color: var(--faint);
+  opacity: 1;
+}
+
 input[type="date"].inp {
   color-scheme: dark;
 }
