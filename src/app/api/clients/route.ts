@@ -62,6 +62,7 @@ export async function POST(req: Request) {
   const auth = await requireUser();
   if (isErr(auth)) return auth.res;
   const { user } = auth;
+  if (user.role !== "admin") return bad("إضافة العملاء للمدير فقط — المستخدم ينشئ فواتير البيع فقط", 403);
 
   const body = await readBody<Record<string, unknown>>(req);
   if (!body) return bad("طلب غير صالح");

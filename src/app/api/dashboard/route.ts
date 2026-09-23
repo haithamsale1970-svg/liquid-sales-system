@@ -14,6 +14,7 @@ function ymd(d: Date) {
 export async function GET() {
   const auth = await requireUser();
   if (isErr(auth)) return auth.res;
+  const isAdmin = auth.user.role === "admin";
 
   const now = new Date();
   const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -147,7 +148,8 @@ export async function GET() {
         todayCount: todayRows[0]?.count ?? 0,
         yesterdayTotal: num(yesterdayRows[0]?.total),
         monthTotal: num(monthRows[0]?.total),
-        monthProfit: num(monthRows[0]?.profit),
+        // صافي الربح للأدمن فقط — المستخدم العادي يرى إجمالي المبيعات والمخزون.
+        monthProfit: isAdmin ? num(monthRows[0]?.profit) : 0,
         monthCount: monthRows[0]?.count ?? 0,
         totalUnits: stockRows[0]?.units ?? 0,
         activeProducts: stockRows[0]?.active ?? 0,
@@ -163,15 +165,18 @@ export async function GET() {
         createdAt: r.createdAt.toISOString(),
         clientName: r.clientName,
       })),
-      recentActivity: recentActivity.map((a) => ({
-        id: a.id,
-        userName: a.userName,
-        action: a.action,
-        entity: a.entity,
-        entityId: a.entityId,
-        details: a.details,
-        createdAt: a.createdAt.toISOString(),
-      })),
+      // سجل النشاط الأخير للأدمن فقط.
+      recentActivity: isAdmin
+        ? recentActivity.map((a) => ({
+            id: a.id,
+            userName: a.userName,
+            action: a.action,
+            entity: a.entity,
+            entityId: a.entityId,
+            details: a.details,
+            createdAt: a.createdAt.toISOString(),
+          }))
+        : [],
       topProducts: topProducts.map((t) => ({
         ...t,
         revenue: parseFloat(t.revenue),

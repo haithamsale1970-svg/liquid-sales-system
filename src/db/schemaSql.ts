@@ -98,6 +98,8 @@ CREATE TABLE IF NOT EXISTS "sales" (
   "shipping_cost" numeric(12, 2) DEFAULT '0' NOT NULL,
   "total" numeric(12, 2) DEFAULT '0' NOT NULL,
   "profit" numeric(12, 2) DEFAULT '0' NOT NULL,
+  "currency" text DEFAULT 'JOD' NOT NULL,
+  "rate" numeric(14, 6) DEFAULT '1' NOT NULL,
   "notes" text DEFAULT '' NOT NULL,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -151,4 +153,21 @@ CREATE TABLE IF NOT EXISTS "activity_logs" (
 );
 
 CREATE INDEX IF NOT EXISTS "activity_created_idx" ON "activity_logs" ("created_at");
+
+CREATE TABLE IF NOT EXISTS "app_settings" (
+  "id" integer PRIMARY KEY NOT NULL,
+  "default_currency" text DEFAULT 'JOD' NOT NULL,
+  "rate_usd" numeric(14, 6) DEFAULT '1.41' NOT NULL,
+  "rate_egp" numeric(14, 6) DEFAULT '67.5' NOT NULL,
+  "shipping_internal" numeric(12, 2) DEFAULT '1.5' NOT NULL,
+  "shipping_external" numeric(12, 2) DEFAULT '2' NOT NULL,
+  "show_reports_for_users" boolean DEFAULT true NOT NULL,
+  "show_clients_for_users" boolean DEFAULT true NOT NULL,
+  "show_products_for_users" boolean DEFAULT true NOT NULL,
+  "updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+INSERT INTO "app_settings" ("id") VALUES (1) ON CONFLICT ("id") DO NOTHING;
+ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "currency" text DEFAULT 'JOD' NOT NULL;
+ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "rate" numeric(14, 6) DEFAULT '1' NOT NULL;
 `;

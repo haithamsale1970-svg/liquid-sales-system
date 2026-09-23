@@ -17,20 +17,25 @@ import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
 import { Badge, Btn, Card, Field, Input, Select, Skeleton, Textarea } from "@/components/ui";
 import { ProductImage } from "@/components/ProductImage";
+import CurrencySwitcher from "@/components/CurrencySwitcher";
+import { useCurrency } from "@/components/useCurrency";
+import { formatMoneyJOD } from "@/lib/currency";
 import {
   CLIENT_TYPES,
   SHIPPING_TYPES,
   cls,
-  fmtMoney,
   type ClientDTO,
   type ClientType,
   type ProductDTO,
+  type SessionUserDTO,
   type ShippingType,
 } from "@/lib/shared";
 
 export default function NewSalePage() {
   const router = useRouter();
   const toast = useToast();
+  const { currency, settings, rates } = useCurrency();
+  const [me, setMe] = useState<SessionUserDTO | null>(null);
 
   const [products, setProducts] = useState<ProductDTO[] | null>(null);
   const [clients, setClients] = useState<ClientDTO[] | null>(null);
@@ -43,7 +48,6 @@ export default function NewSalePage() {
   const [addingClient, setAddingClient] = useState(false);
 
   const [shippingType, setShippingType] = useState<ShippingType>("none");
-  const [shippingCost, setShippingCost] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -54,6 +58,7 @@ export default function NewSalePage() {
     api<ClientDTO[]>("/api/clients")
       .then(setClients)
       .catch((e) => toast.push("err", e.message));
+    api<SessionUserDTO>("/api/auth/me").then(setMe).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -73,8 +78,12 @@ export default function NewSalePage() {
   );
 
   const subtotal = cartEntries.reduce((a, x) => a + x.product.price * x.qty, 0);
-  const profit = cartEntries.reduce((a, x) => a + (x.product.price - x.product.cost) * x.qty, 0);
-  const ship = shippingType === "none" ? 0 : Math.max(0, Number(shippingCost) || 0);
+  // المستخدم العادي محجوب عن الكلف/الأرباح — نحسب الربح للأدمن فقط للعرض.
+  const isAdmin = me?.role === "admin";
+  const profit = isAdmin ? cartEntries.reduce((a, x) => a + (x.product.price - x.product.cost) * x.qty, 0) : 0;
+  // التوصيل ثابت من إعدادات الأدمن (داخلي 1.5 / خارجي 2 افتراضيًا).
+  const ship =
+    shippingType === "none" ? 0 : shippingType === "internal" ? (settings?.shippingInternal ?? 1.5) : (settings?.shippingExternal ?? 2);
   const total = subtotal + ship;
 
   function addToCart(p: ProductDTO) {
@@ -141,7 +150,7 @@ export default function NewSalePage() {
           clientId: Number(clientId),
           items: cartEntries.map((x) => ({ productId: x.product.id, quantity: x.qty })),
           shippingType,
-          shippingCost: ship,
+          currency,
           notes,
         },
       });
@@ -206,7 +215,7 @@ export default function NewSalePage() {
                     <ProductImage src={p.imageUrl} name={p.name} size={46} radius={12} />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[12.5px] font-extrabold leading-5">{p.name}</div>
-                      <div className="num mt-0.5 text-[13px] font-black text-[var(--mint)]">{fmtMoney(p.price)}</div>
+                      <div className="num mt-0.5 text-[13px] font-black text-[var(--mint)]">{formatMoneyJOD(p.price, currency, rates)}</div>
                       <div className={cls("num mt-0.5 text-[10.5px] font-bold", out ? "text-[var(--danger)]" : "text-[var(--faint)]")}>
                         {out ? "نفد المخزون" : `متاح: ${p.stock}`}
                       </div>
@@ -263,6 +272,11 @@ export default function NewSalePage() {
 
           {/* lines */}
           <div className="min-h-[120px]">
+            {!isAdmin && (
+              <p className="mb-2 rounded-xl border border-[var(--line-soft)] bg-white/[.03] px-3 py-2 text-[11.5px] font-bold text-[var(--muted)]">
+                وضع الموظف — الأرباح والكلف مخفية، أسعار البيع والمخزون فقط
+              </p>
+            )}
             {cartEntries.length === 0 ? (
               <div className="flex h-[120px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--line)] text-[var(--faint)]">
                 <ShoppingCart size={22} />
@@ -276,7 +290,7 @@ export default function NewSalePage() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[12.5px] font-extrabold">{p.name}</div>
                       <div className="num text-[11px] font-bold text-[var(--muted)]">
-                        {fmtMoney(p.price)} × {qty} = <span className="text-[var(--mint)]">{fmtMoney(p.price * qty)}</span>
+                        {formatMoneyJOD(p.price, currency, rates)} × {qty} = <span className="text-[var(--mint)]">{formatMoneyJOD(p.price * qty, currency, rates)}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
@@ -299,38 +313,36 @@ export default function NewSalePage() {
 
           {/* shipping */}
           <div>
-            <label className="lbl">الشحن</label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="lbl !mb-0">الشحن (ثابت من إعدادات الأدمن)</label>
+              <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
+            </div>
             <div className="flex gap-2">
-              {(Object.keys(SHIPPING_TYPES) as ShippingType[]).map((t) => (
+              {([
+                { t: "none" as ShippingType, fee: 0 },
+                { t: "internal" as ShippingType, fee: settings?.shippingInternal ?? 1.5 },
+                { t: "external" as ShippingType, fee: settings?.shippingExternal ?? 2 },
+              ]).map(({ t, fee }) => (
                 <button
                   key={t}
                   onClick={() => setShippingType(t)}
                   className={cls(
-                    "flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-[12px] font-extrabold transition-all",
+                    "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border px-2 py-2.5 text-[12px] font-extrabold transition-all",
                     shippingType === t
                       ? "border-[rgba(255,34,34,.55)] bg-[rgba(255,34,34,.1)] text-[var(--mint)]"
                       : "border-[var(--line-soft)] bg-white/[.02] text-[var(--muted)] hover:bg-white/[.05]",
                   )}
                 >
-                  <Truck size={13} />
-                  {SHIPPING_TYPES[t]}
+                  <span className="flex items-center gap-1.5">
+                    <Truck size={13} />
+                    {SHIPPING_TYPES[t]}
+                  </span>
+                  {t !== "none" && (
+                    <span className="num text-[11px] font-black">{formatMoneyJOD(fee, currency, rates)}</span>
+                  )}
                 </button>
               ))}
             </div>
-            {shippingType !== "none" && (
-              <div className="mt-2">
-                <Input
-                  type="number"
-                  min="0"
-                  step="any"
-                  dir="ltr"
-                  className="num"
-                  placeholder="تكلفة الشحن (تُضاف للفاتورة)"
-                  value={shippingCost}
-                  onChange={(e) => setShippingCost(e.target.value)}
-                />
-              </div>
-            )}
           </div>
 
           <Field label="ملاحظات الفاتورة">
@@ -340,22 +352,24 @@ export default function NewSalePage() {
           {/* totals */}
           <div className="space-y-2 rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-4">
             <div className="flex justify-between text-[13px] font-bold text-[var(--muted)]">
-              <span>الإجمالي الفرعي</span>
-              <span className="num">{fmtMoney(subtotal)}</span>
+              <span>الإجمالي الفرعي ({currency})</span>
+              <span className="num">{formatMoneyJOD(subtotal, currency, rates)}</span>
             </div>
             <div className="flex justify-between text-[13px] font-bold text-[var(--muted)]">
               <span>الشحن ({SHIPPING_TYPES[shippingType]})</span>
-              <span className="num">{fmtMoney(ship)}</span>
+              <span className="num">{formatMoneyJOD(ship, currency, rates)}</span>
             </div>
             <div className="hr" />
             <div className="flex items-center justify-between">
-              <span className="text-[14px] font-black">الإجمالي النهائي</span>
-              <span className="num text-[22px] font-black text-[var(--mint)]">{fmtMoney(total)}</span>
+              <span className="text-[14px] font-black">الإجمالي النهائي ({currency})</span>
+              <span className="num text-[22px] font-black text-[var(--mint)]">{formatMoneyJOD(total, currency, rates)}</span>
             </div>
-            <div className="flex justify-between text-[11.5px] font-bold text-[var(--faint)]">
-              <span>الربح المتوقع</span>
-              <span className="num text-[var(--amber)]">{fmtMoney(profit)}</span>
-            </div>
+            {isAdmin && (
+              <div className="flex justify-between text-[11.5px] font-bold text-[var(--faint)]">
+                <span>الربح المتوقع</span>
+                <span className="num text-[var(--amber)]">{formatMoneyJOD(profit, currency, rates)}</span>
+              </div>
+            )}
           </div>
 
           <Btn variant="primary" onClick={submit} loading={submitting} disabled={!clientId || !cartEntries.length} className="w-full !py-3.5 !text-[14.5px]">

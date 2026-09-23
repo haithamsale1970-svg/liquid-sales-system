@@ -30,9 +30,11 @@ import {
   Textarea,
 } from "@/components/ui";
 import { ProductImage } from "@/components/ProductImage";
+import CurrencySwitcher from "@/components/CurrencySwitcher";
+import { useCurrency } from "@/components/useCurrency";
+import { formatMoneyJOD } from "@/lib/currency";
 import {
   cls,
-  fmtMoney,
   fmtNum,
   type ProductDTO,
   type SessionUserDTO,
@@ -66,6 +68,7 @@ const FIELD_PRESETS = ["نسبة النيكوتين", "حجم الزجاجة", "
 
 export default function ProductsPage() {
   const toast = useToast();
+  const { currency, settings, rates } = useCurrency();
   const [me, setMe] = useState<SessionUserDTO | null>(null);
   const [items, setItems] = useState<ProductDTO[] | null>(null);
   const [q, setQ] = useState("");
@@ -125,12 +128,14 @@ export default function ProductsPage() {
   }, [items, q, cat, showArchived]);
 
   function openCreate() {
+    if (me && me.role !== "admin") return;
     setEditing(null);
     setForm(EMPTY_FORM);
     setFormOpen(true);
   }
 
   function openEdit(p: ProductDTO) {
+    if (me && me.role !== "admin") return;
     setEditing(p);
     setForm({
       name: p.name,
@@ -284,9 +289,15 @@ export default function ProductsPage() {
             {showArchived ? "الأصناف النشطة" : "الأرشيف"}
           </Btn>
         )}
-        <Btn variant="primary" size="sm" onClick={openCreate}>
-          <Plus size={15} /> إضافة منتج
-        </Btn>
+        <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
+        {me?.role === "admin" && (
+          <Btn variant="primary" size="sm" onClick={openCreate}>
+            <Plus size={15} /> إضافة منتج
+          </Btn>
+        )}
+        {me?.role !== "admin" && (
+          <span className="badge badge-slate">وضع الموظف — إجمالي المبيعات والمخزون فقط</span>
+        )}
       </div>
 
       {/* grid */}
@@ -303,7 +314,7 @@ export default function ProductsPage() {
             title={showArchived ? "الأرشيف فارغ" : "لا توجد أصناف مطابقة"}
             hint={showArchived ? "لم يتم أرشفة أي منتج بعد" : "أضف أول منتج لبدء البيع وإصدار الفواتير"}
             action={
-              !showArchived ? (
+              !showArchived && me?.role === "admin" ? (
                 <Btn variant="primary" size="sm" onClick={openCreate}>
                   <Plus size={15} /> إضافة منتج
                 </Btn>
@@ -367,10 +378,10 @@ export default function ProductsPage() {
                     </div>
                     <div className="text-end leading-tight">
                       <div className="num text-[15px] font-black text-[var(--mint)]">
-                        {fmtMoney(p.price)}
+                        {formatMoneyJOD(p.price, currency, rates)}
                       </div>
                       <div className="num text-[10.5px] font-bold text-[var(--faint)]">
-                        ربح: {fmtMoney(pProfit)}
+                        {me?.role === "admin" ? <>ربح: {formatMoneyJOD(pProfit, currency, rates)}</> : <>المتبقي: {fmtNum(p.stock)}</>}
                       </div>
                     </div>
                   </div>
@@ -401,20 +412,24 @@ export default function ProductsPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <button
-                        className="icon-btn"
-                        title="تعديل المخزون"
-                        onClick={() => {
-                          setStockTarget(p);
-                          setDelta("");
-                          setStockNote("");
-                        }}
-                      >
-                        <Boxes size={15} />
-                      </button>
-                      <button className="icon-btn" title="تعديل" onClick={() => openEdit(p)}>
-                        <Pencil size={15} />
-                      </button>
+                      {me?.role === "admin" && (
+                        <button
+                          className="icon-btn"
+                          title="تعديل المخزون"
+                          onClick={() => {
+                            setStockTarget(p);
+                            setDelta("");
+                            setStockNote("");
+                          }}
+                        >
+                          <Boxes size={15} />
+                        </button>
+                      )}
+                      {me?.role === "admin" && (
+                        <button className="icon-btn" title="تعديل" onClick={() => openEdit(p)}>
+                          <Pencil size={15} />
+                        </button>
+                      )}
                       {me?.role === "admin" &&
                         (p.archived ? (
                           <button className="icon-btn" title="استعادة" onClick={() => restoreProduct(p)}>
@@ -649,7 +664,7 @@ export default function ProductsPage() {
 
         <div className="mt-6 flex items-center justify-between border-t border-[var(--line-soft)] pt-4">
           <span className="num text-[12.5px] font-bold text-[var(--muted)]">
-            هامش الربح: <span className={profit >= 0 ? "text-[var(--mint)]" : "text-[var(--danger)]"}>{fmtMoney(profit)}</span>
+            هامش الربح ({currency}): <span className={profit >= 0 ? "text-[var(--mint)]" : "text-[var(--danger)]"}>{formatMoneyJOD(profit, currency, rates)}</span>
           </span>
           <div className="flex gap-2">
             <Btn onClick={() => setFormOpen(false)}>إلغاء</Btn>

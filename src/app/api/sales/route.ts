@@ -14,6 +14,8 @@ import {
   type DbOrTx,
 } from "@/lib/api";
 import { f2 } from "@/lib/products";
+import { getAppSettings } from "@/lib/settings";
+import { isCurrencyCode } from "@/lib/currency";
 import { invoiceNo, type SaleListDTO } from "@/lib/shared";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +27,7 @@ function dayStart(d: Date) {
 export async function GET(req: Request) {
   const auth = await requireUser();
   if (isErr(auth)) return auth.res;
+  const isAdmin = auth.user.role === "admin";
   const url = new URL(req.url);
   const from = url.searchParams.get("from");
   const to = url.searchParams.get("to");
@@ -68,6 +71,8 @@ export async function GET(req: Request) {
         shippingCost: sales.shippingCost,
         total: sales.total,
         profit: sales.profit,
+        currency: sales.currency,
+        rate: sales.rate,
         createdAt: sales.createdAt,
         clientName: clients.name,
         clientType: clients.type,
@@ -106,7 +111,10 @@ export async function GET(req: Request) {
       shippingType: r.shippingType,
       shippingCost: num(r.shippingCost),
       total: num(r.total),
-      profit: num(r.profit),
+      // الربح للأدمن فقط — المستخدم العادي يرى إجمالي المبيعات فقط.
+      profit: isAdmin ? num(r.profit) : 0,
+      currency: (r.currency as string) ?? "JOD",
+      rate: num(r.rate) || 1,
       itemsCount: aggMap.get(r.id)?.itemsCount ?? 0,
       unitsCount: aggMap.get(r.id)?.unitsCount ?? 0,
       createdAt: r.createdAt.toISOString(),
@@ -157,8 +165,18 @@ export async function POST(req: Request) {
   )
     ? (body.shippingType as "none" | "internal" | "external")
     : "none";
+  // التوصيل ثابت من إعدادات الأدمن (داخلي 1.5 / خارجي 2 افتراضيًا) — يُتجاهل أي رقم قادم من الواجهة.
+  const settings = await getAppSettings();
   const shippingCost =
-    shippingType === "none" ? 0 : Math.max(0, num(body.shippingCost));
+    shippingType === "none"
+      ? 0
+      : shippingType === "internal"
+        ? settings.shippingInternal
+        : settings.shippingExternal;
+  const currency = isCurrencyCode((body as Record<string, unknown>).currency)
+    ? ((body as Record<string, unknown>).currency as "JOD" | "USD" | "EGP")
+    : settings.defaultCurrency;
+  const rate = currency === "JOD" ? 1 : currency === "USD" ? settings.rateUSD : settings.rateEGP;
 
   try {
     const saleId = await db.transaction(async (tx: DbOrTx) => {
@@ -231,6 +249,8 @@ export async function POST(req: Request) {
           shippingCost: f2(shippingCost),
           total: f2(total),
           profit: f2(profit),
+          currency,
+          rate: String(rate),
           notes: String(body.notes ?? "").slice(0, 400),
         })
         .returning({ id: sales.id });

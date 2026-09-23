@@ -29,12 +29,14 @@ import {
   Textarea,
 } from "@/components/ui";
 import { ProductImage } from "@/components/ProductImage";
+import CurrencySwitcher from "@/components/CurrencySwitcher";
+import { useCurrency } from "@/components/useCurrency";
+import { formatMoneyJOD } from "@/lib/currency";
 import {
   CLIENT_TYPES,
   cls,
   fmtDate,
   fmtDateTime,
-  fmtMoney,
   fmtNum,
   invoiceNo,
   type ClientDTO,
@@ -89,6 +91,7 @@ const EMPTY_FORM = { name: "", type: "individual" as ClientType, phone: "", addr
 
 export default function ClientsPage() {
   const toast = useToast();
+  const { currency, settings, rates } = useCurrency();
   const [me, setMe] = useState<SessionUserDTO | null>(null);
   const [items, setItems] = useState<ClientDTO[] | null>(null);
   const [q, setQ] = useState("");
@@ -142,12 +145,14 @@ export default function ClientsPage() {
   }
 
   function openCreate() {
+    if (me && me.role !== "admin") return;
     setEditing(null);
     setForm(EMPTY_FORM);
     setFormOpen(true);
   }
 
   function openEdit(c: ClientDTO) {
+    if (me && me.role !== "admin") return;
     setEditing(c);
     setForm({ name: c.name, type: c.type, phone: c.phone, address: c.address, notes: c.notes });
     setFormOpen(true);
@@ -200,9 +205,12 @@ export default function ClientsPage() {
           />
           <Search size={16} className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[var(--faint)]" />
         </div>
+      {me?.role === "admin" && (
         <Btn variant="primary" size="sm" onClick={openCreate}>
           <Plus size={15} /> إضافة عميل
         </Btn>
+      )}
+        <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
       </div>
 
       <Card className="anim-in anim-d1 overflow-hidden" bodyClass="overflow-x-auto">
@@ -262,16 +270,18 @@ export default function ClientsPage() {
                       <span className="num font-black">{fmtNum(c.ordersCount)}</span>
                     </td>
                     <td>
-                      <span className="num font-black text-[var(--mint)]">{fmtMoney(c.totalSpent)}</span>
+                      <span className="num font-black text-[var(--mint)]">{formatMoneyJOD(c.totalSpent, currency, rates)}</span>
                     </td>
                     <td>
                       <span className="text-[12px] font-bold text-[var(--faint)]">{fmtDate(c.createdAt)}</span>
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1.5">
-                        <button className="icon-btn" title="تعديل" onClick={() => openEdit(c)}>
-                          <Pencil size={14} />
-                        </button>
+                        {me?.role === "admin" && (
+                          <button className="icon-btn" title="تعديل" onClick={() => openEdit(c)}>
+                            <Pencil size={14} />
+                          </button>
+                        )}
                         {me?.role === "admin" && (
                           <button className="icon-btn danger" title="حذف" onClick={() => setDeleteTarget(c)}>
                             <Trash2 size={14} />
@@ -360,7 +370,7 @@ export default function ClientsPage() {
                 <div className="text-[11.5px] font-bold text-[var(--muted)]">فاتورة مكتملة</div>
               </div>
               <div className="rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-4 text-center">
-                <div className="num text-[22px] font-black text-[var(--mint)]">{fmtMoney(detail.stats.total)}</div>
+                <div className="num text-[22px] font-black text-[var(--mint)]">{formatMoneyJOD(detail.stats.total, currency, rates)}</div>
                 <div className="text-[11.5px] font-bold text-[var(--muted)]">إجمالي المشتريات</div>
               </div>
             </div>
@@ -381,7 +391,7 @@ export default function ClientsPage() {
                         {p.status === "cancelled" && <Badge tone="rose">ملغاة</Badge>}
                       </div>
                       <span className={cls("num text-[13.5px] font-black", p.status === "cancelled" ? "text-[var(--faint)] line-through" : "text-[var(--mint)]")}>
-                        {fmtMoney(p.total)}
+                        {formatMoneyJOD(p.total, currency, rates)}
                       </span>
                     </div>
                     <div className="mt-1.5 text-[11px] font-bold text-[var(--faint)]">

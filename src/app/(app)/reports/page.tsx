@@ -17,14 +17,17 @@ import { api, downloadCsv } from "@/lib/client";
 import { useToast } from "@/components/toast";
 import { Badge, Btn, Card, Empty, Input, Skeleton } from "@/components/ui";
 import { BarsChart } from "@/components/charts";
+import CurrencySwitcher from "@/components/CurrencySwitcher";
+import { useCurrency } from "@/components/useCurrency";
 import { ProductImage } from "@/components/ProductImage";
+import { formatMoneyJOD } from "@/lib/currency";
 import {
   CLIENT_TYPES,
   cls,
-  fmtMoney,
   fmtNum,
   invoiceNo,
   type ClientType,
+  type SessionUserDTO,
 } from "@/lib/shared";
 
 type ReportData = {
@@ -115,11 +118,17 @@ function Stat({
 
 export default function ReportsPage() {
   const toast = useToast();
+  const { currency, settings, rates } = useCurrency();
+  const [me, setMe] = useState<SessionUserDTO | null>(null);
   const [preset, setPreset] = useState<Preset>("month");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    api<SessionUserDTO>("/api/auth/me").then(setMe).catch(() => {});
+  }, []);
 
   const load = useCallback(async (f: string, t: string) => {
     setLoading(true);
@@ -182,6 +191,7 @@ export default function ReportsPage() {
     <div className="space-y-5">
       {/* presets */}
       <div className="anim-in flex flex-wrap items-center gap-2">
+        <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
         {PRESETS.map((p) => (
           <button
             key={p.key}
@@ -222,11 +232,13 @@ export default function ReportsPage() {
         </div>
       ) : (
         <div className={cls("grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6", loading && "opacity-60 transition-opacity")}>
-          <Stat icon={<Coins size={18} className="text-[var(--mint)]" />} tone="rgba(255,34,34,.12)" label="إجمالي المبيعات" value={fmtMoney(data.totals.total)} />
-          <Stat icon={<TrendingUp size={18} className="text-[var(--amber)]" />} tone="rgba(255,122,122,.12)" label={`صافي الربح (هامش ${margin.toFixed(0)}%)`} value={fmtMoney(data.totals.profit)} />
+          <Stat icon={<Coins size={18} className="text-[var(--mint)]" />} tone="rgba(255,34,34,.12)" label={`إجمالي المبيعات (${currency})`} value={formatMoneyJOD(data.totals.total, currency, rates)} />
+          {me?.role === "admin" && (
+            <Stat icon={<TrendingUp size={18} className="text-[var(--amber)]" />} tone="rgba(255,122,122,.12)" label={`صافي الربح (هامش ${margin.toFixed(0)}%)`} value={formatMoneyJOD(data.totals.profit, currency, rates)} />
+          )}
           <Stat icon={<ReceiptText size={18} className="text-[var(--violet)]" />} tone="rgba(255,255,255,.1)" label="عدد الفواتير" value={fmtNum(data.totals.count)} />
-          <Stat icon={<Scale size={18} className="text-[var(--sky)]" />} tone="rgba(255,255,255,.07)" label="متوسط الفاتورة" value={fmtMoney(data.totals.avg)} />
-          <Stat icon={<Truck size={18} className="text-[var(--rose)]" />} tone="rgba(255,43,43,.12)" label="إجمالي الشحن" value={fmtMoney(data.totals.shipping)} />
+          <Stat icon={<Scale size={18} className="text-[var(--sky)]" />} tone="rgba(255,255,255,.07)" label={`متوسط الفاتورة (${currency})`} value={formatMoneyJOD(data.totals.avg, currency, rates)} />
+          <Stat icon={<Truck size={18} className="text-[var(--rose)]" />} tone="rgba(255,43,43,.12)" label={`إجمالي الشحن (${currency})`} value={formatMoneyJOD(data.totals.shipping, currency, rates)} />
           <Stat icon={<BarChart3 size={18} className="text-[var(--mint)]" />} tone="rgba(255,34,34,.12)" label="وحدات مباعة" value={fmtNum(data.totals.units)} />
         </div>
       )}
@@ -255,7 +267,7 @@ export default function ReportsPage() {
               value: Math.round(s.total),
               sub: `${s.date} — ${s.count} فاتورة`,
             }))}
-            format={(n) => fmtMoney(n)}
+            format={(n) => formatMoneyJOD(n, currency, rates)}
           />
         )}
       </Card>
@@ -264,7 +276,7 @@ export default function ReportsPage() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Card
           className="anim-in anim-d2 overflow-hidden"
-          title="الأصناف الأكثر مبيعًا"
+          title={`الأصناف الأكثر مبيعًا (${currency})`}
           icon={<Flame size={16} />}
           actions={
             <Btn size="xs" onClick={exportProducts} disabled={!data || data.topProducts.length === 0}>
@@ -285,7 +297,7 @@ export default function ReportsPage() {
                   <th>الصنف</th>
                   <th>الكمية</th>
                   <th>الإيراد</th>
-                  <th>الربح</th>
+                  {me?.role === "admin" && <th>الربح</th>}
                 </tr>
               </thead>
               <tbody>
@@ -303,8 +315,8 @@ export default function ReportsPage() {
                       </div>
                     </td>
                     <td><span className="num font-black text-[var(--mint)]">{fmtNum(p.qty)}</span></td>
-                    <td><span className="num font-bold">{fmtMoney(p.revenue)}</span></td>
-                    <td><span className="num font-bold text-[var(--amber)]">{fmtMoney(p.profit)}</span></td>
+                    <td><span className="num font-bold">{formatMoneyJOD(p.revenue, currency, rates)}</span></td>
+                    {me?.role === "admin" && <td><span className="num font-bold text-[var(--amber)]">{formatMoneyJOD(p.profit, currency, rates)}</span></td>}
                   </tr>
                 ))}
               </tbody>
@@ -349,7 +361,7 @@ export default function ReportsPage() {
                     <td className="font-extrabold">{c.name}</td>
                     <td><Badge tone={c.type === "store" ? "mint" : c.type === "company" ? "violet" : "sky"}>{CLIENT_TYPES[c.type]}</Badge></td>
                     <td><span className="num font-black">{fmtNum(c.orders)}</span></td>
-                    <td><span className="num font-black text-[var(--mint)]">{fmtMoney(c.revenue)}</span></td>
+                    <td><span className="num font-black text-[var(--mint)]">{formatMoneyJOD(c.revenue, currency, rates)}</span></td>
                   </tr>
                 ))}
               </tbody>

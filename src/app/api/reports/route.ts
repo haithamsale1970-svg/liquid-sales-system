@@ -18,6 +18,7 @@ function dayStart(d: Date) {
 export async function GET(req: Request) {
   const auth = await requireUser();
   if (isErr(auth)) return auth.res;
+  const isAdmin = auth.user.role === "admin";
 
   const url = new URL(req.url);
   const now = new Date();
@@ -126,7 +127,8 @@ export async function GET(req: Request) {
       range: { from: ymd(from), to: ymd(to) },
       totals: {
         total,
-        profit: num(totalsRows[0]?.profit),
+        // الأرباح للأدمن فقط.
+        profit: isAdmin ? num(totalsRows[0]?.profit) : 0,
         shipping: num(totalsRows[0]?.shipping),
         count,
         avg: count ? total / count : 0,
@@ -136,7 +138,7 @@ export async function GET(req: Request) {
       topProducts: topProducts.map((p) => ({
         ...p,
         revenue: parseFloat(p.revenue),
-        profit: parseFloat(p.profit),
+        profit: isAdmin ? parseFloat(p.profit) : 0,
       })),
       topClients: topClients.map((c) => ({
         ...c,

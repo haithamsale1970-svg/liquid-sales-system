@@ -22,7 +22,7 @@ export async function GET(_req: Request, ctx: Ctx) {
   const auth = await requireUser();
   if (isErr(auth)) return auth.res;
   const { id } = await ctx.params;
-  const dto = await getProductDTO(num(id));
+  const dto = await getProductDTO(num(id), db, { hideCost: auth.user.role !== "admin" });
   if (!dto) return bad("المنتج غير موجود", 404);
   return ok(dto);
 }
@@ -31,6 +31,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
   const auth = await requireUser();
   if (isErr(auth)) return auth.res;
   const { user } = auth;
+  const isAdmin = user.role === "admin";
   const { id: rawId } = await ctx.params;
   const id = Math.trunc(num(rawId));
   if (!id) return bad("معرّف غير صالح");
@@ -42,7 +43,9 @@ export async function PATCH(req: Request, ctx: Ctx) {
   if (!existing) return bad("المنتج غير موجود", 404);
 
   // Full-edit mode (all fields sent) vs quick actions
+  // تعديل بيانات/أسعار الأصناف للأدمن فقط — المستخدم العادي لا يملك أي صلاحية إدارة.
   if (body.mode === "edit") {
+    if (!isAdmin) return bad("تعديل الأصناف يتطلب صلاحية المدير", 403);
     const parsed = parseProductInput({ ...existing, ...body });
     if ("error" in parsed) return bad(parsed.error);
     const { data } = parsed;
@@ -76,10 +79,11 @@ export async function PATCH(req: Request, ctx: Ctx) {
         details: `تعديل المنتج "${data.name}"`,
       });
     });
-    return ok(await getProductDTO(id));
+    return ok(await getProductDTO(id, db, { hideCost: !isAdmin }));
   }
 
   if (body.mode === "adjustStock") {
+    if (!isAdmin) return bad("تعديل المخزون يتطلب صلاحية المدير", 403);
     const delta = Math.trunc(num(body.delta));
     const note = String(body.note ?? "").slice(0, 160);
     if (!delta) return bad("أدخل قيمة تعديل صحيحة");
@@ -101,7 +105,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
         }`,
       });
     });
-    return ok(await getProductDTO(id));
+    return ok(await getProductDTO(id, db, { hideCost: !isAdmin }));
   }
 
   if (body.mode === "restore") {
@@ -115,7 +119,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
       entityId: id,
       details: `استعادة المنتج "${existing.name}"`,
     });
-    return ok(await getProductDTO(id));
+    return ok(await getProductDTO(id, db, { hideCost: !isAdmin }));
   }
 
   return bad("نوع التعديل غير معروف");

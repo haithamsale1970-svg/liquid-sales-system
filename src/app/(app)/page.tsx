@@ -19,7 +19,10 @@ import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
 import { Badge, Card, Empty, Skeleton, useCountUp } from "@/components/ui";
 import { BarsChart, Sparkline } from "@/components/charts";
+import CurrencySwitcher from "@/components/CurrencySwitcher";
+import { useCurrency } from "@/components/useCurrency";
 import { ProductImage } from "@/components/ProductImage";
+import { formatMoneyJOD } from "@/lib/currency";
 import {
   cls,
   fmtDateTime,
@@ -28,6 +31,7 @@ import {
   invoiceNo,
   relTime,
   type ActivityDTO,
+  type SessionUserDTO,
 } from "@/lib/shared";
 
 type DashboardData = {
@@ -86,6 +90,8 @@ function Kpi({
   spark,
   tone,
   delay,
+  currency,
+  rates,
 }: {
   icon: ReactNode;
   label: string;
@@ -95,6 +101,8 @@ function Kpi({
   spark?: number[];
   tone: "mint" | "violet" | "amber" | "sky";
   delay: string;
+  currency?: import("@/lib/currency").CurrencyCode;
+  rates?: Record<import("@/lib/currency").CurrencyCode, number>;
 }) {
   const v = useCountUp(value);
   const bg: Record<string, string> = {
@@ -121,7 +129,7 @@ function Kpi({
         {spark && <Sparkline points={spark} color={fg[tone]} />}
       </div>
       <div className="mt-4 text-[26px] font-black leading-none tracking-tight">
-        <span className="num">{money ? fmtMoney(Math.round(v)) : fmtNum(Math.round(v))}</span>
+        <span className="num">{money && currency ? formatMoneyJOD(Math.round(v), currency, rates) : money ? fmtMoney(Math.round(v)) : fmtNum(Math.round(v))}</span>
       </div>
       <div className="mt-2 flex items-center justify-between gap-2">
         <span className="text-[12px] font-bold text-[var(--muted)]">{label}</span>
@@ -150,7 +158,9 @@ function TableSkeleton() {
 
 export default function DashboardPage() {
   const toast = useToast();
+  const { currency, settings, rates } = useCurrency();
   const [data, setData] = useState<DashboardData | null>(null);
+  const [me, setMe] = useState<SessionUserDTO | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -161,6 +171,7 @@ export default function DashboardPage() {
         setFailed(true);
         toast.push("err", e.message);
       });
+    api<SessionUserDTO>("/api/auth/me").then((u) => live && setMe(u)).catch(() => {});
     return () => {
       live = false;
     };
@@ -172,6 +183,12 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-5">
+      <div className="anim-in flex items-center justify-between gap-2">
+        <span className="text-[12px] font-bold text-[var(--muted)]">
+          {me?.role === "admin" ? "عرض شامل — كل الأرقام والأرباح" : "عرض الموظف — إجمالي المبيعات والمخزون فقط"}
+        </span>
+        <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
+      </div>
       {/* KPIs */}
       {!data ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -185,9 +202,11 @@ export default function DashboardPage() {
             delay=""
             tone="mint"
             icon={<Banknote size={21} />}
-            label="مبيعات اليوم"
+            label={`مبيعات اليوم (${currency})`}
             value={data.kpis.todayTotal}
             money
+            currency={currency}
+            rates={rates}
             spark={series7}
             sub={
               <Badge tone={data.kpis.todayTotal >= data.kpis.yesterdayTotal ? "mint" : "rose"}>
@@ -199,24 +218,43 @@ export default function DashboardPage() {
             delay="anim-d1"
             tone="violet"
             icon={<CalendarDays size={21} />}
-            label="مبيعات الشهر"
+            label={`مبيعات الشهر (${currency})`}
             value={data.kpis.monthTotal}
             money
+            currency={currency}
+            rates={rates}
             sub={<Badge tone="violet">{data.kpis.monthCount} فاتورة</Badge>}
           />
-          <Kpi
-            delay="anim-d2"
-            tone="amber"
-            icon={<Coins size={21} />}
-            label="صافي ربح الشهر"
-            value={data.kpis.monthProfit}
-            money
-            sub={
-              <Badge tone="amber">
-                <TrendingUp size={12} /> بعد التكاليف
-              </Badge>
-            }
-          />
+          {me?.role === "admin" ? (
+            <Kpi
+              delay="anim-d2"
+              tone="amber"
+              icon={<Coins size={21} />}
+              label={`صافي ربح الشهر (${currency})`}
+              value={data.kpis.monthProfit}
+              money
+              currency={currency}
+              rates={rates}
+              sub={
+                <Badge tone="amber">
+                  <TrendingUp size={12} /> بعد التكاليف
+                </Badge>
+              }
+            />
+          ) : (
+            <Kpi
+              delay="anim-d2"
+              tone="amber"
+              icon={<ReceiptText size={21} />}
+              label="فواتير الشهر"
+              value={data.kpis.monthCount}
+              sub={
+                <Badge tone="amber">
+                  إجمالي المبيعات فقط
+                </Badge>
+              }
+            />
+          )}
           <Kpi
             delay="anim-d3"
             tone="sky"
@@ -242,7 +280,7 @@ export default function DashboardPage() {
           icon={<TrendingUp size={16} />}
           actions={
             <Badge tone="mint">
-              إجمالي: <span className="num">{fmtMoney(data?.series.reduce((a, s) => a + s.total, 0) ?? 0)}</span>
+              إجمالي ({currency}): <span className="num">{formatMoneyJOD(data?.series.reduce((a, s) => a + s.total, 0) ?? 0, currency, rates)}</span>
             </Badge>
           }
           bodyClass="p-5"
@@ -256,7 +294,7 @@ export default function DashboardPage() {
                 value: Math.round(s.total),
                 sub: `${fmtDateTime(s.date).split("،")[0]} — ${s.count} فاتورة`,
               }))}
-              format={(n) => fmtMoney(n)}
+              format={(n) => formatMoneyJOD(n, currency, rates)}
             />
           )}
         </Card>
@@ -296,8 +334,8 @@ export default function DashboardPage() {
                       />
                     </div>
                   </div>
-                  <span className="num hidden w-20 text-end text-[12px] font-bold text-[var(--muted)] sm:block">
-                    {fmtMoney(p.revenue)}
+                  <span className="num hidden w-28 text-end text-[12px] font-bold text-[var(--muted)] sm:block">
+                    {formatMoneyJOD(p.revenue, currency, rates)}
                   </span>
                 </li>
               ))}
@@ -387,7 +425,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <span className={cls("num text-[13px] font-black", s.status === "cancelled" ? "text-[var(--faint)] line-through" : "text-[var(--mint)]")}>
-                      {fmtMoney(s.total)}
+                      {formatMoneyJOD(s.total, currency, rates)}
                     </span>
                   </Link>
                 </li>
@@ -396,34 +434,36 @@ export default function DashboardPage() {
           )}
         </Card>
 
-        <Card
-          className="anim-in anim-d4"
-          title="آخر النشاطات"
-          icon={<ScrollText size={16} />}
-          bodyClass="px-3 py-2"
-        >
-          {!data ? (
-            <TableSkeleton />
-          ) : data.recentActivity.length === 0 ? (
-            <Empty icon={<ScrollText size={20} />} title="لا يوجد نشاط بعد" />
-          ) : (
-            <ul className="divide-y divide-[var(--line-soft)]">
-              {data.recentActivity.map((a) => (
-                <li key={a.id} className="flex items-start gap-2.5 px-2 py-2.5">
-                  <Badge tone={ENTITY_TONES[a.entity] ?? "slate"} className="mt-0.5 shrink-0">
-                    {a.entity}
-                  </Badge>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[12.5px] font-bold leading-5">{a.details || a.action}</div>
-                    <div className="mt-0.5 text-[11px] font-bold text-[var(--faint)]">
-                      {a.userName} • {relTime(a.createdAt)}
+        {me?.role === "admin" && (
+          <Card
+            className="anim-in anim-d4"
+            title="آخر النشاطات"
+            icon={<ScrollText size={16} />}
+            bodyClass="px-3 py-2"
+          >
+            {!data ? (
+              <TableSkeleton />
+            ) : data.recentActivity.length === 0 ? (
+              <Empty icon={<ScrollText size={20} />} title="لا يوجد نشاط بعد" />
+            ) : (
+              <ul className="divide-y divide-[var(--line-soft)]">
+                {data.recentActivity.map((a) => (
+                  <li key={a.id} className="flex items-start gap-2.5 px-2 py-2.5">
+                    <Badge tone={ENTITY_TONES[a.entity] ?? "slate"} className="mt-0.5 shrink-0">
+                      {a.entity}
+                    </Badge>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[12.5px] font-bold leading-5">{a.details || a.action}</div>
+                      <div className="mt-0.5 text-[11px] font-bold text-[var(--faint)]">
+                        {a.userName} • {relTime(a.createdAt)}
+                      </div>
                     </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        )}
       </div>
     </div>
   );

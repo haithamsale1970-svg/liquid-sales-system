@@ -19,15 +19,18 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { ToastProvider } from "./toast";
+import CurrencySwitcher from "./CurrencySwitcher";
 import { cls, initials, type SessionUserDTO } from "@/lib/shared";
+import { api } from "@/lib/client";
+import type { AppSettings } from "@/lib/currency";
 
 const NAV = [
   { href: "/", label: "لوحة التحكم", icon: LayoutDashboard },
-  { href: "/products", label: "الأصناف والمخزون", icon: Package },
+  { href: "/products", label: "الأصناف والمخزون", icon: Package, key: "products" },
   { href: "/sales", label: "الفواتير", icon: ShoppingCart },
   { href: "/sales/new", label: "فاتورة جديدة", icon: PlusCircle, accent: true },
-  { href: "/clients", label: "العملاء", icon: Users },
-  { href: "/reports", label: "التقارير", icon: BarChart3 },
+  { href: "/clients", label: "العملاء", icon: Users, key: "clients" },
+  { href: "/reports", label: "التقارير", icon: BarChart3, key: "reports" },
   { href: "/users", label: "المستخدمون", icon: UsersRound, admin: true },
   { href: "/activity", label: "سجل النشاط", icon: ScrollText, admin: true },
   { href: "/settings", label: "الإعدادات والنسخ", icon: Settings },
@@ -60,9 +63,13 @@ export default function AppShell({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+  useEffect(() => {
+    api<AppSettings>("/api/settings").then(setSettings).catch(() => {});
+  }, []);
 
   const active = bestMatch(pathname);
   const title = pageTitle(pathname);
@@ -71,6 +78,18 @@ export default function AppShell({
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     window.location.href = "/login";
   }
+
+  const isAdmin = user.role === "admin";
+  // الأدمن يتحكم بإظهار/إخفاء الأقسام عن باقي المستخدمين من الإعدادات.
+  const visibleNav = NAV.filter((n) => {
+    if ("admin" in n && n.admin && !isAdmin) return false;
+    if (!isAdmin && settings) {
+      if ("key" in n && n.key === "reports" && !settings.showReportsForUsers) return false;
+      if ("key" in n && n.key === "clients" && !settings.showClientsForUsers) return false;
+      if ("key" in n && n.key === "products" && !settings.showProductsForUsers) return false;
+    }
+    return true;
+  });
 
   return (
     <ToastProvider>
@@ -111,7 +130,7 @@ export default function AppShell({
           </div>
 
           <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
-            {NAV.filter((n) => !("admin" in n && n.admin) || user.role === "admin").map(
+            {visibleNav.map(
               (n) => {
                 const Icon = n.icon;
                 const isActive = active === n.href;
@@ -182,6 +201,7 @@ export default function AppShell({
               <div className="glow-dot hidden sm:block" />
             </div>
             <div className="flex items-center gap-2.5">
+              <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
               <span className="badge badge-slate hidden md:inline-flex">
                 {new Date().toLocaleDateString("ar-EG-u-nu-latn", {
                   weekday: "long",

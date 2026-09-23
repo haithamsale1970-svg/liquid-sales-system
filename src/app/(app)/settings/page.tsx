@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import {
+  Banknote,
   CalendarClock,
   DatabaseBackup,
   Download,
+  Eye,
+  EyeOff,
   Info,
   KeyRound,
   ShieldCheck,
@@ -12,10 +15,30 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
-import { Badge, Btn, Card, Field, Input, Skeleton } from "@/components/ui";
+import { Badge, Btn, Card, Field, Input, Select, Skeleton } from "@/components/ui";
+import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { fmtDateTime, type SessionUserDTO } from "@/lib/shared";
+import { CURRENCIES, DEFAULT_SETTINGS, type AppSettings, type CurrencyCode } from "@/lib/currency";
 
 const LAST_BACKUP_KEY = "sohob_last_backup";
+
+function Toggle({ value, onChange, label, hint }: { value: boolean; onChange: (v: boolean) => void; label: string; hint: string }) {
+  return (
+    <button
+      onClick={() => onChange(!value)}
+      className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[var(--line-soft)] bg-white/[.02] px-4 py-3 text-start transition-colors hover:bg-white/[.05]"
+    >
+      <span>
+        <span className="block text-[13px] font-extrabold">{label}</span>
+        <span className="block text-[11px] font-semibold text-[var(--faint)]">{hint}</span>
+      </span>
+      <span className="flex items-center gap-1.5 text-[12px] font-black" style={{ color: value ? "var(--mint)" : "var(--faint)" }}>
+        {value ? <Eye size={15} /> : <EyeOff size={15} />}
+        {value ? "ظاهر" : "مخفي"}
+      </span>
+    </button>
+  );
+}
 
 export default function SettingsPage() {
   const toast = useToast();
@@ -28,6 +51,11 @@ export default function SettingsPage() {
   const [savingPw, setSavingPw] = useState(false);
   const [lastBackup, setLastBackup] = useState<string | null>(null);
 
+  // إعدادات الأدمن (عملات + توصيل + إظهار الأقسام)
+  const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [draft, setDraft] = useState<AppSettings>({ ...DEFAULT_SETTINGS });
+  const [savingSettings, setSavingSettings] = useState(false);
+
   useEffect(() => {
     api<SessionUserDTO>("/api/auth/me")
       .then((u) => {
@@ -36,6 +64,12 @@ export default function SettingsPage() {
       })
       .catch(() => {});
     setLastBackup(typeof window !== "undefined" ? localStorage.getItem(LAST_BACKUP_KEY) : null);
+    api<AppSettings>("/api/settings")
+      .then((s) => {
+        setSettings(s);
+        setDraft(s);
+      })
+      .catch(() => {});
   }, []);
 
   async function saveProfile() {
@@ -81,6 +115,24 @@ export default function SettingsPage() {
     setLastBackup(stamp);
     window.open("/api/backup", "_blank");
     toast.push("ok", "بدأ تنزيل النسخة الاحتياطية");
+  }
+
+  const isAdmin = me?.role === "admin";
+
+  async function saveSettings() {
+    if (savingSettings) return;
+    setSavingSettings(true);
+    try {
+      const saved = await api<AppSettings>("/api/settings", { method: "PUT", body: draft });
+      setSettings(saved);
+      setDraft(saved);
+      window.dispatchEvent(new CustomEvent("cc:currency", { detail: undefined }));
+      toast.push("ok", "تم حفظ إعدادات العملات والتوصيل والصلاحيات");
+    } catch (e) {
+      toast.push("err", e instanceof Error ? e.message : "تعذر الحفظ");
+    } finally {
+      setSavingSettings(false);
+    }
   }
 
   return (
@@ -152,6 +204,69 @@ export default function SettingsPage() {
 
       {/* backup */}
       <div className="space-y-4 self-start">
+        {/* ===== تحكم الأدمن المطلق: العملات + التوصيل + إظهار الأقسام ===== */}
+        {isAdmin && (
+          <Card
+            className="anim-in anim-d1"
+            title="إعدادات الأدمن: العملات والتوصيل والصلاحيات"
+            icon={<Banknote size={16} />}
+            bodyClass="space-y-4 p-5"
+          >
+            {!settings ? (
+              <div className="space-y-3">
+                <Skeleton className="h-11" />
+                <Skeleton className="h-11" />
+              </div>
+            ) : (
+              <>
+                <Field label="العملة الافتراضية للنظام" hint="تُستخدم عند إنشاء الفواتير الجديدة">
+                  <Select value={draft.defaultCurrency} onChange={(e) => setDraft((d) => ({ ...d, defaultCurrency: e.target.value as CurrencyCode }))}>
+                    {(Object.keys(CURRENCIES) as CurrencyCode[]).map((c) => (
+                      <option key={c} value={c}>{c} — {CURRENCIES[c].label}</option>
+                    ))}
+                  </Select>
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="سعر الصرف: دولار لكل دينار (USD)" hint="افتراضي 1.41">
+                    <Input dir="ltr" type="number" step="any" min="0" className="num" value={String(draft.rateUSD)} onChange={(e) => setDraft((d) => ({ ...d, rateUSD: Number(e.target.value) }))} />
+                  </Field>
+                  <Field label="سعر الصرف: جنيه لكل دينار (EGP)" hint="افتراضي 67.5">
+                    <Input dir="ltr" type="number" step="any" min="0" className="num" value={String(draft.rateEGP)} onChange={(e) => setDraft((d) => ({ ...d, rateEGP: Number(e.target.value) }))} />
+                  </Field>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="التوصيل الداخلي (ثابت بالدينار)" hint="افتراضي 1.5">
+                    <Input dir="ltr" type="number" step="any" min="0" className="num" value={String(draft.shippingInternal)} onChange={(e) => setDraft((d) => ({ ...d, shippingInternal: Number(e.target.value) }))} />
+                  </Field>
+                  <Field label="التوصيل الخارجي (ثابت بالدينار)" hint="افتراضي 2">
+                    <Input dir="ltr" type="number" step="any" min="0" className="num" value={String(draft.shippingExternal)} onChange={(e) => setDraft((d) => ({ ...d, shippingExternal: Number(e.target.value) }))} />
+                  </Field>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[12px] font-extrabold text-[var(--muted)]">إظهار / إخفاء الأقسام عن المستخدمين العاديين (abood / hasan…)</p>
+                  <Toggle value={draft.showProductsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showProductsForUsers: v }))} label="الأصناف والمخزون" hint="إخفاؤها يمنع المستخدم من فتح الصفحة" />
+                  <Toggle value={draft.showClientsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showClientsForUsers: v }))} label="العملاء" hint="إخفاؤها يمنع المستخدم من فتح الصفحة" />
+                  <Toggle value={draft.showReportsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showReportsForUsers: v }))} label="التقارير" hint="إخفاؤها يمنع المستخدم من فتح الصفحة" />
+                  <p className="text-[11px] font-semibold leading-5 text-[var(--faint)]">ملاحظة: الكلف والأرباح مخفية نهائيًا عن المستخدمين العاديين في كل الصفحات والـ API — وصلاحياتهم محصورة بإنشاء فواتير البيع فقط.</p>
+                </div>
+                <Btn variant="primary" onClick={saveSettings} loading={savingSettings}>حفظ إعدادات الأدمن</Btn>
+              </>
+            )}
+          </Card>
+        )}
+
+        <Card
+          className="anim-in anim-d1"
+          title="عملة العرض"
+          icon={<Banknote size={16} />}
+          bodyClass="space-y-3 p-5"
+        >
+          <p className="text-[12.5px] font-semibold leading-7 text-[var(--muted)]">
+            اختر عملة العرض (دينار JOD / دولار USD / جنيه EGP) — التحويل فوري في
+            الفواتير والحسابات والتقارير، والتخزين دائمًا بالدينار.
+          </p>
+          <CurrencySwitcher defaultCurrency={settings?.defaultCurrency ?? draft.defaultCurrency} />
+        </Card>
         <Card
           className="anim-in anim-d1"
           title="النسخ الاحتياطي"

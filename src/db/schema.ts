@@ -123,6 +123,9 @@ export const sales = pgTable(
     profit: numeric("profit", { precision: 12, scale: 2 })
       .notNull()
       .default("0"),
+    // عملة العرض المحفوظة مع الفاتورة (القيم مخزّنة دائمًا بالدينار JOD)
+    currency: text("currency").notNull().default("JOD"),
+    rate: numeric("rate", { precision: 14, scale: 6 }).notNull().default("1"),
     notes: text("notes").notNull().default(""),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -153,6 +156,21 @@ export const saleItems = pgTable(
   },
   (t) => [index("sale_items_sale_idx").on(t.saleId)],
 );
+
+// ---------- إعدادات النظام العامة (صف واحد id=1) ----------
+// يتحكم بها الأدمن فقط: العملة الافتراضية + أسعار الصرف + التوصيل + إظهار الأقسام.
+export const appSettings = pgTable("app_settings", {
+  id: integer("id").primaryKey(),
+  defaultCurrency: text("default_currency").notNull().default("JOD"),
+  rateUsd: numeric("rate_usd", { precision: 14, scale: 6 }).notNull().default("1.41"),
+  rateEgp: numeric("rate_egp", { precision: 14, scale: 6 }).notNull().default("67.5"),
+  shippingInternal: numeric("shipping_internal", { precision: 12, scale: 2 }).notNull().default("1.5"),
+  shippingExternal: numeric("shipping_external", { precision: 12, scale: 2 }).notNull().default("2"),
+  showReportsForUsers: boolean("show_reports_for_users").notNull().default(true),
+  showClientsForUsers: boolean("show_clients_for_users").notNull().default(true),
+  showProductsForUsers: boolean("show_products_for_users").notNull().default(true),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const activityLogs = pgTable(
   "activity_logs",

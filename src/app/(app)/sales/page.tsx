@@ -12,15 +12,18 @@ import {
 import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
 import { Badge, Btn, Card, Empty, Input, Select, Skeleton } from "@/components/ui";
+import CurrencySwitcher from "@/components/CurrencySwitcher";
+import { useCurrency } from "@/components/useCurrency";
+import { formatMoneyJOD } from "@/lib/currency";
 import {
   SHIPPING_TYPES,
   cls,
   fmtDateTime,
-  fmtMoney,
   fmtNum,
   invoiceNo,
   type ClientDTO,
   type SaleListDTO,
+  type SessionUserDTO,
 } from "@/lib/shared";
 
 type SalesResponse = {
@@ -32,6 +35,8 @@ type SalesResponse = {
 
 export default function SalesPage() {
   const toast = useToast();
+  const { currency, settings, rates } = useCurrency();
+  const [me, setMe] = useState<SessionUserDTO | null>(null);
   const [res, setRes] = useState<SalesResponse | null>(null);
   const [clients, setClients] = useState<ClientDTO[]>([]);
   const [from, setFrom] = useState("");
@@ -63,6 +68,7 @@ export default function SalesPage() {
 
   useEffect(() => {
     api<ClientDTO[]>("/api/clients").then(setClients).catch(() => {});
+    api<SessionUserDTO>("/api/auth/me").then(setMe).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -123,6 +129,7 @@ export default function SalesPage() {
         <Link href="/sales/new" className="btn btn-primary btn-sm ms-auto">
           <Plus size={15} /> فاتورة جديدة
         </Link>
+        <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
       </div>
 
       <Card
@@ -156,8 +163,8 @@ export default function SalesPage() {
                 <th>العميل</th>
                 <th>الأصناف</th>
                 <th>الشحن</th>
-                <th>الإجمالي</th>
-                <th>الربح</th>
+                <th>الإجمالي ({currency})</th>
+                {me?.role === "admin" && <th>الربح</th>}
                 <th>البائع</th>
                 <th>الحالة</th>
                 <th>التاريخ</th>
@@ -180,18 +187,20 @@ export default function SalesPage() {
                       <span className="text-[12px] font-bold text-[var(--faint)]">—</span>
                     ) : (
                       <Badge tone={s.shippingType === "internal" ? "sky" : "violet"}>
-                        {SHIPPING_TYPES[s.shippingType]} <span className="num">{fmtMoney(s.shippingCost)}</span>
+                        {SHIPPING_TYPES[s.shippingType]} <span className="num">{formatMoneyJOD(s.shippingCost, currency, rates)}</span>
                       </Badge>
                     )}
                   </td>
                   <td>
                     <span className={cls("num font-black", s.status === "cancelled" && "text-[var(--faint)] line-through")}>
-                      {fmtMoney(s.total)}
+                      {formatMoneyJOD(s.total, currency, rates)}
                     </span>
                   </td>
-                  <td>
-                    <span className="num text-[12.5px] font-bold text-[var(--amber)]">{fmtMoney(s.profit)}</span>
-                  </td>
+                  {me?.role === "admin" && (
+                    <td>
+                      <span className="num text-[12.5px] font-bold text-[var(--amber)]">{formatMoneyJOD(s.profit, currency, rates)}</span>
+                    </td>
+                  )}
                   <td>
                     <span className="text-[12.5px] font-bold text-[var(--muted)]">{s.userName}</span>
                   </td>

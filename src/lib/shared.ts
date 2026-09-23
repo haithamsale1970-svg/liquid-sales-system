@@ -141,6 +141,8 @@ export type SaleListDTO = {
   shippingCost: number;
   total: number;
   profit: number;
+  currency?: string;
+  rate?: number;
   itemsCount: number;
   unitsCount: number;
   createdAt: string;
@@ -164,6 +166,8 @@ export type SaleDetailDTO = {
   shippingCost: number;
   total: number;
   profit: number;
+  currency?: string;
+  rate?: number;
   notes: string;
   createdAt: string;
   client: {

@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   const auth = await requireUser();
   if (isErr(auth)) return auth.res;
+  const isAdmin = auth.user.role === "admin";
 
   const url = new URL(req.url);
   const q = (url.searchParams.get("q") ?? "").trim();
@@ -35,13 +36,15 @@ export async function GET(req: Request) {
     .orderBy(desc(products.createdAt));
 
   const fieldsMap = await loadFieldsMap(rows.map((r) => r.id));
-  return ok(rows.map((r) => mapProduct(r, fieldsMap.get(r.id) ?? [])));
+  // المستخدم العادي لا يرى الكلف أبدًا — تُصفَّر قبل الإرسال.
+  return ok(rows.map((r) => mapProduct(r, fieldsMap.get(r.id) ?? [], { hideCost: !isAdmin })));
 }
 
 export async function POST(req: Request) {
   const auth = await requireUser();
   if (isErr(auth)) return auth.res;
   const { user } = auth;
+  if (user.role !== "admin") return bad("إضافة الأصناف تتطلب صلاحية المدير", 403);
 
   const body = await readBody<Record<string, unknown>>(req);
   if (!body) return bad("طلب غير صالح");

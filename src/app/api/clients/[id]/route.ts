@@ -114,6 +114,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
   const auth = await requireUser();
   if (isErr(auth)) return auth.res;
   const { user } = auth;
+  if (user.role !== "admin") return bad("تعديل العملاء للمدير فقط", 403);
   const { id: rawId } = await ctx.params;
   const id = Math.trunc(num(rawId));
   if (!id) return bad("معرّف غير صالح");

@@ -7,12 +7,14 @@ import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
 import { Badge, Btn, ConfirmDialog, Skeleton } from "@/components/ui";
 import { ProductImage } from "@/components/ProductImage";
+import CurrencySwitcher from "@/components/CurrencySwitcher";
+import { useCurrency } from "@/components/useCurrency";
+import { formatMoneyJOD, isCurrencyCode, type CurrencyCode } from "@/lib/currency";
 import {
   CLIENT_TYPES,
   SHIPPING_TYPES,
   cls,
   fmtDateTime,
-  fmtMoney,
   invoiceNo,
   type SaleDetailDTO,
   type SessionUserDTO,
@@ -25,6 +27,7 @@ export default function InvoicePage({
 }) {
   const { id } = use(params);
   const toast = useToast();
+  const { currency, settings, rates } = useCurrency();
   const [sale, setSale] = useState<SaleDetailDTO | null>(null);
   const [me, setMe] = useState<SessionUserDTO | null>(null);
   const [error, setError] = useState("");
@@ -96,6 +99,10 @@ export default function InvoicePage({
           ) : (
             <Badge tone="mint">فاتورة مكتملة</Badge>
           )}
+          <Badge tone="slate">{isCurrencyCode(sale.currency) ? (sale.currency as CurrencyCode) : currency} • سعر {sale.rate || 1}</Badge>
+          <span data-chrome>
+            <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
+          </span>
           <Btn variant="primary" size="sm" onClick={() => window.print()}>
             <Printer size={15} /> طباعة / حفظ PDF
           </Btn>
@@ -202,13 +209,13 @@ export default function InvoicePage({
                     </div>
                   </td>
                   <td>
-                    <span className="num font-bold text-[#33424e]">{fmtMoney(it.price)}</span>
+                    <span className="num font-bold text-[#33424e]">{formatMoneyJOD(it.price, currency, rates)}</span>
                   </td>
                   <td>
                     <span className="num font-black text-[#14222c]">×{it.quantity}</span>
                   </td>
                   <td style={{ textAlign: "left" }}>
-                    <span className="num font-black text-[#c40000]">{fmtMoney(it.lineTotal)}</span>
+                    <span className="num font-black text-[#c40000]">{formatMoneyJOD(it.lineTotal, currency, rates)}</span>
                   </td>
                 </tr>
               ))}
@@ -229,19 +236,19 @@ export default function InvoicePage({
             </div>
             <div className="w-full max-w-[300px] space-y-1.5 text-[13px] font-bold text-[#33424e]">
               <div className="flex justify-between">
-                <span>الإجمالي الفرعي</span>
-                <span className="num">{fmtMoney(sale.subtotal)}</span>
+                <span>الإجمالي الفرعي ({currency})</span>
+                <span className="num">{formatMoneyJOD(sale.subtotal, currency, rates)}</span>
               </div>
               <div className="flex justify-between">
                 <span>الشحن ({SHIPPING_TYPES[sale.shippingType]})</span>
-                <span className="num">{fmtMoney(sale.shippingCost)}</span>
+                <span className="num">{formatMoneyJOD(sale.shippingCost, currency, rates)}</span>
               </div>
               <div
                 className="flex items-center justify-between rounded-2xl px-4 py-3 text-[15px] font-black text-white"
                 style={{ background: "linear-gradient(135deg,#c40000,#5c0000)" }}
               >
-                <span>الإجمالي المستحق</span>
-                <span className="num text-[19px]">{fmtMoney(sale.total)}</span>
+                <span>الإجمالي المستحق ({currency})</span>
+                <span className="num text-[19px]">{formatMoneyJOD(sale.total, currency, rates)}</span>
               </div>
             </div>
           </div>

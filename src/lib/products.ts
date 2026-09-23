@@ -7,6 +7,7 @@ import type { ProductDTO, ProductField } from "./shared";
 export function mapProduct(
   p: typeof products.$inferSelect,
   fields: ProductField[],
+  opts?: { hideCost?: boolean },
 ): ProductDTO {
   return {
     id: p.id,
@@ -14,7 +15,7 @@ export function mapProduct(
     category: p.category,
     description: p.description,
     price: num(p.price),
-    cost: num(p.cost),
+    cost: opts?.hideCost ? 0 : num(p.cost),
     stock: p.stock,
     lowStockAt: p.lowStockAt,
     imageUrl: p.imageUrl,
@@ -45,6 +46,7 @@ export async function loadFieldsMap(
 export async function getProductDTO(
   id: number,
   conn: DbOrTx = db,
+  opts?: { hideCost?: boolean },
 ): Promise<ProductDTO | null> {
   const rows = await conn
     .select()
@@ -61,6 +63,7 @@ export async function getProductDTO(
   return mapProduct(
     p,
     fieldsRows.map((f) => ({ id: f.id, label: f.label, value: f.value })),
+    opts,
   );
 }
 

@@ -23,6 +23,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function GET(_req: Request, ctx: Ctx) {
   const auth = await requireUser();
   if (isErr(auth)) return auth.res;
+  const isAdmin = auth.user.role === "admin";
   const { id: rawId } = await ctx.params;
   const id = Math.trunc(num(rawId));
   if (!id) return bad("معرّف غير صالح");
@@ -56,7 +57,10 @@ export async function GET(_req: Request, ctx: Ctx) {
       shippingType: row.sale.shippingType,
       shippingCost: num(row.sale.shippingCost),
       total: num(row.sale.total),
-      profit: num(row.sale.profit),
+      // الربح للأدمن فقط.
+      profit: isAdmin ? num(row.sale.profit) : 0,
+      currency: row.sale.currency ?? "JOD",
+      rate: num(row.sale.rate) || 1,
       notes: row.sale.notes,
       createdAt: row.sale.createdAt.toISOString(),
       client: {
@@ -80,6 +84,8 @@ export async function GET(_req: Request, ctx: Ctx) {
         quantity: it.quantity,
         lineTotal: num(it.lineTotal),
       })),
+      // التكلفة مخفية عن المستخدم العادي.
+      ...(isAdmin ? {} : { itemsHiddenCost: true }),
     });
   } catch (e) {
     return errResponse(e);
