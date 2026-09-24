@@ -154,7 +154,7 @@ export default function NewSalePage() {
         ? Math.min(subtotal + ship, dv)
         : 0
     : 0;
-  const total = Math.max(0, subtotal + ship - discount);
+  const total = Math.max(0, Number((subtotal + ship - discount).toFixed(2)));
   const isDeliveryShipping = shippingType !== "none";
   // الموظف العادي لا يستطيع تفعيل الآجل حتى لو وصلت الحالة من طلب قديم.
   const effectivePaymentMethod: PaymentMethod = isDeliveryShipping
@@ -163,8 +163,10 @@ export default function NewSalePage() {
       ? paymentMethod
       : "cash";
   const isDeliverySale = isDeliveryShipping && effectivePaymentMethod === "delivery";
-  // شركة التوصيل تُستحق قيمة التوصيل فقط؛ الصافي هو المبلغ المتبقي على ذمتها.
-  const deliveryReceivable = isDeliverySale ? Math.max(0, total - ship) : 0;
+  // الصافي بذمة شركة التوصيل = الإجمالي النهائي للطلب − قيمة التوصيل فقط (مثال: 89 − 1.5 = 87.5).
+  const deliveryReceivable = isDeliverySale
+    ? Math.max(0, Number((total - ship).toFixed(2)))
+    : 0;
   // المدفوع الافتراضي: آجل = صفر، التوصيل = سعر التوصيل، وغيرها = كامل الإجمالي.
   const paid = isDeliverySale
     ? Math.min(total, ship)
@@ -173,7 +175,9 @@ export default function NewSalePage() {
       : paidInput === ""
         ? total
         : Math.min(Number(paidInput) || 0, total);
-  const remaining = Math.max(0, total - paid);
+  const remaining = isDeliverySale
+    ? deliveryReceivable
+    : Math.max(0, Number((total - paid).toFixed(2)));
 
   // ===== ماسح الباركود السريع (Keyboard Wedge) =====
   // القارئ يكتب الأرقام ثم Enter: نطابق الباركود أولًا، ثم الاسم النصي،
