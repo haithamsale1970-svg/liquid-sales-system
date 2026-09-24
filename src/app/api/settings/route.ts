@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { appSettings } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -15,6 +14,7 @@ import {
 } from "@/lib/api";
 import { getAppSettings } from "@/lib/settings";
 import { isCurrencyCode, DEFAULT_SETTINGS } from "@/lib/currency";
+import { ensureSchema } from "@/lib/migrate";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +22,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const auth = await requireUser();
   if (isErr(auth)) return auth.res;
+  await ensureSchema();
   try {
     return ok(await getAppSettings());
   } catch (e) {
@@ -49,7 +50,10 @@ export async function PUT(req: Request) {
   const showReportsForUsers = body.showReportsForUsers !== false;
   const showClientsForUsers = body.showClientsForUsers !== false;
   const showProductsForUsers = body.showProductsForUsers !== false;
+  // صلاحية الموظفين في إضافة/تصحيح بيانات العملاء — تُفعَّل صراحةً (افتراضيًا مغلقة).
+  const allowUsersEditClients = body.allowUsersEditClients === true;
 
+  await ensureSchema();
   try {
     await db.insert(appSettings).values({ id: 1 }).onConflictDoNothing();
     await db
@@ -63,6 +67,7 @@ export async function PUT(req: Request) {
         showReportsForUsers,
         showClientsForUsers,
         showProductsForUsers,
+        allowUsersEditClients,
         updatedAt: new Date(),
       })
       .where(eq(appSettings.id, 1));
@@ -72,7 +77,9 @@ export async function PUT(req: Request) {
       action: "تعديل إعدادات",
       entity: "نظام",
       entityId: 1,
-      details: `تحديث العملات والأسعار (${defaultCurrency} — USD:${rateUsd} EGP:${rateEgp} — توصيل ${shipIn}/${shipEx})`,
+      details: `تحديث العملات والأسعار (${defaultCurrency} — USD:${rateUsd} EGP:${rateEgp} — توصيل ${shipIn}/${shipEx}) • صلاحية الموظفين بتعديل العملاء: ${
+        allowUsersEditClients ? "مُفعَّلة" : "موقوفة"
+      }`,
     });
     return ok(await getAppSettings());
   } catch (e) {
@@ -80,6 +87,4 @@ export async function PUT(req: Request) {
   }
 }
 
-export function badRequest(m: string, s = 400) {
-  return NextResponse.json({ error: m }, { status: s });
-}
+

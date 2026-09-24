@@ -16,6 +16,7 @@ import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { useCurrency } from "@/components/useCurrency";
 import { formatMoneyJOD } from "@/lib/currency";
 import {
+  PAYMENT_METHODS,
   SHIPPING_TYPES,
   cls,
   fmtDateTime,
@@ -206,6 +207,9 @@ export default function SalesPage() {
                   </td>
                   <td>
                     {s.status === "completed" ? <Badge tone="mint">مكتملة</Badge> : <Badge tone="rose">ملغاة</Badge>}
+                  <Badge tone={s.paymentMethod === "credit" ? "rose" : "slate"}>
+                    {PAYMENT_METHODS[s.paymentMethod]}
+                  </Badge>
                   </td>
                   <td>
                     <span className="text-[12px] font-bold text-[var(--faint)]">{fmtDateTime(s.createdAt)}</span>

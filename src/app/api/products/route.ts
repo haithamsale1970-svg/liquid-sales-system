@@ -2,6 +2,7 @@ import { and, desc, eq, ilike, or } from "drizzle-orm";
 import { db } from "@/db";
 import { productFields, products } from "@/db/schema";
 import { bad, isErr, logActivity, ok, readBody, requireUser, type DbOrTx } from "@/lib/api";
+import { logMovement } from "@/lib/inventory";
 import {
   f2,
   loadFieldsMap,
@@ -63,10 +64,25 @@ export async function POST(req: Request) {
         cost: f2(data.cost),
         stock: data.stock,
         lowStockAt: data.lowStockAt,
+        barcode: data.barcode,
         imageUrl: data.imageUrl,
       })
       .returning({ id: products.id });
     const id = rows[0].id;
+    // رصيد افتتاحي — يُسجّل كحركة دخول في سجل المخزون.
+    if (data.stock > 0) {
+      await logMovement(tx, {
+        productId: id,
+        productName: data.name,
+        delta: data.stock,
+        stockAfter: data.stock,
+        reason: "رصيد افتتاحي",
+        refType: "product",
+        refId: id,
+        userId: user.id,
+        userName: user.name,
+      });
+    }
     if (data.fields.length) {
       await tx.insert(productFields).values(
         data.fields.map((f) => ({ productId: id, label: f.label, value: f.value })),

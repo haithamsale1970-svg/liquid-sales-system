@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { describeDbError } from "@/db/connection";
 import { users } from "@/db/schema";
+import { ensureSchema } from "@/lib/migrate";
 import {
   SESSION_COOKIE,
   SESSION_TTL_SECONDS,
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
     return bad("أدخل اسم المستخدم وكلمة المرور");
   }
   try {
+    await ensureSchema();
     const rows = await db
       .select()
       .from(users)
@@ -47,7 +49,7 @@ export async function POST(req: Request) {
       details: `قام ${user.name} بتسجيل الدخول`,
     });
     const res = ok(
-      { id: user.id, username: user.username, name: user.name, role: user.role },
+      { id: user.id, username: user.username, name: user.name, role: user.role, canEditClients: user.canEditClients },
       { status: 200 },
     );
     res.cookies.set(SESSION_COOKIE, token, {

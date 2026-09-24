@@ -13,6 +13,7 @@ import {
   type DbOrTx,
 } from "@/lib/api";
 import { f2, getProductDTO, parseProductInput } from "@/lib/products";
+import { logMovement } from "@/lib/inventory";
 
 export const dynamic = "force-dynamic";
 
@@ -60,11 +61,26 @@ export async function PATCH(req: Request, ctx: Ctx) {
           cost: f2(data.cost),
           stock: data.stock,
           lowStockAt: data.lowStockAt,
+          barcode: data.barcode,
           imageUrl: data.imageUrl,
           updatedAt: new Date(),
         })
         .where(eq(products.id, id));
       await tx.delete(productFields).where(eq(productFields.productId, id));
+      if (data.stock !== existing.stock) {
+        await logMovement(tx, {
+          productId: id,
+          productName: data.name,
+          delta: data.stock - existing.stock,
+          stockAfter: data.stock,
+          reason: "تعديل بيانات",
+          refType: "product",
+          refId: id,
+          userId: user.id,
+          userName: user.name,
+          note: "تغيير الكمية من نموذج المنتج",
+        });
+      }
       if (data.fields.length) {
         await tx
           .insert(productFields)
@@ -94,6 +110,18 @@ export async function PATCH(req: Request, ctx: Ctx) {
         .update(products)
         .set({ stock: next, updatedAt: new Date() })
         .where(eq(products.id, id));
+      await logMovement(tx, {
+        productId: id,
+        productName: existing.name,
+        delta,
+        stockAfter: next,
+        reason: "تسوية يدوية",
+        refType: "product",
+        refId: id,
+        userId: user.id,
+        userName: user.name,
+        note,
+      });
       await logActivity(tx, {
         userId: user.id,
         userName: user.name,

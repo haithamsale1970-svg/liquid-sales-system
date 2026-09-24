@@ -16,7 +16,8 @@ import {
 import { f2 } from "@/lib/products";
 import { getAppSettings } from "@/lib/settings";
 import { isCurrencyCode } from "@/lib/currency";
-import { invoiceNo, type SaleListDTO } from "@/lib/shared";
+import { logMovement } from "@/lib/inventory";
+import { PAYMENT_METHODS, invoiceNo, isPaymentMethod, type PaymentMethod, type SaleListDTO } from "@/lib/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,9 @@ export async function GET(req: Request) {
         profit: sales.profit,
         currency: sales.currency,
         rate: sales.rate,
+        paymentMethod: sales.paymentMethod,
+        discount: sales.discount,
+        paid: sales.paid,
         createdAt: sales.createdAt,
         clientName: clients.name,
         clientType: clients.type,
@@ -117,6 +121,9 @@ export async function GET(req: Request) {
       rate: num(r.rate) || 1,
       itemsCount: aggMap.get(r.id)?.itemsCount ?? 0,
       unitsCount: aggMap.get(r.id)?.unitsCount ?? 0,
+      paymentMethod: isPaymentMethod(r.paymentMethod) ? r.paymentMethod : "cash",
+      discount: num(r.discount),
+      paid: r.paid === null ? num(r.total) : num(r.paid),
       createdAt: r.createdAt.toISOString(),
     }));
 
@@ -144,6 +151,11 @@ export async function POST(req: Request) {
     items?: SaleItemInput[];
     shippingType?: string;
     shippingCost?: number;
+    paymentMethod?: string;
+    discountType?: string;
+    discountValue?: number;
+    paid?: number | string;
+    currency?: string;
     notes?: string;
   }>(req);
   if (!body) return bad("طلب غير صالح");
@@ -165,6 +177,20 @@ export async function POST(req: Request) {
   )
     ? (body.shippingType as "none" | "internal" | "external")
     : "none";
+  // طريقة الدفع + خصم الفاتورة (الخصم للأدمن فقط — يُتجاهل من المستخدم العادي).
+  const paymentMethod: PaymentMethod = isPaymentMethod(body.paymentMethod)
+    ? body.paymentMethod
+    : "cash";
+  const discountType = ["none", "percent", "amount"].includes(
+    String(body.discountType ?? "none"),
+  )
+    ? String(body.discountType ?? "none")
+    : "none";
+  const discountValue = Math.max(0, num(body.discountValue));
+  const paidRaw =
+    body.paid === undefined || body.paid === null || body.paid === ""
+      ? null
+      : Math.max(0, num(body.paid));
   // التوصيل ثابت من إعدادات الأدمن (داخلي 1.5 / خارجي 2 افتراضيًا) — يُتجاهل أي رقم قادم من الواجهة.
   const settings = await getAppSettings();
   const shippingCost =
@@ -196,6 +222,7 @@ export async function POST(req: Request) {
         .for("update");
 
       let subtotal = 0;
+      const stockAfterMap = new Map<number, number>();
       let profit = 0;
       const lines: Array<{
         saleId?: number;
@@ -236,9 +263,21 @@ export async function POST(req: Request) {
             updatedAt: new Date(),
           })
           .where(eq(products.id, pid));
+        stockAfterMap.set(pid, p.stock - qty);
       }
 
-      const total = subtotal + shippingCost;
+      // الخصم (للأدمن فقط): نسبة من الفرعي أو مبلغ ثابت — يُخصم من الإجمالي ويقلل الربح.
+      let discount = 0;
+      if (user.role === "admin") {
+        if (discountType === "percent")
+          discount = Math.min(subtotal, (subtotal * discountValue) / 100);
+        else if (discountType === "amount")
+          discount = Math.min(subtotal + shippingCost, discountValue);
+      }
+      const total = Math.max(0, subtotal + shippingCost - discount);
+      const finalProfit = profit - discount;
+      const paidDefault = paymentMethod === "credit" ? 0 : total;
+      const paid = Math.min(total, paidRaw === null ? paidDefault : paidRaw);
       const saleRows = await tx
         .insert(sales)
         .values({
@@ -248,7 +287,10 @@ export async function POST(req: Request) {
           shippingType,
           shippingCost: f2(shippingCost),
           total: f2(total),
-          profit: f2(profit),
+          profit: f2(finalProfit),
+          paymentMethod,
+          discount: f2(discount),
+          paid: f2(paid),
           currency,
           rate: String(rate),
           notes: String(body.notes ?? "").slice(0, 400),
@@ -258,6 +300,21 @@ export async function POST(req: Request) {
       await tx
         .insert(saleItems)
         .values(lines.map((l) => ({ ...l, saleId })));
+      // سجل حركات المخزون — خروج كل صنف مع الرصيد بعد البيع.
+      for (const l of lines) {
+        await logMovement(tx, {
+          productId: l.productId,
+          productName: l.productName,
+          delta: -l.quantity,
+          stockAfter: stockAfterMap.get(l.productId) ?? 0,
+          reason: "بيع",
+          refType: "sale",
+          refId: saleId,
+          userId: user.id,
+          userName: user.name,
+          note: invoiceNo(saleId),
+        });
+      }
       await logActivity(tx, {
         userId: user.id,
         userName: user.name,
@@ -266,7 +323,9 @@ export async function POST(req: Request) {
         entityId: saleId,
         details: `فاتورة ${invoiceNo(saleId)} للعميل "${client.name}" بقيمة ${f2(
           total,
-        )} (${lines.length} صنف)`,
+        )} (${lines.length} صنف) — ${PAYMENT_METHODS[paymentMethod]}${
+          paid < total ? ` • المتبقي ${f2(total - paid)}` : " • مدفوعة بالكامل"
+        }${discount > 0 ? ` • خصم ${f2(discount)}` : ""}`,
       });
       return saleId;
     });

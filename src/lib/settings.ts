@@ -20,6 +20,7 @@ function rowToSettings(r: typeof appSettings.$inferSelect): AppSettings {
     showReportsForUsers: r.showReportsForUsers,
     showClientsForUsers: r.showClientsForUsers,
     showProductsForUsers: r.showProductsForUsers,
+    allowUsersEditClients: r.allowUsersEditClients,
   };
 }
 

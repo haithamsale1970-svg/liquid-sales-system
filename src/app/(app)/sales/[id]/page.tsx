@@ -2,20 +2,23 @@
 
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
-import { ArrowRight, Ban, Droplets, Printer } from "lucide-react";
+import { ArrowRight, Ban, Droplets, Printer, Trash2, Undo2 } from "lucide-react";
 import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
-import { Badge, Btn, ConfirmDialog, Skeleton } from "@/components/ui";
+import { Badge, Btn, ConfirmDialog, Field, Input, Modal, Select, Skeleton } from "@/components/ui";
 import { ProductImage } from "@/components/ProductImage";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { useCurrency } from "@/components/useCurrency";
 import { formatMoneyJOD, isCurrencyCode, type CurrencyCode } from "@/lib/currency";
 import {
   CLIENT_TYPES,
+  PAYMENT_METHODS,
   SHIPPING_TYPES,
   cls,
   fmtDateTime,
   invoiceNo,
+  type PaymentMethod,
+  type ProductDTO,
   type SaleDetailDTO,
   type SessionUserDTO,
 } from "@/lib/shared";
@@ -33,6 +36,17 @@ export default function InvoicePage({
   const [error, setError] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+
+  // مرتجع / استبدال
+  const [retOpen, setRetOpen] = useState(false);
+  const [retQty, setRetQty] = useState<Record<number, number>>({});
+  const [exch, setExch] = useState<Array<{ productId: number; quantity: number; name: string }>>([]);
+  const [exchPick, setExchPick] = useState("");
+  const [exchCount, setExchCount] = useState("1");
+  const [retNote, setRetNote] = useState("");
+  const [retMethod, setRetMethod] = useState<PaymentMethod>("cash");
+  const [retLoading, setRetLoading] = useState(false);
+  const [catalog, setCatalog] = useState<ProductDTO[]>([]);
 
   async function load() {
     try {
@@ -60,6 +74,67 @@ export default function InvoicePage({
       toast.push("err", e instanceof Error ? e.message : "تعذر الإلغاء");
     } finally {
       setCancelling(false);
+    }
+  }
+
+  // طباعة حرارية على ورق 80mm — يُخفي الفاتورة الكاملة ويعرض الإيصال المختصر.
+  function printThermal() {
+    const style = document.createElement("style");
+    style.id = "thermal-page-style";
+    style.textContent = "@page { size: 80mm auto; margin: 4mm; }";
+    document.head.appendChild(style);
+    document.body.classList.add("print-thermal");
+    const done = () => {
+      document.body.classList.remove("print-thermal");
+      style.remove();
+      window.removeEventListener("afterprint", done);
+    };
+    window.addEventListener("afterprint", done);
+    window.print();
+    // بعض المتصفحات لا تطلق afterprint عند الإلغاء مباشرة.
+    setTimeout(done, 1500);
+  }
+
+  function openReturn() {
+    setRetQty({});
+    setExch([]);
+    setExchPick("");
+    setExchCount("1");
+    setRetNote("");
+    setRetMethod(sale?.paymentMethod === "credit" ? "cash" : sale?.paymentMethod ?? "cash");
+    setRetOpen(true);
+    api<ProductDTO[]>("/api/products").then(setCatalog).catch(() => {});
+  }
+
+  async function submitReturn() {
+    if (retLoading || !sale) return;
+    const returned = sale.items
+      .map((it) => ({ productId: it.productId, quantity: retQty[it.productId] ?? 0 }))
+      .filter((l) => l.quantity > 0);
+    const exchange = exch.map((l) => ({ productId: l.productId, quantity: l.quantity }));
+    if (!returned.length && !exchange.length) {
+      toast.push("info", "حدد كميات للإرجاع أو أضف أصناف استبدال");
+      return;
+    }
+    setRetLoading(true);
+    try {
+      await api("/api/returns", {
+        method: "POST",
+        body: {
+          saleId: sale.id,
+          returned,
+          exchange,
+          note: retNote,
+          method: retMethod,
+        },
+      });
+      toast.push("ok", "تم تسجيل المرتجع/الاستبدال وتحديث المخزون والحساب");
+      setRetOpen(false);
+      await load();
+    } catch (e) {
+      toast.push("err", e instanceof Error ? e.message : "تعذر تسجيل المرتجع");
+    } finally {
+      setRetLoading(false);
     }
   }
 
@@ -100,9 +175,20 @@ export default function InvoicePage({
             <Badge tone="mint">فاتورة مكتملة</Badge>
           )}
           <Badge tone="slate">{isCurrencyCode(sale.currency) ? (sale.currency as CurrencyCode) : currency} • سعر {sale.rate || 1}</Badge>
+          <Badge tone={sale.paymentMethod === "credit" ? "rose" : "mint"}>
+            {PAYMENT_METHODS[sale.paymentMethod]}
+          </Badge>
           <span data-chrome>
             <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
           </span>
+          <Btn variant="primary" size="sm" onClick={printThermal}>
+            <Printer size={15} /> طباعة حرارية (80mm)
+          </Btn>
+          {me?.role === "admin" && !cancelled && (
+            <Btn size="sm" onClick={openReturn}>
+              <Undo2 size={15} /> مرتجع / استبدال
+            </Btn>
+          )}
           <Btn variant="primary" size="sm" onClick={() => window.print()}>
             <Printer size={15} /> طباعة / حفظ PDF
           </Btn>
@@ -183,6 +269,10 @@ export default function InvoicePage({
                 <div>
                   إجمالي القطع: <span className="num font-black">{units}</span>
                 </div>
+                <div>
+                  طريقة الدفع:{" "}
+                  <span className="font-black">{PAYMENT_METHODS[sale.paymentMethod]}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -243,6 +333,22 @@ export default function InvoicePage({
                 <span>الشحن ({SHIPPING_TYPES[sale.shippingType]})</span>
                 <span className="num">{formatMoneyJOD(sale.shippingCost, currency, rates)}</span>
               </div>
+              {sale.discount > 0 && (
+                <div className="flex justify-between text-[var(--danger)]">
+                  <span>الخصم</span>
+                  <span className="num">− {formatMoneyJOD(sale.discount, currency, rates)}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span>المدفوع</span>
+                <span className="num">{formatMoneyJOD(sale.paid, currency, rates)}</span>
+              </div>
+              {sale.remaining > 0 && (
+                <div className="flex justify-between font-black text-[var(--danger)]">
+                  <span>المتبقي (دين)</span>
+                  <span className="num">{formatMoneyJOD(sale.remaining, currency, rates)}</span>
+                </div>
+              )}
               <div
                 className="flex items-center justify-between rounded-2xl px-4 py-3 text-[15px] font-black text-white"
                 style={{ background: "linear-gradient(135deg,#c40000,#5c0000)" }}
@@ -260,6 +366,242 @@ export default function InvoicePage({
           </div>
         </div>
       </div>
+
+      {/* إيصال حراري 80mm — يظهر فقط عند الطباعة الحرارية (body.print-thermal) */}
+      <div
+        className="thermal-receipt"
+        dir="rtl"
+        style={{
+          fontFamily: "'Courier New', monospace",
+          color: "#000",
+          background: "#fff",
+          width: "72mm",
+          margin: "0 auto",
+          padding: "4mm",
+          fontSize: "12px",
+          lineHeight: 1.7,
+        }}
+      >
+        <div style={{ textAlign: "center", fontWeight: 800, fontSize: "16px" }}>Cloud Culture</div>
+        <div style={{ textAlign: "center", fontSize: "11px" }}>لتجارة المنتجات والتدخين الإلكتروني</div>
+        <div style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span style={{ fontWeight: 700 }}>{invoiceNo(sale.id)}</span>
+          <span>{fmtDateTime(sale.createdAt)}</span>
+        </div>
+        <div>العميل: {sale.client.name}</div>
+        <div>البائع: {sale.seller.name}</div>
+        <div>الدفع: {PAYMENT_METHODS[sale.paymentMethod]}</div>
+        <div style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
+        {sale.items.map((it) => (
+          <div
+            key={it.id}
+            style={{ display: "flex", justifyContent: "space-between", gap: "4px" }}
+          >
+            <span style={{ flex: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+              {it.productName}
+            </span>
+            <span>×{it.quantity}</span>
+            <span style={{ fontWeight: 700 }}>{formatMoneyJOD(it.lineTotal, currency, rates)}</span>
+          </div>
+        ))}
+        <div style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>الفرعي</span>
+          <span>{formatMoneyJOD(sale.subtotal, currency, rates)}</span>
+        </div>
+        {sale.discount > 0 && (
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>الخصم</span>
+            <span>- {formatMoneyJOD(sale.discount, currency, rates)}</span>
+          </div>
+        )}
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>الشحن</span>
+          <span>{formatMoneyJOD(sale.shippingCost, currency, rates)}</span>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontWeight: 800,
+            fontSize: "14px",
+            borderTop: "1px solid #000",
+            marginTop: "4px",
+            paddingTop: "4px",
+          }}
+        >
+          <span>الإجمالي</span>
+          <span>{formatMoneyJOD(sale.total, currency, rates)}</span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>المدفوع</span>
+          <span>{formatMoneyJOD(sale.paid, currency, rates)}</span>
+        </div>
+        {sale.remaining > 0 && (
+          <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800 }}>
+            <span>المتبقي</span>
+            <span>{formatMoneyJOD(sale.remaining, currency, rates)}</span>
+          </div>
+        )}
+        <div style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
+        <div style={{ textAlign: "center", fontSize: "11px" }}>شكرًا لتعاملكم معنا — Cloud Culture</div>
+      </div>
+
+      {/* ===== مرتجع / استبدال ===== */}
+      {sale && (
+        <Modal
+          open={retOpen}
+          onClose={() => setRetOpen(false)}
+          title={`مرتجع / استبدال — ${invoiceNo(sale.id)}`}
+          icon={<Undo2 size={17} />}
+          wide
+        >
+          <div className="space-y-4">
+            <div>
+              <p className="lbl">أصناف الفاتورة — حدد كمية الإرجاع (تعود للمخزون)</p>
+              <ul className="max-h-[220px] space-y-2 overflow-y-auto pe-1">
+                {sale.items.map((it) => {
+                  const already = sale.returnedQty?.[it.productId] ?? 0;
+                  const allowed = it.quantity - already;
+                  return (
+                    <li
+                      key={it.id}
+                      className="flex items-center gap-2 rounded-xl border border-[var(--line-soft)] bg-white/[.02] px-3 py-2"
+                    >
+                      <span className="min-w-0 flex-1 truncate text-[12.5px] font-extrabold">
+                        {it.productName}
+                      </span>
+                      <span className="num shrink-0 text-[11px] font-bold text-[var(--faint)]">
+                        بيع {it.quantity} • مرتجع {already}
+                      </span>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={allowed}
+                        className="num !w-20 shrink-0"
+                        value={retQty[it.productId] ?? ""}
+                        placeholder="0"
+                        disabled={allowed <= 0}
+                        onChange={(e) =>
+                          setRetQty((q) => ({
+                            ...q,
+                            [it.productId]: Math.max(
+                              0,
+                              Math.min(allowed, Math.trunc(Number(e.target.value) || 0)),
+                            ),
+                          }))
+                        }
+                      />
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+            <div>
+              <p className="lbl">أصناف الاستبدال (تُخصم من المخزون)</p>
+              <div className="flex gap-2">
+                <Select
+                  value={exchPick}
+                  onChange={(e) => setExchPick(e.target.value)}
+                  className="min-w-0 flex-1"
+                >
+                  <option value="">— اختر صنفًا —</option>
+                  {catalog
+                    .filter((p) => p.stock > 0)
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} (متاح {p.stock})
+                      </option>
+                    ))}
+                </Select>
+                <Input
+                  type="number"
+                  min="1"
+                  className="num !w-20"
+                  value={exchCount}
+                  onChange={(e) => setExchCount(e.target.value)}
+                />
+                <Btn
+                  size="sm"
+                  onClick={() => {
+                    const p = catalog.find((x) => x.id === Number(exchPick));
+                    if (!p) return;
+                    const qty = Math.max(1, Math.trunc(Number(exchCount) || 1));
+                    if (qty > p.stock) {
+                      toast.push("info", `المتاح من "${p.name}" هو ${p.stock} فقط`);
+                      return;
+                    }
+                    setExch((xs) => [...xs, { productId: p.id, quantity: qty, name: p.name }]);
+                    setExchPick("");
+                    setExchCount("1");
+                  }}
+                  disabled={!exchPick}
+                >
+                  إضافة
+                </Btn>
+              </div>
+              {exch.length > 0 && (
+                <ul className="mt-2 space-y-1.5">
+                  {exch.map((l, i) => (
+                    <li
+                      key={`${l.productId}-${i}`}
+                      className="flex items-center gap-2 rounded-lg border border-[var(--line-soft)] px-2.5 py-1.5 text-[12px] font-bold"
+                    >
+                      <span className="min-w-0 flex-1 truncate">
+                        {l.name} <span className="num">×{l.quantity}</span>
+                      </span>
+                      <button
+                        className="icon-btn !h-6 !w-6"
+                        onClick={() => setExch((xs) => xs.filter((_, j) => j !== i))}
+                        aria-label="حذف"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <Field label="طريقة الاسترداد / فرق الاستبدال">
+              <Select
+                value={retMethod}
+                onChange={(e) => setRetMethod(e.target.value as PaymentMethod)}
+              >
+                {(["cash", "clink_haitham", "clink_lahsan", "delivery"] as PaymentMethod[]).map(
+                  (m) => (
+                    <option key={m} value={m}>
+                      {PAYMENT_METHODS[m]}
+                    </option>
+                  ),
+                )}
+              </Select>
+            </Field>
+
+            <Field label="ملاحظة (اختياري)">
+              <Input
+                value={retNote}
+                onChange={(e) => setRetNote(e.target.value)}
+                placeholder="سبب الإرجاع / ملاحظات…"
+              />
+            </Field>
+
+            <p className="rounded-xl border border-[var(--line-soft)] bg-white/[.03] px-3 py-2 text-[11.5px] font-bold text-[var(--muted)]">
+              فرق القيمة (مرتجع − استبدال) يُخصم أو يُضاف على حساب العميل تلقائيًا، وتُسجَّل كل
+              حركة في سجل المخزون.
+            </p>
+
+            <div className="flex justify-end gap-2 border-t border-[var(--line-soft)] pt-4">
+              <Btn onClick={() => setRetOpen(false)}>إلغاء</Btn>
+              <Btn variant="primary" onClick={submitReturn} loading={retLoading}>
+                تسجيل المرتجع
+              </Btn>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       <ConfirmDialog
         open={cancelOpen}

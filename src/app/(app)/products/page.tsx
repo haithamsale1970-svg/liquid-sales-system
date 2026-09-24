@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArchiveRestore,
+  Barcode,
   Boxes,
   CircleAlert,
   ImagePlus,
@@ -48,6 +49,7 @@ type FormState = {
   cost: string;
   stock: string;
   lowStockAt: string;
+  barcode: string;
   imageUrl: string;
   fields: Array<{ label: string; value: string }>;
 };
@@ -60,6 +62,7 @@ const EMPTY_FORM: FormState = {
   cost: "",
   stock: "",
   lowStockAt: "5",
+  barcode: "",
   imageUrl: "",
   fields: [],
 };
@@ -145,6 +148,7 @@ export default function ProductsPage() {
       cost: String(p.cost),
       stock: String(p.stock),
       lowStockAt: String(p.lowStockAt),
+      barcode: p.barcode,
       imageUrl: p.imageUrl,
       fields: p.fields.map((f) => ({ label: f.label, value: f.value })),
     });
@@ -162,6 +166,7 @@ export default function ProductsPage() {
       cost: Number(form.cost) || 0,
       stock: Number(form.stock) || 0,
       lowStockAt: Number(form.lowStockAt) || 0,
+      barcode: form.barcode,
       imageUrl: form.imageUrl,
       fields: form.fields.filter((f) => f.label.trim() && f.value.trim()),
     };
@@ -289,6 +294,17 @@ export default function ProductsPage() {
             {showArchived ? "الأصناف النشطة" : "الأرشيف"}
           </Btn>
         )}
+        {!showArchived &&
+          (items ?? []).some((p) => !p.archived && p.stock <= p.lowStockAt) && (
+            <div className="flex items-center gap-2 rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-2.5 text-[12.5px] font-extrabold text-amber-400">
+              <CircleAlert size={16} className="shrink-0" />
+              تنبيه نقص المخزون:{" "}
+              <span className="num">
+                {(items ?? []).filter((p) => !p.archived && p.stock <= p.lowStockAt).length}
+              </span>{" "}
+              صنف تحت حد التنبيه
+            </div>
+          )}
         <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
         {me?.role === "admin" && (
           <Btn variant="primary" size="sm" onClick={openCreate}>
@@ -522,6 +538,15 @@ export default function ProductsPage() {
               value={form.lowStockAt}
               onChange={(e) => setForm((f) => ({ ...f, lowStockAt: e.target.value }))}
               placeholder="5"
+            />
+          </Field>
+          <Field label="الباركود" hint="رقم باركود للمسح السريع في فاتورة جديدة (اختياري)">
+            <Input
+              dir="ltr"
+              className="num"
+              value={form.barcode}
+              onChange={(e) => setForm((f) => ({ ...f, barcode: e.target.value }))}
+              placeholder="6291100000015"
             />
           </Field>
           <div className="md:col-span-2">

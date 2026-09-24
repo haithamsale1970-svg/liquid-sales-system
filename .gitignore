@@ -35,6 +35,26 @@ yarn-error.log*
 
 # ============ TypeScript ============
 *.tsbuildinfo
+.next/
+
+# ============ سجلات الفحص المحلية ============
+*-status*.txt
+*-diff*.txt
+*-meta*.txt
+*-check*.txt
+*-check*.exit
+*-out.txt
+*-err.txt
+*-exit
+*-pid
+node-search.txt
+node-now.txt
+node-present.txt
+where-npm.txt
+node-locations.txt
+bins*.txt
+run-build.js
+verify-cleanup.txt
 
 # ============ النسخ الاحتياطية المصدّرة من النظام ============
 sohob-backup-*.json

@@ -3,23 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Banknote,
   BarChart3,
   Droplets,
   LayoutDashboard,
   LogOut,
   Menu,
   Package,
+  PackageSearch,
   PlusCircle,
   ScrollText,
   Settings,
   ShoppingCart,
+  Undo2,
   Users,
   UsersRound,
+  Wallet,
   X,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { ToastProvider } from "./toast";
 import CurrencySwitcher from "./CurrencySwitcher";
+import LowStockBanner from "./LowStockBanner";
 import { cls, initials, type SessionUserDTO } from "@/lib/shared";
 import { api } from "@/lib/client";
 import type { AppSettings } from "@/lib/currency";
@@ -30,6 +35,10 @@ const NAV = [
   { href: "/sales", label: "الفواتير", icon: ShoppingCart },
   { href: "/sales/new", label: "فاتورة جديدة", icon: PlusCircle, accent: true },
   { href: "/clients", label: "العملاء", icon: Users, key: "clients" },
+  { href: "/debts", label: "الديون والتحصيل", icon: Wallet, admin: true },
+  { href: "/expenses", label: "المصاريف", icon: Banknote, admin: true },
+  { href: "/inventory", label: "حركة المخزون", icon: PackageSearch, admin: true },
+  { href: "/returns", label: "المرتجعات والاستبدال", icon: Undo2, admin: true },
   { href: "/reports", label: "التقارير", icon: BarChart3, key: "reports" },
   { href: "/users", label: "المستخدمون", icon: UsersRound, admin: true },
   { href: "/activity", label: "سجل النشاط", icon: ScrollText, admin: true },
@@ -219,6 +228,7 @@ export default function AppShell({
             data-main
             className="mx-auto w-full max-w-[1240px] flex-1 px-4 py-6 sm:px-6"
           >
+            <LowStockBanner />
             {children}
           </main>
         </div>

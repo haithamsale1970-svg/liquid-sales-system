@@ -51,7 +51,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
   const body = await readBody<Record<string, unknown>>(req);
   if (!body) return bad("طلب غير صالح");
 
-  const updates: Record<string, string> = {};
+  const updates: Partial<typeof users.$inferInsert> = {};
   const changes: string[] = [];
 
   if (typeof body.name === "string" && body.name.trim().length >= 2) {
@@ -78,6 +78,17 @@ export async function PATCH(req: Request, ctx: Ctx) {
     if (role !== target.role) {
       updates.role = role;
       changes.push("الصلاحية");
+    }
+  }
+
+  if (typeof body.canEditClients === "boolean") {
+    if (user.role !== "admin")
+      return bad("تغيير صلاحية تعديل العملاء للمدير فقط", 403);
+    if (isSelf) return bad("لا يمكنك تغيير صلاحيتك بنفسك");
+    const canEditClients = body.canEditClients;
+    if (canEditClients !== target.canEditClients) {
+      updates.canEditClients = canEditClients;
+      changes.push("صلاحية تعديل العملاء");
     }
   }
 

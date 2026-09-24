@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { and, eq, gt, lt } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { db } from "@/db";
+import { ensureSchema } from "@/lib/migrate";
 import { sessions, users } from "@/db/schema";
 
 export const SESSION_COOKIE = "sohob_session";
@@ -12,6 +13,7 @@ export type SessionUser = {
   username: string;
   name: string;
   role: "admin" | "user";
+  canEditClients: boolean;
 };
 
 export async function createSession(userId: number) {
@@ -35,12 +37,15 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     const store = await cookies();
     const token = store.get(SESSION_COOKIE)?.value;
     if (!token) return null;
+    // يضمن أن crumb/schema الجديدة موجودة قبل قراءة صلاحية الموظف.
+    await ensureSchema();
     const rows = await db
       .select({
         id: users.id,
         username: users.username,
         name: users.name,
         role: users.role,
+        canEditClients: users.canEditClients,
       })
       .from(sessions)
       .innerJoin(users, eq(sessions.userId, users.id))
@@ -48,7 +53,13 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       .limit(1);
     const row = rows[0];
     if (!row) return null;
-    return { id: row.id, username: row.username, name: row.name, role: row.role };
+    return {
+      id: row.id,
+      username: row.username,
+      name: row.name,
+      role: row.role,
+      canEditClients: row.canEditClients,
+    };
   } catch {
     return null;
   }

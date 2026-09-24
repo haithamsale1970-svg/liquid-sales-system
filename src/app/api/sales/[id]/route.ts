@@ -1,6 +1,6 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { clients, products, saleItems, sales, users } from "@/db/schema";
+import { clients, products, returnItems, returns, saleItems, sales, users } from "@/db/schema";
 import {
   BizError,
   bad,
@@ -14,7 +14,8 @@ import {
   requireUser,
   type DbOrTx,
 } from "@/lib/api";
-import { invoiceNo } from "@/lib/shared";
+import { logMovement } from "@/lib/inventory";
+import { invoiceNo, isPaymentMethod } from "@/lib/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,31 @@ export async function GET(_req: Request, ctx: Ctx) {
       .where(eq(saleItems.saleId, id))
       .orderBy(asc(saleItems.id));
 
+    // الكميات المرتجعة سابقًا لكل صنف (لمنع الإرجاع الزائد).
+    const returnedRows = await db
+      .select({
+        productId: returnItems.productId,
+        qty: sql<number>`coalesce(sum(${returnItems.quantity}), 0)::int`,
+      })
+      .from(returnItems)
+      .innerJoin(returns, eq(returnItems.returnId, returns.id))
+      .where(and(eq(returns.saleId, id), eq(returnItems.direction, "in")))
+      .groupBy(returnItems.productId);
+    const returnedQty: Record<number, number> = {};
+    for (const r of returnedRows) returnedQty[r.productId] = r.qty;
+
+    const returnRows = await db
+      .select({
+        id: returns.id,
+        refund: returns.refund,
+        method: returns.method,
+        createdAt: returns.createdAt,
+      })
+      .from(returns)
+      .where(eq(returns.saleId, id))
+      .orderBy(desc(returns.createdAt));
+    const returnTotal = returnRows.reduce((sum, r) => sum + num(r.refund), 0);
+
     return ok({
       id: row.sale.id,
       status: row.sale.status,
@@ -61,6 +87,16 @@ export async function GET(_req: Request, ctx: Ctx) {
       profit: isAdmin ? num(row.sale.profit) : 0,
       currency: row.sale.currency ?? "JOD",
       rate: num(row.sale.rate) || 1,
+      paymentMethod: isPaymentMethod(row.sale.paymentMethod)
+        ? row.sale.paymentMethod
+        : "cash",
+      discount: num(row.sale.discount),
+      paid: row.sale.paid === null ? num(row.sale.total) : num(row.sale.paid),
+      remaining:
+        row.sale.paid === null
+          ? 0
+          : Math.max(0, num(row.sale.total) - num(row.sale.paid) - returnTotal),
+      returnedQty,
       notes: row.sale.notes,
       createdAt: row.sale.createdAt.toISOString(),
       client: {
@@ -68,6 +104,7 @@ export async function GET(_req: Request, ctx: Ctx) {
         name: row.client.name,
         type: row.client.type,
         phone: row.client.phone,
+        phone2: row.client.phone2 ?? "",
         address: row.client.address,
       },
       seller: {
@@ -83,6 +120,12 @@ export async function GET(_req: Request, ctx: Ctx) {
         price: num(it.price),
         quantity: it.quantity,
         lineTotal: num(it.lineTotal),
+      })),
+      returns: returnRows.map((r) => ({
+        id: r.id,
+        refund: num(r.refund),
+        method: r.method,
+        createdAt: r.createdAt.toISOString(),
       })),
       // التكلفة مخفية عن المستخدم العادي.
       ...(isAdmin ? {} : { itemsHiddenCost: true }),
@@ -116,6 +159,13 @@ export async function PATCH(req: Request, ctx: Ctx) {
       if (!sale) throw new BizError("الفاتورة غير موجودة", 404);
       if (sale.status === "cancelled")
         throw new BizError("هذه الفاتورة ملغاة بالفعل");
+      const hasReturns = await tx
+        .select({ id: returns.id })
+        .from(returns)
+        .where(eq(returns.saleId, id))
+        .limit(1);
+      if (hasReturns.length)
+        throw new BizError("لا يمكن إلغاء فاتورة لها مرتجع — عالج الاستبدال من سجل المرتجعات");
 
       const items = await tx
         .select()
@@ -129,6 +179,23 @@ export async function PATCH(req: Request, ctx: Ctx) {
             updatedAt: new Date(),
           })
           .where(eq(products.id, it.productId));
+        const afterRows = await tx
+          .select({ stock: products.stock })
+          .from(products)
+          .where(eq(products.id, it.productId))
+          .limit(1);
+        await logMovement(tx, {
+          productId: it.productId,
+          productName: it.productName,
+          delta: it.quantity,
+          stockAfter: afterRows[0]?.stock ?? 0,
+          reason: "إلغاء فاتورة",
+          refType: "sale",
+          refId: id,
+          userId: user.id,
+          userName: user.name,
+          note: invoiceNo(id),
+        });
       }
       await tx
         .update(sales)

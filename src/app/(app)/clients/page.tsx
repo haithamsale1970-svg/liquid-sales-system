@@ -62,11 +62,18 @@ type ClientDetail = {
     name: string;
     type: ClientType;
     phone: string;
+    phone2: string;
     address: string;
     notes: string;
     createdAt: string;
   };
-  stats: { orders: number; total: number };
+  stats: {
+    orders: number;
+    total: number;
+    avg?: number;
+    lastOrderAt?: string | null;
+    debt?: number;
+  };
   purchases: Array<{
     id: number;
     invoice: string;
@@ -87,7 +94,14 @@ type ClientDetail = {
   }>;
 };
 
-const EMPTY_FORM = { name: "", type: "individual" as ClientType, phone: "", address: "", notes: "" };
+const EMPTY_FORM = {
+  name: "",
+  type: "individual" as ClientType,
+  phone: "",
+  phone2: "",
+  address: "",
+  notes: "",
+};
 
 export default function ClientsPage() {
   const toast = useToast();
@@ -108,6 +122,13 @@ export default function ClientsPage() {
   const [deleteTarget, setDeleteTarget] = useState<ClientDTO | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const isAdmin = me?.role === "admin";
+  // صلاحية الموظفين (abood / hasan): يتحكم بها الأدمن من صفحة الإعدادات،
+  // وتسمح لهم بإضافة عملاء وتصحيح أرقام الهواتف (مع رقم هاتف ثانٍ).
+  const canEdit =
+    isAdmin || (settings?.allowUsersEditClients === true && me?.canEditClients === true);
+  const canDelete = isAdmin;
+
   async function load() {
     try {
       setItems(await api<ClientDTO[]>("/api/clients"));
@@ -126,7 +147,7 @@ export default function ClientsPage() {
   const filtered = useMemo(() => {
     const n = q.trim().toLowerCase();
     return (items ?? []).filter(
-      (c) => !n || `${c.name} ${c.phone}`.toLowerCase().includes(n),
+      (c) => !n || `${c.name} ${c.phone} ${c.phone2 ?? ""}`.toLowerCase().includes(n),
     );
   }, [items, q]);
 
@@ -145,16 +166,16 @@ export default function ClientsPage() {
   }
 
   function openCreate() {
-    if (me && me.role !== "admin") return;
+    if (!canEdit) return;
     setEditing(null);
     setForm(EMPTY_FORM);
     setFormOpen(true);
   }
 
   function openEdit(c: ClientDTO) {
-    if (me && me.role !== "admin") return;
+    if (!canEdit) return;
     setEditing(c);
-    setForm({ name: c.name, type: c.type, phone: c.phone, address: c.address, notes: c.notes });
+    setForm({ name: c.name, type: c.type, phone: c.phone, phone2: c.phone2 ?? "", address: c.address, notes: c.notes });
     setFormOpen(true);
   }
 
@@ -205,7 +226,7 @@ export default function ClientsPage() {
           />
           <Search size={16} className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[var(--faint)]" />
         </div>
-      {me?.role === "admin" && (
+      {canEdit && (
         <Btn variant="primary" size="sm" onClick={openCreate}>
           <Plus size={15} /> إضافة عميل
         </Btn>
@@ -264,7 +285,16 @@ export default function ClientsPage() {
                       <Badge tone={TYPE_TONES[c.type]}>{CLIENT_TYPES[c.type]}</Badge>
                     </td>
                     <td>
-                      <span className="num text-[12.5px] font-bold text-[var(--muted)]">{c.phone || "—"}</span>
+                      <div className="leading-tight">
+                        <div className="num text-[12.5px] font-bold text-[var(--muted)]">
+                          {c.phone || "—"}
+                        </div>
+                        {c.phone2 && (
+                          <div className="num text-[11px] font-bold text-[var(--faint)]" dir="ltr">
+                            {c.phone2}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td>
                       <span className="num font-black">{fmtNum(c.ordersCount)}</span>
@@ -277,12 +307,12 @@ export default function ClientsPage() {
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1.5">
-                        {me?.role === "admin" && (
+                        {canEdit && (
                           <button className="icon-btn" title="تعديل" onClick={() => openEdit(c)}>
                             <Pencil size={14} />
                           </button>
                         )}
-                        {me?.role === "admin" && (
+                        {canDelete && (
                           <button className="icon-btn danger" title="حذف" onClick={() => setDeleteTarget(c)}>
                             <Trash2 size={14} />
                           </button>
@@ -305,12 +335,27 @@ export default function ClientsPage() {
         icon={<Users size={17} />}
       >
         <div className="space-y-4">
+          {!isAdmin && canEdit && (
+            <p className="rounded-xl border border-[rgba(255,170,0,.35)] bg-[rgba(255,170,0,.07)] px-3 py-2 text-[11.5px] font-bold text-amber-400">
+              صلاحية الموظف: يمكنك إضافة عميل جديد وتصحيح أرقام الهواتف (بما فيها رقم
+              هاتف ثانٍ) — أما تعديل الاسم والنوع وإتمام الحذف فيبقى للمدير.
+            </p>
+          )}
           <Field label="اسم العميل *">
-            <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="محل النخبة / أحمد سامي…" />
+            <Input
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="محل النخبة / أحمد سامي…"
+              disabled={!!editing && !isAdmin}
+            />
           </Field>
           <div className="grid grid-cols-2 gap-4">
             <Field label="نوع العميل">
-              <Select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as ClientType }))}>
+              <Select
+                value={form.type}
+                onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as ClientType }))}
+                disabled={!!editing && !isAdmin}
+              >
                 <option value="store">محل</option>
                 <option value="company">شركة</option>
                 <option value="individual">فرد</option>
@@ -320,11 +365,20 @@ export default function ClientsPage() {
               <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="01xxxxxxxxx" dir="ltr" className="num" />
             </Field>
           </div>
+          <Field label="رقم هاتف ثانٍ (اختياري)" hint="يظهر في البحث السريع داخل الفاتورة للتواصل البديل">
+            <Input
+              value={form.phone2}
+              onChange={(e) => setForm((f) => ({ ...f, phone2: e.target.value }))}
+              placeholder="07xxxxxxxx"
+              dir="ltr"
+              className="num"
+            />
+          </Field>
           <Field label="العنوان">
-            <Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder="المحافظة — المنطقة — الشارع" />
+            <Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder="المحافظة — المنطقة — الشارع" disabled={!!editing && !isAdmin} />
           </Field>
           <Field label="ملاحظات">
-            <Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="شروط تعامل، أسعار خاصة…" />
+            <Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="شروط تعامل، أسعار خاصة…" disabled={!!editing && !isAdmin} />
           </Field>
           <div className="flex justify-end gap-2 border-t border-[var(--line-soft)] pt-4">
             <Btn onClick={() => setFormOpen(false)}>إلغاء</Btn>
@@ -358,13 +412,31 @@ export default function ClientsPage() {
                   <Phone size={11} /> <span className="num">{detail.client.phone}</span>
                 </Badge>
               )}
+              {detail.client.phone2 && (
+                <Badge tone="slate">
+                  <Phone size={11} /> <span className="num">{detail.client.phone2}</span>
+                </Badge>
+              )}
+              {(detail.stats.debt ?? 0) > 0 && (
+                <Badge tone="rose">
+                  دين قائم{" "}
+                  <span className="num">
+                    {formatMoneyJOD(detail.stats.debt ?? 0, currency, rates)}
+                  </span>
+                </Badge>
+              )}
+              {detail.stats.lastOrderAt && (
+                <Badge tone="mint">
+                  آخر طلب <span className="num">{fmtDate(detail.stats.lastOrderAt)}</span>
+                </Badge>
+              )}
               {detail.client.address && <Badge tone="slate">{detail.client.address}</Badge>}
               <span className="me-auto text-[11.5px] font-bold text-[var(--faint)]">
                 عميل منذ {fmtDate(detail.client.createdAt)}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-4 text-center">
                 <div className="num text-[22px] font-black text-[var(--mint)]">{fmtNum(detail.stats.orders)}</div>
                 <div className="text-[11.5px] font-bold text-[var(--muted)]">فاتورة مكتملة</div>
@@ -372,6 +444,18 @@ export default function ClientsPage() {
               <div className="rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-4 text-center">
                 <div className="num text-[22px] font-black text-[var(--mint)]">{formatMoneyJOD(detail.stats.total, currency, rates)}</div>
                 <div className="text-[11.5px] font-bold text-[var(--muted)]">إجمالي المشتريات</div>
+              </div>
+              <div className="rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-4 text-center">
+                <div className="num text-[22px] font-black text-[var(--muted)]">
+                  {formatMoneyJOD(detail.stats.avg ?? (detail.stats.orders ? detail.stats.total / detail.stats.orders : 0), currency, rates)}
+                </div>
+                <div className="text-[11.5px] font-bold text-[var(--muted)]">متوسط الفاتورة</div>
+              </div>
+              <div className="rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-4 text-center">
+                <div className={cls("num text-[22px] font-black", (detail.stats.debt ?? 0) > 0 ? "text-[var(--danger)]" : "text-[var(--mint)]")}>
+                  {formatMoneyJOD(detail.stats.debt ?? 0, currency, rates)}
+                </div>
+                <div className="text-[11.5px] font-bold text-[var(--muted)]">الرصيد (دين)</div>
               </div>
             </div>
 

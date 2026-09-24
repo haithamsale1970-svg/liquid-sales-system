@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS "users" (
   "name" text NOT NULL,
   "password_hash" text NOT NULL,
   "role" "role" DEFAULT 'user' NOT NULL,
+  "can_edit_clients" boolean DEFAULT false NOT NULL,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   CONSTRAINT "users_username_unique" UNIQUE("username")
 );
@@ -55,6 +56,7 @@ CREATE TABLE IF NOT EXISTS "products" (
   "stock" integer DEFAULT 0 NOT NULL,
   "low_stock_at" integer DEFAULT 5 NOT NULL,
   "image_url" text DEFAULT '' NOT NULL,
+  "barcode" text DEFAULT '' NOT NULL,
   "archived" boolean DEFAULT false NOT NULL,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   "updated_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -81,6 +83,7 @@ CREATE TABLE IF NOT EXISTS "clients" (
   "name" text NOT NULL,
   "type" "client_type" DEFAULT 'individual' NOT NULL,
   "phone" text DEFAULT '' NOT NULL,
+  "phone2" text DEFAULT '' NOT NULL,
   "address" text DEFAULT '' NOT NULL,
   "notes" text DEFAULT '' NOT NULL,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -164,10 +167,125 @@ CREATE TABLE IF NOT EXISTS "app_settings" (
   "show_reports_for_users" boolean DEFAULT true NOT NULL,
   "show_clients_for_users" boolean DEFAULT true NOT NULL,
   "show_products_for_users" boolean DEFAULT true NOT NULL,
+  "allow_users_edit_clients" boolean DEFAULT false NOT NULL,
   "updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
 INSERT INTO "app_settings" ("id") VALUES (1) ON CONFLICT ("id") DO NOTHING;
 ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "currency" text DEFAULT 'JOD' NOT NULL;
 ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "rate" numeric(14, 6) DEFAULT '1' NOT NULL;
+ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "payment_method" text DEFAULT 'cash' NOT NULL;
+ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "discount" numeric(12, 2) DEFAULT '0' NOT NULL;
+ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "paid" numeric(12, 2);
+ALTER TABLE "sale_items" ADD COLUMN IF NOT EXISTS "cost" numeric(12, 2) DEFAULT '0' NOT NULL;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "barcode" text DEFAULT '' NOT NULL;
+ALTER TABLE "clients" ADD COLUMN IF NOT EXISTS "phone2" text DEFAULT '' NOT NULL;
+ALTER TABLE "app_settings" ADD COLUMN IF NOT EXISTS "allow_users_edit_clients" boolean DEFAULT false NOT NULL;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "can_edit_clients" boolean DEFAULT false NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "client_payments" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "client_id" integer NOT NULL,
+  "sale_id" integer,
+  "amount" numeric(12, 2) NOT NULL,
+  "method" text DEFAULT 'cash' NOT NULL,
+  "note" text DEFAULT '' NOT NULL,
+  "user_id" integer,
+  "user_name" text DEFAULT '' NOT NULL,
+  "created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+DO $$ BEGIN
+  ALTER TABLE "client_payments" ADD CONSTRAINT "client_payments_client_id_clients_id_fk"
+    FOREIGN KEY ("client_id") REFERENCES "clients"("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "client_payments" ADD CONSTRAINT "client_payments_sale_id_sales_id_fk"
+    FOREIGN KEY ("sale_id") REFERENCES "sales"("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE INDEX IF NOT EXISTS "client_payments_client_idx" ON "client_payments" ("client_id");
+CREATE INDEX IF NOT EXISTS "client_payments_created_idx" ON "client_payments" ("created_at");
+
+CREATE TABLE IF NOT EXISTS "expenses" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "category" text DEFAULT '' NOT NULL,
+  "amount" numeric(12, 2) NOT NULL,
+  "note" text DEFAULT '' NOT NULL,
+  "user_id" integer,
+  "user_name" text DEFAULT '' NOT NULL,
+  "created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS "expenses_created_idx" ON "expenses" ("created_at");
+
+CREATE TABLE IF NOT EXISTS "returns" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "sale_id" integer NOT NULL,
+  "client_id" integer NOT NULL,
+  "user_id" integer,
+  "user_name" text DEFAULT '' NOT NULL,
+  "refund" numeric(12, 2) DEFAULT '0' NOT NULL,
+  "method" text DEFAULT 'cash' NOT NULL,
+  "note" text DEFAULT '' NOT NULL,
+  "created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+ALTER TABLE "returns" ADD COLUMN IF NOT EXISTS "method" text DEFAULT 'cash' NOT NULL;
+
+DO $$ BEGIN
+  ALTER TABLE "returns" ADD CONSTRAINT "returns_sale_id_sales_id_fk"
+    FOREIGN KEY ("sale_id") REFERENCES "sales"("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "returns" ADD CONSTRAINT "returns_client_id_clients_id_fk"
+    FOREIGN KEY ("client_id") REFERENCES "clients"("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE INDEX IF NOT EXISTS "returns_sale_idx" ON "returns" ("sale_id");
+CREATE INDEX IF NOT EXISTS "returns_created_idx" ON "returns" ("created_at");
+
+CREATE TABLE IF NOT EXISTS "return_items" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "return_id" integer NOT NULL,
+  "product_id" integer NOT NULL,
+  "product_name" text NOT NULL,
+  "price" numeric(12, 2) NOT NULL,
+  "cost" numeric(12, 2) DEFAULT '0' NOT NULL,
+  "quantity" integer NOT NULL,
+  "direction" text DEFAULT 'in' NOT NULL
+);
+
+DO $$ BEGIN
+  ALTER TABLE "return_items" ADD CONSTRAINT "return_items_return_id_returns_id_fk"
+    FOREIGN KEY ("return_id") REFERENCES "returns"("id") ON DELETE cascade;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE INDEX IF NOT EXISTS "return_items_return_idx" ON "return_items" ("return_id");
+ALTER TABLE "return_items" ADD COLUMN IF NOT EXISTS "cost" numeric(12, 2) DEFAULT '0' NOT NULL;
+
+CREATE TABLE IF NOT EXISTS "inventory_movements" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "product_id" integer NOT NULL,
+  "product_name" text NOT NULL,
+  "direction" text NOT NULL,
+  "delta" integer NOT NULL,
+  "stock_after" integer NOT NULL,
+  "reason" text NOT NULL,
+  "ref_type" text DEFAULT '' NOT NULL,
+  "ref_id" integer,
+  "user_id" integer,
+  "user_name" text DEFAULT '' NOT NULL,
+  "note" text DEFAULT '' NOT NULL,
+  "created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+DO $$ BEGIN
+  ALTER TABLE "inventory_movements" ADD CONSTRAINT "inventory_movements_product_id_products_id_fk"
+    FOREIGN KEY ("product_id") REFERENCES "products"("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE INDEX IF NOT EXISTS "inv_movements_product_idx" ON "inventory_movements" ("product_id");
+CREATE INDEX IF NOT EXISTS "inv_movements_created_idx" ON "inventory_movements" ("created_at");
 `;

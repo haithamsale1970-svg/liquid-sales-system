@@ -528,6 +528,28 @@ input[type="date"].inp {
     size: A4;
     margin: 9mm;
   }
+  .thermal-receipt {
+    display: none !important;
+  }
+}
+
+/* ---------- thermal receipt (80mm) — يُفعَّل بفئة body.print-thermal ---------- */
+.thermal-receipt {
+  display: none;
+}
+@media print {
+  body.print-thermal .invoice-paper,
+  body.print-thermal .no-print {
+    display: none !important;
+  }
+  body.print-thermal .thermal-receipt {
+    display: block !important;
+  }
+  body.print-thermal [data-main] {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
 }
 
 @media (max-width: 1023px) {

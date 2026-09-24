@@ -18,6 +18,7 @@ export function mapProduct(
     cost: opts?.hideCost ? 0 : num(p.cost),
     stock: p.stock,
     lowStockAt: p.lowStockAt,
+    barcode: p.barcode ?? "",
     imageUrl: p.imageUrl,
     archived: p.archived,
     fields,
@@ -75,6 +76,7 @@ export type ProductInput = {
   cost: number;
   stock: number;
   lowStockAt: number;
+  barcode: string;
   imageUrl: string;
   fields: Array<{ label: string; value: string }>;
 };
@@ -90,6 +92,7 @@ export function parseProductInput(
   const stock = Math.trunc(num(body.stock));
   if (stock < 0) return { error: "الكمية لا يمكن أن تكون سالبة" };
   const lowStockAt = Math.max(0, Math.trunc(num(body.lowStockAt ?? 5)));
+  const barcode = String(body.barcode ?? "").trim().slice(0, 60);
   const imageUrl = String(body.imageUrl ?? "").slice(0, 400_000);
   const rawFields = Array.isArray(body.fields) ? body.fields : [];
   const fields = rawFields
@@ -109,6 +112,7 @@ export function parseProductInput(
       stock,
       lowStockAt,
       imageUrl,
+      barcode,
       fields,
     },
   };

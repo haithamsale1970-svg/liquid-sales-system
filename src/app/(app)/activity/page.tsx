@@ -5,7 +5,7 @@ import { RefreshCw, ScrollText, Search, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
 import { Badge, Btn, Card, Empty, Input, Select, Skeleton } from "@/components/ui";
-import { fmtDateTime, relTime, type ActivityDTO } from "@/lib/shared";
+import { fmtDateTime, fmtNum, relTime, type ActivityDTO } from "@/lib/shared";
 
 const ENTITY_TONES: Record<string, string> = {
   منتج: "mint",
@@ -14,14 +14,39 @@ const ENTITY_TONES: Record<string, string> = {
   مستخدم: "rose",
   نظام: "slate",
   دخول: "sky",
+  ديون: "rose",
+  مصروف: "amber",
+  مرتجع: "violet",
+  مخزون: "mint",
 };
-const ENTITIES = ["", "منتج", "عميل", "فاتورة", "مستخدم", "دخول", "نظام"];
+const ENTITIES = ["", "منتج", "عميل", "فاتورة", "مستخدم", "دخول", "نظام", "ديون", "مصروف", "مرتجع", "مخزون"];
+
+type ActivitySummary = {
+  userId: number | null;
+  userName: string;
+  total: number;
+  invoices: number;
+  collections: number;
+  returns: number;
+  expenses: number;
+  clients: number;
+  inventory: number;
+  products: number;
+  lastAt: string | null;
+};
+
+type ActivityResponse = { summary: ActivitySummary[]; items: ActivityDTO[] };
 
 export default function ActivityPage() {
   const toast = useToast();
   const [rows, setRows] = useState<ActivityDTO[] | null>(null);
+  const [summary, setSummary] = useState<ActivitySummary[]>([]);
   const [entity, setEntity] = useState("");
   const [q, setQ] = useState("");
+  const [userId, setUserId] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [users, setUsers] = useState<Array<{ id: number; name: string }>>([]);
   const [forbidden, setForbidden] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -32,8 +57,13 @@ export default function ActivityPage() {
         const params = new URLSearchParams();
         if (e) params.set("entity", e);
         if (s.trim()) params.set("q", s.trim());
+        if (userId) params.set("userId", userId);
+        if (from) params.set("from", from);
+        if (to) params.set("to", to);
         params.set("limit", "200");
-        setRows(await api<ActivityDTO[]>(`/api/activity?${params.toString()}`));
+        const result = await api<ActivityResponse>(`/api/activity?${params.toString()}`);
+        setRows(result.items);
+        setSummary(result.summary);
       } catch (err) {
         if (err instanceof Error && err.message.includes("المدير")) setForbidden(true);
         else toast.push("err", err instanceof Error ? err.message : "تعذر التحميل");
@@ -42,11 +72,14 @@ export default function ActivityPage() {
         setLoading(false);
       }
     },
-    [entity, q], // eslint-disable-line react-hooks/exhaustive-deps
+    [entity, q, userId, from, to], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   useEffect(() => {
     load();
+    api<Array<{ id: number; name: string }>>("/api/users")
+      .then(setUsers)
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -89,10 +122,58 @@ export default function ActivityPage() {
             </option>
           ))}
         </Select>
+        <Select
+          value={userId}
+          onChange={(e) => {
+            setUserId(e.target.value);
+            load(entity, q);
+          }}
+          className="!w-auto min-w-[130px]"
+        >
+          <option value="">كل المستخدمين</option>
+          {users.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.name}
+            </option>
+          ))}
+        </Select>
+        <Input
+          type="date"
+          value={from}
+          onChange={(e) => setFrom(e.target.value)}
+          onBlur={() => load()}
+          className="!w-auto"
+        />
+        <span className="text-[12px] font-bold text-[var(--faint)]">إلى</span>
+        <Input
+          type="date"
+          value={to}
+          onChange={(e) => setTo(e.target.value)}
+          onBlur={() => load()}
+          className="!w-auto"
+        />
         <Btn variant="primary" size="sm" onClick={() => load()} loading={loading}>
           <RefreshCw size={14} /> تحديث
         </Btn>
       </div>
+
+      {summary.length > 0 && (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {summary.slice(0, 8).map((s) => (
+            <Card key={`${s.userId ?? "system"}-${s.userName}`} className="p-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[12px] font-extrabold">{s.userName}</span>
+                <Badge tone="slate">{fmtNum(s.total)} حركة</Badge>
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-1 text-center text-[10.5px] font-bold text-[var(--muted)]">
+                <span>فواتير<br /><b className="text-[var(--mint)]">{s.invoices}</b></span>
+                <span>تحصيل<br /><b className="text-[var(--mint)]">{s.collections}</b></span>
+                <span>مرتجع<br /><b className="text-[var(--violet)]">{s.returns}</b></span>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Card className="anim-in anim-d1" title="كل الحركات المسجلة" icon={<ScrollText size={16} />} bodyClass="p-2">
         {!rows ? (

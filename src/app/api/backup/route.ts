@@ -2,8 +2,13 @@ import { db } from "@/db";
 import {
   activityLogs,
   clients,
+  clientPayments,
+  expenses,
+  inventoryMovements,
   productFields,
   products,
+  returnItems,
+  returns,
   saleItems,
   sales,
   users,
@@ -34,6 +39,15 @@ export async function GET() {
       clients: await db.select().from(clients),
       sales: await db.select().from(sales),
       sale_items: await db.select().from(saleItems),
+      client_payments: await db.select().from(clientPayments),
+      expenses: await db.select().from(expenses),
+      returns: await db.select().from(returns),
+      return_items: await db.select().from(returnItems),
+      inventory_movements: await db
+        .select()
+        .from(inventoryMovements)
+        .orderBy(inventoryMovements.id)
+        .limit(5000),
       activity_logs: await db
         .select()
         .from(activityLogs)

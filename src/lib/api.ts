@@ -58,23 +58,20 @@ export type LogInput = {
   userId: number | null;
   userName: string;
   action: string;
-  entity: "منتج" | "عميل" | "فاتورة" | "مستخدم" | "نظام" | "دخول";
+  entity: "منتج" | "عميل" | "فاتورة" | "مستخدم" | "نظام" | "دخول" | "ديون" | "مصروف" | "مرتجع" | "مخزون";
   entityId?: number | null;
   details?: string;
 };
 
 export async function logActivity(conn: DbOrTx, entry: LogInput) {
-  await conn
-    .insert(activityLogs)
-    .values({
-      userId: entry.userId,
-      userName: entry.userName,
-      action: entry.action,
-      entity: entry.entity,
-      entityId: entry.entityId ?? null,
-      details: entry.details ?? "",
-    })
-    .catch(() => {});
+  await conn.insert(activityLogs).values({
+    userId: entry.userId,
+    userName: entry.userName,
+    action: entry.action,
+    entity: entry.entity,
+    entityId: entry.entityId ?? null,
+    details: entry.details ?? "",
+  });
 }
 
 export function num(v: unknown): number {
