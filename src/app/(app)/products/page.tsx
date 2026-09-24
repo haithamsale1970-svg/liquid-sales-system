@@ -30,7 +30,7 @@ import {
   Skeleton,
   Textarea,
 } from "@/components/ui";
-import ImageZoom, { ProductImage } from "@/components/ProductImage";
+import { ProductImage } from "@/components/ProductImage";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { useCurrency } from "@/components/useCurrency";
 import { formatMoneyJOD } from "@/lib/currency";
@@ -420,13 +420,12 @@ export default function ProductsPage() {
               >
                 <div className="relative">
                   {p.imageUrl ? (
-                    <ImageZoom
+                    <ProductImage
                       src={p.imageUrl}
                       name={p.name}
                       size={160}
                       radius={0}
                       className="group block h-40 w-full"
-                      imageClassName="h-full w-full rounded-none"
                     />
                   ) : (
                     <div className="flex h-40 items-center justify-center">
@@ -631,13 +630,12 @@ export default function ProductsPage() {
             <div className="flex flex-wrap items-center gap-3">
               {form.imageUrl ? (
                 <div className="relative">
-                  <ImageZoom
+                  <ProductImage
                     src={form.imageUrl}
                     name={form.name || "صورة المنتج"}
                     size={96}
                     radius={16}
                     className="h-24 w-24"
-                    imageClassName="h-full w-full rounded-2xl"
                   />
                   <button
                     type="button"

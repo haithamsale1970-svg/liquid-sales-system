@@ -6,7 +6,7 @@ import { ArrowRight, Ban, Droplets, Printer, Trash2, Undo2 } from "lucide-react"
 import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
 import { Badge, Btn, ConfirmDialog, Field, Input, Modal, Select, Skeleton } from "@/components/ui";
-import ImageZoom from "@/components/ProductImage";
+import { ProductImage } from "@/components/ProductImage";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { useCurrency } from "@/components/useCurrency";
 import { formatMoneyJOD, isCurrencyCode, type CurrencyCode } from "@/lib/currency";
@@ -324,7 +324,7 @@ export default function InvoicePage({
                   <td>
                     <div className="flex items-center gap-3">
                       <span style={{ filter: "none" }}>
-                        <ImageZoom
+                        <ProductImage
                            src={it.imageUrl}
                            name={it.productName}
                            size={44}

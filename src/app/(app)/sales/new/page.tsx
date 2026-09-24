@@ -22,7 +22,7 @@ import Link from "next/link";
 import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
 import { Badge, Btn, Card, Field, Input, Modal, Select, Skeleton, Textarea } from "@/components/ui";
-import ImageZoom, { ProductImage } from "@/components/ProductImage";
+import { ProductImage } from "@/components/ProductImage";
 import ClientPicker from "@/components/ClientPicker";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { useCurrency } from "@/components/useCurrency";
@@ -398,7 +398,7 @@ export default function NewSalePage() {
                   )}
                 >
                   <div className="flex items-start gap-2.5 p-3">
-                    <ImageZoom
+                    <ProductImage
                       src={p.imageUrl}
                       name={p.name}
                       size={46}
@@ -597,7 +597,7 @@ export default function NewSalePage() {
                   const key = lineKey(p, variant, priceType);
                   return (
                    <li key={key} className="flex items-center gap-2.5 rounded-2xl border border-[var(--line-soft)] bg-white/[.02] p-2.5">
-                     <ImageZoom
+                     <ProductImage
                        src={p.imageUrl}
                        name={p.name}
                        size={40}
