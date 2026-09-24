@@ -257,7 +257,7 @@ export default function ReportsPage() {
            ["عدد المرتجعات", data.totals.returnCount],
           ["عدد الفواتير", data.totals.count],
           ["الوحدات المباعة", data.totals.units],
-          ["إجمالي الشحن", data.totals.shipping.toFixed(2)],
+          ["إجمالي التوصيل", data.totals.shipping.toFixed(2)],
           ["إجمالي الخصومات", data.totals.discount.toFixed(2)],
           ["المستحق (آجل)", data.totals.unpaid.toFixed(2)],
           ["صافي الربح", data.totals.profit.toFixed(2)],
@@ -410,7 +410,7 @@ export default function ReportsPage() {
           )}
           <Stat icon={<ReceiptText size={18} className="text-[var(--violet)]" />} tone="rgba(255,255,255,.1)" label="عدد الفواتير" value={fmtNum(data.totals.count)} />
           <Stat icon={<Scale size={18} className="text-[var(--sky)]" />} tone="rgba(255,255,255,.07)" label={`متوسط الفاتورة (${currency})`} value={formatMoneyJOD(data.totals.avg, currency, rates)} />
-          <Stat icon={<Truck size={18} className="text-[var(--rose)]" />} tone="rgba(255,43,43,.12)" label={`إجمالي الشحن (${currency})`} value={formatMoneyJOD(data.totals.shipping, currency, rates)} />
+          <Stat icon={<Truck size={18} className="text-[var(--rose)]" />} tone="rgba(255,43,43,.12)" label={`إجمالي التوصيل (${currency})`} value={formatMoneyJOD(data.totals.shipping, currency, rates)} />
           <Stat icon={<BarChart3 size={18} className="text-[var(--mint)]" />} tone="rgba(255,34,34,.12)" label="وحدات مباعة" value={fmtNum(data.totals.units)} />
           {me?.role === "admin" && (
             <>

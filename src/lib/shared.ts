@@ -10,16 +10,16 @@ export const CLIENT_TYPES = {
 export type ClientType = keyof typeof CLIENT_TYPES;
 
 export const SHIPPING_TYPES = {
-  none: "بدون شحن",
-  internal: "شحن داخلي",
-  external: "شحن خارجي",
+  none: "بدون توصيل",
+  internal: "توصيل داخلي",
+  external: "توصيل خارجي",
 } as const;
 export type ShippingType = keyof typeof SHIPPING_TYPES;
 
 export const PAYMENT_METHODS = {
-  cash: "نقدي",
-  clink_haitham: "كليك — تحويل لهيثم",
-  clink_lahsan: "كليك — تحويل للحسن",
+  cash: "CASH",
+  clink_haitham: "QLICK - HAITHAM",
+  clink_lahsan: "QLICK - HASAN",
   delivery: "مستحقات شركة التوصيل",
   credit: "آجل (ذمة العميل)",
 } as const;
@@ -42,7 +42,7 @@ export const EXPENSE_CATEGORIES = [
   "صيانة",
   "ضيافة ونثريات",
   "رواتب ومكافآت",
-  "نقل وشحن",
+  "نقل وتوصيل",
   "تسويق",
   "أخرى",
 ] as const;

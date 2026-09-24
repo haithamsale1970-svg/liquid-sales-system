@@ -226,7 +226,7 @@ async function main() {
   // ---------- clients ----------
   const clientRows = [
     { name: "محل النخبة للفيب", type: "store" as const, phone: "01001234567", address: "مدينة نصر، القاهرة", notes: "أسعار جملة درجة أولى" },
-    { name: "شركة الدلتا للتوزيع", type: "company" as const, phone: "0223456789", address: "سموحة، الإسكندرية", notes: "شحن خارجي ثابت" },
+    { name: "شركة الدلتا للتوزيع", type: "company" as const, phone: "0223456789", address: "سموحة، الإسكندرية", notes: "توصيل خارجي ثابت" },
     { name: "أحمد سامي", type: "individual" as const, phone: "01112345678", address: "الدقي، الجيزة", notes: "" },
     { name: "محل السلام", type: "store" as const, phone: "01099887766", address: "شبرا، القاهرة", notes: "دفع كاش عند الاستلام" },
     { name: "شركة النور للتجارة", type: "company" as const, phone: "0401234567", address: "طنطا، الغربية", notes: "" },

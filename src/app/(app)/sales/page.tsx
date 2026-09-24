@@ -163,7 +163,7 @@ export default function SalesPage() {
                 <th>رقم الفاتورة</th>
                 <th>العميل</th>
                 <th>الأصناف</th>
-                <th>الشحن</th>
+                <th>التوصيل</th>
                 <th>الإجمالي ({currency})</th>
                 {me?.role === "admin" && <th>الربح</th>}
                 <th>البائع</th>

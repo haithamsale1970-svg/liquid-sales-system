@@ -264,7 +264,7 @@ export default function InvoicePage({
                   <span className="num text-[#8a97a3]"> @{sale.seller.username}</span>
                 </div>
                 <div>
-                  الشحن: <span className="font-black">{SHIPPING_TYPES[sale.shippingType]}</span>
+                  التوصيل: <span className="font-black">{SHIPPING_TYPES[sale.shippingType]}</span>
                 </div>
                 <div>
                   إجمالي القطع: <span className="num font-black">{units}</span>
@@ -330,7 +330,7 @@ export default function InvoicePage({
                 <span className="num">{formatMoneyJOD(sale.subtotal, currency, rates)}</span>
               </div>
               <div className="flex justify-between">
-                <span>الشحن ({SHIPPING_TYPES[sale.shippingType]})</span>
+                <span>التوصيل ({SHIPPING_TYPES[sale.shippingType]})</span>
                 <span className="num">{formatMoneyJOD(sale.shippingCost, currency, rates)}</span>
               </div>
               {sale.discount > 0 && (
@@ -417,7 +417,7 @@ export default function InvoicePage({
           </div>
         )}
         <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>الشحن</span>
+          <span>التوصيل</span>
           <span>{formatMoneyJOD(sale.shippingCost, currency, rates)}</span>
         </div>
         <div

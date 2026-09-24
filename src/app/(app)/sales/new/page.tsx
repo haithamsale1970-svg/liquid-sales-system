@@ -147,8 +147,24 @@ export default function NewSalePage() {
         : 0
     : 0;
   const total = Math.max(0, subtotal + ship - discount);
-  // المدفوع الافتراضي: آجل = صفر، وغيرها = كامل الإجمالي.
-  const paid = paymentMethod === "credit" ? Math.min(Number(paidInput) || 0, total) : paidInput === "" ? total : Math.min(Number(paidInput) || 0, total);
+  const isDeliveryShipping = shippingType !== "none";
+  // الموظف العادي لا يستطيع تفعيل الآجل حتى لو وصلت الحالة من طلب قديم.
+  const effectivePaymentMethod: PaymentMethod = isDeliveryShipping
+    ? "delivery"
+    : isAdmin || paymentMethod !== "credit"
+      ? paymentMethod
+      : "cash";
+  const isDeliverySale = isDeliveryShipping && effectivePaymentMethod === "delivery";
+  // شركة التوصيل تُستحق قيمة التوصيل فقط؛ الصافي هو المبلغ المتبقي على ذمتها.
+  const deliveryReceivable = isDeliverySale ? Math.max(0, total - ship) : 0;
+  // المدفوع الافتراضي: آجل = صفر، التوصيل = سعر التوصيل، وغيرها = كامل الإجمالي.
+  const paid = isDeliverySale
+    ? Math.min(total, ship)
+    : effectivePaymentMethod === "credit"
+      ? Math.min(Number(paidInput) || 0, total)
+      : paidInput === ""
+        ? total
+        : Math.min(Number(paidInput) || 0, total);
   const remaining = Math.max(0, total - paid);
 
   // ===== ماسح الباركود السريع (Keyboard Wedge) =====
@@ -257,7 +273,7 @@ export default function NewSalePage() {
           shippingType,
           currency,
           notes,
-          paymentMethod,
+          paymentMethod: effectivePaymentMethod,
           paid,
           discountType,
           discountValue: dv,
@@ -556,7 +572,7 @@ export default function NewSalePage() {
           {/* shipping */}
           <div>
             <div className="mb-1.5 flex items-center justify-between">
-              <label className="lbl !mb-0">الشحن (ثابت من إعدادات الأدمن)</label>
+              <label className="lbl !mb-0">التوصيل (ثابت من إعدادات الأدمن)</label>
               <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
             </div>
             <div className="flex gap-2">
@@ -567,7 +583,16 @@ export default function NewSalePage() {
               ]).map(({ t, fee }) => (
                 <button
                   key={t}
-                  onClick={() => setShippingType(t)}
+                  onClick={() => {
+                    setShippingType(t);
+                    if (t !== "none") {
+                      setPaymentMethod("delivery");
+                      setPaidInput("");
+                    } else if (paymentMethod === "delivery") {
+                      setPaymentMethod("cash");
+                      setPaidInput("");
+                    }
+                  }}
                   className={cls(
                     "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border px-2 py-2.5 text-[12px] font-extrabold transition-all",
                     shippingType === t
@@ -591,33 +616,51 @@ export default function NewSalePage() {
           <div>
             <label className="lbl">طريقة الدفع *</label>
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-              {(Object.keys(PAYMENT_METHODS) as PaymentMethod[]).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setPaymentMethod(m)}
-                  className={cls(
-                    "rounded-xl border px-2 py-2 text-[11.5px] font-extrabold transition-all",
-                    paymentMethod === m
-                      ? "border-[rgba(255,34,34,.55)] bg-[rgba(255,34,34,.1)] text-[var(--mint)]"
-                      : "border-[var(--line-soft)] bg-white/[.02] text-[var(--muted)] hover:bg-white/[.05]",
-                  )}
-                >
-                  {PAYMENT_METHODS[m]}
-                </button>
-              ))}
+              {(
+                Object.keys(PAYMENT_METHODS) as PaymentMethod[]
+              )
+                .filter((m) => isAdmin || m !== "credit")
+                .filter((m) => !isDeliveryShipping || m === "delivery")
+                .map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => {
+                      if (isDeliveryShipping && m !== "delivery") return;
+                      setPaymentMethod(m);
+                    }}
+                    disabled={isDeliveryShipping && m !== "delivery"}
+                    className={cls(
+                      "rounded-xl border px-2 py-2 text-[11.5px] font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40",
+                      paymentMethod === m
+                        ? "border-[rgba(255,34,34,.55)] bg-[rgba(255,34,34,.1)] text-[var(--mint)]"
+                        : "border-[var(--line-soft)] bg-white/[.02] text-[var(--muted)] hover:bg-white/[.05]",
+                    )}
+                  >
+                    {PAYMENT_METHODS[m]}
+                  </button>
+                ))}
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <Field label={`المدفوع (${currency})`}>
+              <Field
+                label={
+                  isDeliverySale
+                    ? `مبلغ شركة التوصيل (${currency})`
+                    : `المدفوع (${currency})`
+                }
+              >
                 <Input
                   type="number"
                   min="0"
                   step="any"
                   dir="ltr"
                   className="num"
-                  value={paidInput}
-                  onChange={(e) => setPaidInput(e.target.value)}
-                  placeholder={paymentMethod === "credit" ? "0 — آجل" : total.toFixed(2)}
+                  value={isDeliverySale ? paid.toFixed(2) : paidInput}
+                  onChange={(e) => {
+                    if (!isDeliverySale) setPaidInput(e.target.value);
+                  }}
+                  placeholder={effectivePaymentMethod === "credit" ? "0 — آجل" : total.toFixed(2)}
+                  disabled={isDeliverySale}
                 />
               </Field>
               {remaining > 0 && (
@@ -670,7 +713,7 @@ export default function NewSalePage() {
               <span className="num">{formatMoneyJOD(subtotal, currency, rates)}</span>
             </div>
             <div className="flex justify-between text-[13px] font-bold text-[var(--muted)]">
-              <span>الشحن ({SHIPPING_TYPES[shippingType]})</span>
+              <span>التوصيل ({SHIPPING_TYPES[shippingType]})</span>
               <span className="num">{formatMoneyJOD(ship, currency, rates)}</span>
             </div>
             {discount > 0 && (
@@ -680,12 +723,22 @@ export default function NewSalePage() {
               </div>
             )}
             <div className="flex justify-between text-[13px] font-bold text-[var(--muted)]">
-              <span>المدفوع ({PAYMENT_METHODS[paymentMethod]})</span>
+              <span>المدفوع ({PAYMENT_METHODS[effectivePaymentMethod]})</span>
               <span className="num">{formatMoneyJOD(paid, currency, rates)}</span>
             </div>
+            {isDeliverySale && (
+              <div className="flex justify-between text-[12px] font-bold text-[var(--muted)]">
+                <span>بذمة شركة التوصيل (صافي)</span>
+                <span className="num">{formatMoneyJOD(deliveryReceivable, currency, rates)}</span>
+              </div>
+            )}
             {remaining > 0 && (
               <div className="flex justify-between text-[13px] font-black text-[var(--danger)]">
-                <span>المتبقي (دين على العميل)</span>
+                <span>
+                  {isDeliverySale
+                    ? "المتبقي (بذمة شركة التوصيل)"
+                    : "المتبقي (دين على العميل)"}
+                </span>
                 <span className="num">{formatMoneyJOD(remaining, currency, rates)}</span>
               </div>
             )}

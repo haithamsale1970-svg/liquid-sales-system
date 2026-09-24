@@ -178,9 +178,16 @@ export async function POST(req: Request) {
     ? (body.shippingType as "none" | "internal" | "external")
     : "none";
   // طريقة الدفع + خصم الفاتورة (الخصم للأدمن فقط — يُتجاهل من المستخدم العادي).
-  const paymentMethod: PaymentMethod = isPaymentMethod(body.paymentMethod)
+  const requestedPaymentMethod: PaymentMethod = isPaymentMethod(body.paymentMethod)
     ? body.paymentMethod
     : "cash";
+  const paymentMethod: PaymentMethod = shippingType !== "none"
+    ? "delivery"
+    : requestedPaymentMethod;
+  if (paymentMethod === "credit" && user.role !== "admin") {
+    return bad("خيار آجل (ذمة العميل) متاح للمدير فقط", 403);
+  }
+  const isDeliverySale = shippingType !== "none" && paymentMethod === "delivery";
   const discountType = ["none", "percent", "amount"].includes(
     String(body.discountType ?? "none"),
   )
@@ -276,8 +283,11 @@ export async function POST(req: Request) {
       }
       const total = Math.max(0, subtotal + shippingCost - discount);
       const finalProfit = profit - discount;
-      const paidDefault = paymentMethod === "credit" ? 0 : total;
-      const paid = Math.min(total, paidRaw === null ? paidDefault : paidRaw);
+      // مستحقات شركة التوصيل: يدفع المُستحق سعر التوصيل فقط، والباقي يبقى بذمتها.
+      const paidDefault = isDeliverySale ? shippingCost : paymentMethod === "credit" ? 0 : total;
+      const paid = isDeliverySale
+        ? Math.min(total, shippingCost)
+        : Math.min(total, paidRaw === null ? paidDefault : paidRaw);
       const saleRows = await tx
         .insert(sales)
         .values({
