@@ -388,9 +388,6 @@ export default function ProductsPage() {
             <Plus size={15} /> إضافة منتج
           </Btn>
         )}
-        {me?.role !== "admin" && (
-          <span className="badge badge-slate">وضع الموظف — إجمالي المبيعات والمخزون فقط</span>
-        )}
       </div>
 
       {/* grid */}

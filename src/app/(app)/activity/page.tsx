@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { RefreshCw, ScrollText, Search, ShieldCheck } from "lucide-react";
+import { RefreshCw, ScrollText, Search } from "lucide-react";
 import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
 import { Badge, Btn, Card, Empty, Input, Select, Skeleton } from "@/components/ui";
@@ -47,7 +47,6 @@ export default function ActivityPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [users, setUsers] = useState<Array<{ id: number; name: string }>>([]);
-  const [forbidden, setForbidden] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const load = useCallback(
@@ -65,8 +64,7 @@ export default function ActivityPage() {
         setRows(result.items);
         setSummary(result.summary);
       } catch (err) {
-        if (err instanceof Error && err.message.includes("المدير")) setForbidden(true);
-        else toast.push("err", err instanceof Error ? err.message : "تعذر التحميل");
+        toast.push("err", err instanceof Error ? err.message : "تعذر التحميل");
         setRows([]);
       } finally {
         setLoading(false);
@@ -82,18 +80,6 @@ export default function ActivityPage() {
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  if (forbidden) {
-    return (
-      <Card>
-        <Empty
-          icon={<ShieldCheck size={22} />}
-          title="سجل النشاط للمدير فقط"
-          hint="يتتبع السجل كل حركة بالنظام واسم من قام بها"
-        />
-      </Card>
-    );
-  }
 
   return (
     <div className="space-y-5">

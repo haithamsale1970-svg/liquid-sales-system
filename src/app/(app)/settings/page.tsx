@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
-import { Badge, Btn, Card, Field, Input, Select, Skeleton } from "@/components/ui";
+import { Btn, Card, Field, Input, Select, Skeleton } from "@/components/ui";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { fmtDateTime, type SessionUserDTO } from "@/lib/shared";
 import { CURRENCIES, DEFAULT_SETTINGS, type AppSettings, type CurrencyCode } from "@/lib/currency";
@@ -296,41 +296,35 @@ export default function SettingsPage() {
           </p>
           <CurrencySwitcher defaultCurrency={settings?.defaultCurrency ?? draft.defaultCurrency} />
         </Card>
-        <Card
-          className="anim-in anim-d1"
-          title="النسخ الاحتياطي"
-          icon={<DatabaseBackup size={16} />}
-          bodyClass="space-y-4 p-5"
-        >
-          <p className="text-[12.5px] font-semibold leading-7 text-[var(--muted)]">
-            صدّر نسخة كاملة من قاعدة البيانات (الأصناف، العملاء، الفواتير،
-            المستخدمون، سجل النشاط) بصيغة JSON واحفظها في مكان آمن. يُنصح بأخذ
-            نسخة <span className="text-[var(--text)]">يوميًا أو أسبوعيًا</span> على
-            الأقل — والنسخة لا تتضمن كلمات المرور لأسباب أمنية.
-          </p>
-          {me?.role === "admin" ? (
-            <>
-              <Btn variant="primary" onClick={downloadBackup}>
-                <Download size={16} /> تنزيل نسخة احتياطية الآن
-              </Btn>
-              <div className="flex items-center gap-2 text-[11.5px] font-bold text-[var(--faint)]">
-                <CalendarClock size={14} />
-                {lastBackup ? (
-                  <span>
-                    آخر نسخة من هذا الجهاز:{" "}
-                    <span className="text-[var(--muted)]">{fmtDateTime(lastBackup)}</span>
-                  </span>
-                ) : (
-                  "لم يتم أخذ نسخة من هذا الجهاز بعد"
-                )}
-              </div>
-            </>
-          ) : (
-            <Badge tone="slate">
-              <ShieldCheck size={12} /> تنزيل النسخ متاح للمدير فقط
-            </Badge>
-          )}
-        </Card>
+        {isAdmin && (
+          <Card
+            className="anim-in anim-d1"
+            title="النسخ الاحتياطي"
+            icon={<DatabaseBackup size={16} />}
+            bodyClass="space-y-4 p-5"
+          >
+            <p className="text-[12.5px] font-semibold leading-7 text-[var(--muted)]">
+              صدّر نسخة كاملة من قاعدة البيانات (الأصناف، العملاء، الفواتير،
+              المستخدمون، سجل النشاط) بصيغة JSON واحفظها في مكان آمن. يُنصح بأخذ
+              نسخة <span className="text-[var(--text)]">يوميًا أو أسبوعيًا</span> على
+              الأقل — والنسخة لا تتضمن كلمات المرور لأسباب أمنية.
+            </p>
+            <Btn variant="primary" onClick={downloadBackup}>
+              <Download size={16} /> تنزيل نسخة احتياطية الآن
+            </Btn>
+            <div className="flex items-center gap-2 text-[11.5px] font-bold text-[var(--faint)]">
+              <CalendarClock size={14} />
+              {lastBackup ? (
+                <span>
+                  آخر نسخة من هذا الجهاز:{" "}
+                  <span className="text-[var(--muted)]">{fmtDateTime(lastBackup)}</span>
+                </span>
+              ) : (
+                "لم يتم أخذ نسخة من هذا الجهاز بعد"
+              )}
+            </div>
+          </Card>
+        )}
 
         <Card
           className="anim-in anim-d2"

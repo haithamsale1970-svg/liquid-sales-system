@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   KeyRound,
   Plus,
-  ShieldCheck,
   Trash2,
   UserCog,
   UsersRound,
@@ -39,7 +38,6 @@ export default function UsersPage() {
   const toast = useToast();
   const [me, setMe] = useState<SessionUserDTO | null>(null);
   const [rows, setRows] = useState<UserRow[] | null>(null);
-  const [forbidden, setForbidden] = useState(false);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ username: "", name: "", password: "", role: "user", canEditClients: false });
@@ -56,8 +54,7 @@ export default function UsersPage() {
     try {
       setRows(await api<UserRow[]>("/api/users"));
     } catch (e) {
-      if (e instanceof Error && e.message.includes("المدير")) setForbidden(true);
-      else toast.push("err", e instanceof Error ? e.message : "تعذر التحميل");
+      toast.push("err", e instanceof Error ? e.message : "تعذر التحميل");
       setRows([]);
     }
   }
@@ -134,18 +131,6 @@ export default function UsersPage() {
     } finally {
       setDeleting(false);
     }
-  }
-
-  if (forbidden) {
-    return (
-      <Card>
-        <Empty
-          icon={<ShieldCheck size={22} />}
-          title="هذه الصفحة للمدير فقط"
-          hint="إدارة المستخدمين والصلاحيات تتطلب حساب ماستر"
-        />
-      </Card>
-    );
   }
 
   return (

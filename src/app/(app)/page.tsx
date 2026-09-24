@@ -183,10 +183,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-5">
-      <div className="anim-in flex items-center justify-between gap-2">
-        <span className="text-[12px] font-bold text-[var(--muted)]">
-          {me?.role === "admin" ? "عرض شامل — كل الأرقام والأرباح" : "عرض الموظف — إجمالي المبيعات والمخزون فقط"}
-        </span>
+        <div className="anim-in flex items-center justify-end gap-2">
         <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
       </div>
       {/* KPIs */}

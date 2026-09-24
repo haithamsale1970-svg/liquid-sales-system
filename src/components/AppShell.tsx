@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Banknote,
   BarChart3,
@@ -71,6 +71,7 @@ export default function AppShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   useEffect(() => {
@@ -96,13 +97,22 @@ export default function AppShell({
 
   const active = bestMatch(pathname);
   const title = pageTitle(pathname);
+  const isAdmin = user.role === "admin";
+  const isAdminOnlyPath = NAV.some(
+    (n) => "admin" in n && n.admin && (pathname === n.href || pathname.startsWith(`${n.href}/`)),
+  );
+
+  useEffect(() => {
+    if (!isAdmin && isAdminOnlyPath) router.replace("/");
+  }, [isAdmin, isAdminOnlyPath, router]);
+
+  if (!isAdmin && isAdminOnlyPath) return null;
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     window.location.href = "/login";
   }
 
-  const isAdmin = user.role === "admin";
   // الأدمن يتحكم بإظهار/إخفاء الأقسام عن باقي المستخدمين من الإعدادات.
   const visibleNav = NAV.filter((n) => {
     if ("admin" in n && n.admin && !isAdmin) return false;
@@ -243,7 +253,7 @@ export default function AppShell({
             data-main
             className="mx-auto w-full max-w-[1240px] flex-1 px-3 py-4 sm:px-6 sm:py-6"
           >
-            <LowStockBanner />
+            {isAdmin || settings?.showProductsForUsers === true ? <LowStockBanner /> : null}
             {children}
           </main>
         </div>

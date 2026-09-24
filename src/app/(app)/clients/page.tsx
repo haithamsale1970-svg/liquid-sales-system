@@ -335,32 +335,28 @@ export default function ClientsPage() {
         icon={<Users size={17} />}
       >
         <div className="space-y-4">
-          {!isAdmin && canEdit && (
-            <p className="rounded-xl border border-[rgba(255,170,0,.35)] bg-[rgba(255,170,0,.07)] px-3 py-2 text-[11.5px] font-bold text-amber-400">
-              صلاحية الموظف: يمكنك إضافة عميل جديد وتصحيح أرقام الهواتف (بما فيها رقم
-              هاتف ثانٍ) — أما تعديل الاسم والنوع وإتمام الحذف فيبقى للمدير.
-            </p>
-          )}
-          <Field label="اسم العميل *">
-            <Input
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="محل النخبة / أحمد سامي…"
-              disabled={!!editing && !isAdmin}
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="نوع العميل">
-              <Select
-                value={form.type}
-                onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as ClientType }))}
-                disabled={!!editing && !isAdmin}
-              >
-                <option value="store">محل</option>
-                <option value="company">شركة</option>
-                <option value="individual">فرد</option>
-              </Select>
+          {(isAdmin || !editing) && (
+            <Field label="اسم العميل *">
+              <Input
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                placeholder="محل النخبة / أحمد سامي…"
+              />
             </Field>
+          )}
+          <div className={cls("grid gap-4", isAdmin || !editing ? "grid-cols-2" : "grid-cols-1")}>
+            {(isAdmin || !editing) && (
+              <Field label="نوع العميل">
+                <Select
+                  value={form.type}
+                  onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as ClientType }))}
+                >
+                  <option value="store">محل</option>
+                  <option value="company">شركة</option>
+                  <option value="individual">فرد</option>
+                </Select>
+              </Field>
+            )}
             <Field label="رقم الهاتف">
               <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="01xxxxxxxxx" dir="ltr" className="num" />
             </Field>
@@ -374,12 +370,16 @@ export default function ClientsPage() {
               className="num"
             />
           </Field>
-          <Field label="العنوان">
-            <Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder="المحافظة — المنطقة — الشارع" disabled={!!editing && !isAdmin} />
-          </Field>
-          <Field label="ملاحظات">
-            <Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="شروط تعامل، أسعار خاصة…" disabled={!!editing && !isAdmin} />
-          </Field>
+          {(isAdmin || !editing) && (
+            <Field label="العنوان">
+              <Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder="المحافظة — المنطقة — الشارع" />
+            </Field>
+          )}
+          {(isAdmin || !editing) && (
+            <Field label="ملاحظات">
+              <Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="شروط تعامل، أسعار خاصة…" />
+            </Field>
+          )}
           <div className="flex justify-end gap-2 border-t border-[var(--line-soft)] pt-4">
             <Btn onClick={() => setFormOpen(false)}>إلغاء</Btn>
             <Btn variant="primary" onClick={save} loading={saving} disabled={form.name.trim().length < 2}>

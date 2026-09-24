@@ -679,11 +679,6 @@ export default function NewSalePage() {
 
           {/* lines */}
           <div className="min-h-[120px]">
-            {!isAdmin && (
-              <p className="mb-2 rounded-xl border border-[var(--line-soft)] bg-white/[.03] px-3 py-2 text-[11.5px] font-bold text-[var(--muted)]">
-                وضع الموظف — الأرباح والكلف مخفية، أسعار البيع والمخزون فقط
-              </p>
-            )}
             {cartEntries.length === 0 ? (
               <div className="flex h-[120px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--line)] text-[var(--faint)]">
                 <ShoppingCart size={22} />
@@ -741,7 +736,7 @@ export default function NewSalePage() {
           {/* shipping */}
           <div>
             <div className="mb-1.5 flex items-center justify-between">
-              <label className="lbl !mb-0">التوصيل (ثابت من إعدادات الأدمن)</label>
+              <label className="lbl !mb-0">التوصيل</label>
               <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
             </div>
             <div className="flex gap-2">
