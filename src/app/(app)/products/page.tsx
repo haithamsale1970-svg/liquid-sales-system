@@ -83,14 +83,15 @@ const EMPTY_FORM: FormState = {
 };
 
 const FIELD_PRESETS = ["VG / PG", "بلد الصنع", "نوع الكويل"];
+
 const EMPTY_VARIANT: FormVariant = {
-  size: "60ml",
-  nicotine: "30mg",
+  size: "",
+  nicotine: "",
   retailPrice: "",
   wholesalePrice: "",
   cost: "",
-  stock: "0",
-  lowStockAt: "5",
+  stock: "",
+  lowStockAt: "",
 };
 
 export default function ProductsPage() {
@@ -204,14 +205,14 @@ export default function ProductsPage() {
       barcode: form.barcode,
       imageUrl: form.imageUrl,
       fields: form.fields.filter((f) => f.label.trim() && f.value.trim()),
-      variants: form.variants.map((v) => ({
+      variants: payloadVariants.map((v) => ({
         ...v,
-        retailPrice: Number(v.retailPrice) || 0,
-        wholesalePrice: Number(v.wholesalePrice) || 0,
-        cost: v.cost.trim() ? Number(v.cost) : Number(form.cost) || 0,
-        stock: Number(v.stock) || 0,
-        lowStockAt: Number(v.lowStockAt) || 0,
-      })),
+          retailPrice: Number(v.retailPrice) || 0,
+          wholesalePrice: Number(v.wholesalePrice) || 0,
+          cost: v.cost.trim() ? Number(v.cost) : defaultVariantCost,
+          stock: Number(v.stock) || 0,
+          lowStockAt: Number(v.lowStockAt) || 0,
+        })),
     };
     try {
       if (editing) {
@@ -303,20 +304,33 @@ export default function ProductsPage() {
   }
 
   const profit = (Number(form.price) || 0) - (Number(form.cost) || 0);
-  const validVariants = form.variants.every(
+  const defaultVariantCost = Number(form.cost) || 0;
+  const payloadVariants = form.variants.filter(
     (v) =>
-      PRODUCT_SIZES.includes(v.size as (typeof PRODUCT_SIZES)[number]) &&
-      NICOTINE_LEVELS.includes(v.nicotine as (typeof NICOTINE_LEVELS)[number]) &&
-      Number(v.retailPrice) >= 0 &&
-      Number(v.wholesalePrice) >= 0 &&
+      v.size.trim() ||
+      v.nicotine.trim() ||
+      v.retailPrice.trim() ||
+      v.wholesalePrice.trim() ||
+      v.cost.trim() ||
+      v.stock.trim() ||
+      v.lowStockAt.trim(),
+  );
+  const validVariants = payloadVariants.every(
+    (v) =>
+      (v.size.trim() || v.nicotine.trim()) &&
+      (!v.size.trim() || PRODUCT_SIZES.includes(v.size as (typeof PRODUCT_SIZES)[number])) &&
+      (!v.nicotine.trim() || NICOTINE_LEVELS.includes(v.nicotine as (typeof NICOTINE_LEVELS)[number])) &&
+      (!v.retailPrice.trim() || Number(v.retailPrice) >= 0) &&
+      (!v.wholesalePrice.trim() || Number(v.wholesalePrice) >= 0) &&
       (v.cost.trim() === "" || Number(v.cost) >= 0) &&
-      Number(v.stock) >= 0,
+      (!v.stock.trim() || Number(v.stock) >= 0) &&
+      (!v.lowStockAt.trim() || Number(v.lowStockAt) >= 0),
   );
   const valid =
     form.name.trim().length >= 2 &&
     validVariants &&
-    (form.variants.length > 0
-      ? form.variants.some((v) => Number(v.retailPrice) > 0 || Number(v.wholesalePrice) > 0)
+    (payloadVariants.length > 0
+      ? payloadVariants.some((v) => Number(v.retailPrice) > 0 || Number(v.wholesalePrice) > 0)
       : Number(form.price) > 0);
 
   return (
@@ -418,21 +432,19 @@ export default function ProductsPage() {
                   p.archived && "opacity-60",
                 )}
               >
-                <div className="relative">
-                  {p.imageUrl ? (
+                {/* الصورة: مساحة ثابتة متناسقة في أعلى الكرت */}
+                <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-[var(--line-soft)] bg-[radial-gradient(120%_100%_at_50%_0%,rgba(255,34,34,.10),rgba(255,255,255,.02)_55%,transparent)]">
+                  <div className="flex h-full w-full items-center justify-center p-3 sm:p-4">
                     <ProductImage
                       src={p.imageUrl}
                       name={p.name}
-                      size={160}
-                      radius={0}
-                      className="group block h-40 w-full"
+                      size={p.imageUrl ? 140 : 84}
+                      radius={p.imageUrl ? 0 : 20}
+                      contain={!!p.imageUrl}
+                      className={p.imageUrl ? "h-full w-full" : undefined}
                     />
-                  ) : (
-                    <div className="flex h-40 items-center justify-center">
-                      <ProductImage src="" name={p.name} size={76} radius={20} />
-                    </div>
-                  )}
-                  <div className="absolute inset-x-0 top-0 flex items-start justify-between p-2.5">
+                  </div>
+                  <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 bg-gradient-to-b from-black/45 to-transparent p-2.5">
                     {out ? (
                       <Badge tone="rose">
                         <CircleAlert size={11} /> نفد المخزون
@@ -446,25 +458,62 @@ export default function ProductsPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-1 flex-col gap-2 p-4">
+                <div className="flex flex-1 flex-col gap-2.5 p-3.5 sm:p-4">
+                  {/* الاسم + السعر */}
                   <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <h3 className="truncate text-[14.5px] font-extrabold">{p.name}</h3>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="line-clamp-2 text-[14.5px] font-extrabold leading-6">
+                        {p.name}
+                      </h3>
                       {p.category && (
-                        <span className="mt-1 inline-block text-[11px] font-bold text-[var(--faint)]">
+                        <span className="mt-0.5 block truncate text-[11px] font-bold text-[var(--faint)]">
                           {p.category}
                         </span>
                       )}
                     </div>
-                    <div className="text-end leading-tight">
+                    <div className="shrink-0 text-end leading-tight">
                       <div className="num text-[15px] font-black text-[var(--mint)]">
                         {formatMoneyJOD(p.price, currency, rates)}
                       </div>
                       <div className="num text-[10.5px] font-bold text-[var(--faint)]">
-                        {me?.role === "admin" ? <>ربح: {formatMoneyJOD(pProfit, currency, rates)}</> : <>المتبقي: {fmtNum(p.stock)}</>}
+                        {me?.role === "admin" ? (
+                          <>ربح: {formatMoneyJOD(pProfit, currency, rates)}</>
+                        ) : (
+                          <>المتبقي: {fmtNum(p.stock)}</>
+                        )}
                       </div>
                     </div>
                   </div>
+
+                  {/* الوصف */}
+                  {p.description && (
+                    <p className="line-clamp-2 min-h-[32px] text-[11.5px] font-semibold leading-4 text-[var(--muted)]">
+                      {p.description}
+                    </p>
+                  )}
+
+                  {/* ملخص الخيارات المخزنة (أحجام/نيكوتين) */}
+                  {p.variants.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <Badge tone="slate">
+                        <Boxes size={11} />
+                        <span className="num">{fmtNum(p.variants.length)}</span> خيار
+                      </Badge>
+                      {p.variants.slice(0, 2).map((v) => (
+                        <span
+                          key={v.id}
+                          className="num rounded-lg border border-[var(--line-soft)] bg-white/[.03] px-1.5 py-0.5 text-[10px] font-bold text-[var(--muted)]"
+                        >
+                          {v.size} · {v.nicotine}
+                        </span>
+                      ))}
+                      {p.variants.length > 2 && (
+                        <span className="num text-[10px] font-bold text-[var(--faint)]">
+                          +{p.variants.length - 2}
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   {p.fields.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
@@ -484,14 +533,32 @@ export default function ProductsPage() {
                     </div>
                   )}
 
-                  <div className="mt-auto flex items-center justify-between border-t border-[var(--line-soft)] pt-3">
-                    <div className="text-[12px] font-extrabold">
-                      <span className="text-[var(--faint)]">المخزون: </span>
-                      <span className={cls("num", out ? "text-[var(--danger)]" : low ? "text-[var(--amber)]" : "text-[var(--text)]")}>
-                        {fmtNum(p.stock)}
+                  <div className="mt-auto flex items-center justify-between gap-2 border-t border-[var(--line-soft)] pt-3">
+                    <div className="flex min-w-0 flex-col">
+                      <span className="text-[12px] font-extrabold">
+                        <span className="text-[var(--faint)]">المخزون: </span>
+                        <span
+                          className={cls(
+                            "num",
+                            out
+                              ? "text-[var(--danger)]"
+                              : low
+                                ? "text-[var(--amber)]"
+                                : "text-[var(--text)]",
+                          )}
+                        >
+                          {fmtNum(p.stock)}
+                        </span>
+                      </span>
+                      <span className="truncate text-[10.5px] font-bold text-[var(--faint)]">
+                        {p.barcode ? (
+                          <span className="num">باركود: {p.barcode}</span>
+                        ) : (
+                          "بدون باركود"
+                        )}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex shrink-0 items-center gap-1.5">
                       {me?.role === "admin" && (
                         <button
                           className="icon-btn"
@@ -697,39 +764,103 @@ export default function ProductsPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {form.variants.map((variant, index) => (
-                  <div key={variant.id ?? `new-${index}`} className="rounded-2xl border border-[var(--line-soft)] bg-white/[.02] p-3">
-                    <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
-                      <Field label="الحجم *">
-                        <Select
-                          value={variant.size}
-                          onChange={(e) =>
-                            setForm((f) => ({
-                              ...f,
-                              variants: f.variants.map((v, i) =>
-                                i === index ? { ...v, size: e.target.value } : v,
-                              ),
-                            }))
-                          }
-                        >
-                          {PRODUCT_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
-                        </Select>
-                      </Field>
-                      <Field label="النيكوتين *">
-                        <Select
-                          value={variant.nicotine}
-                          onChange={(e) =>
-                            setForm((f) => ({
-                              ...f,
-                              variants: f.variants.map((v, i) =>
-                                i === index ? { ...v, nicotine: e.target.value } : v,
-                              ),
-                            }))
-                          }
-                        >
-                          {NICOTINE_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
-                        </Select>
-                      </Field>
+                {form.variants.map((variant, index) => {
+                  const setVariant = (patch: Partial<FormVariant>) =>
+                    setForm((f) => ({
+                      ...f,
+                      variants: f.variants.map((v, i) =>
+                        i === index ? { ...v, ...patch } : v,
+                      ),
+                    }));
+                  const isEmpty =
+                    !variant.size.trim() &&
+                    !variant.nicotine.trim() &&
+                    !variant.retailPrice.trim() &&
+                    !variant.wholesalePrice.trim() &&
+                    !variant.cost.trim() &&
+                    !variant.stock.trim() &&
+                    !variant.lowStockAt.trim();
+                  return (
+                  <div
+                    key={variant.id ?? `new-${index}`}
+                    className="rounded-2xl border border-[var(--line-soft)] bg-white/[.02] p-3"
+                  >
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                      <span className="num text-[11.5px] font-extrabold text-[var(--faint)]">
+                        الخيار {index + 1}
+                      </span>
+                      {isEmpty ? (
+                        <span className="text-[10.5px] font-bold text-[var(--amber)]">
+                          سيُتجاهل عند الحفظ (فارغ)
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="icon-btn danger"
+                        title="حذف الخيار"
+                        onClick={() =>
+                          setForm((f) => ({
+                            ...f,
+                            variants: f.variants.filter((_, i) => i !== index),
+                          }))
+                        }
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+
+                    {/* أحجام العبوات — خيارات ثابتة ومرتبة */}
+                    <div className="mb-3">
+                      <label className="lbl !mb-1.5">حجم العبوة *</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {PRODUCT_SIZES.map((size) => (
+                          <button
+                            key={size}
+                            type="button"
+                            onClick={() =>
+                              setVariant({
+                                size: variant.size === size ? "" : size,
+                              })
+                            }
+                            className={
+                              variant.size === size
+                                ? "btn btn-primary btn-xs !px-3 !text-[11.5px]"
+                                : "btn btn-ghost btn-xs !px-3 !text-[11.5px]"
+                            }
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* نسب النيكوتين — خيارات ثابتة ومرتبة */}
+                    <div className="mb-3">
+                      <label className="lbl !mb-1.5">نسبة النيكوتين *</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {NICOTINE_LEVELS.map((level) => (
+                          <button
+                            key={level}
+                            type="button"
+                            onClick={() =>
+                              setVariant({
+                                nicotine:
+                                  variant.nicotine === level ? "" : level,
+                              })
+                            }
+                            className={
+                              variant.nicotine === level
+                                ? "btn btn-primary btn-xs !px-3 !text-[11.5px]"
+                                : "btn btn-ghost btn-xs !px-3 !text-[11.5px]"
+                            }
+                          >
+                            {level}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
                       <Field label="سعر الأفراد *">
                         <Input
                           type="number"
@@ -738,10 +869,10 @@ export default function ProductsPage() {
                           dir="ltr"
                           className="num"
                           value={variant.retailPrice}
-                          onChange={(e) => setForm((f) => ({ ...f, variants: f.variants.map((v, i) => i === index ? { ...v, retailPrice: e.target.value } : v) }))}
+                          onChange={(e) => setVariant({ retailPrice: e.target.value })}
                         />
                       </Field>
-                      <Field label="سعر الجملة *">
+                      <Field label="سعر الجملة (اختياري)">
                         <Input
                           type="number"
                           min="0"
@@ -749,7 +880,7 @@ export default function ProductsPage() {
                           dir="ltr"
                           className="num"
                           value={variant.wholesalePrice}
-                          onChange={(e) => setForm((f) => ({ ...f, variants: f.variants.map((v, i) => i === index ? { ...v, wholesalePrice: e.target.value } : v) }))}
+                          onChange={(e) => setVariant({ wholesalePrice: e.target.value })}
                         />
                       </Field>
                       <Field label="تكلفة الخيار">
@@ -760,10 +891,10 @@ export default function ProductsPage() {
                           dir="ltr"
                           className="num"
                           value={variant.cost}
-                          onChange={(e) => setForm((f) => ({ ...f, variants: f.variants.map((v, i) => i === index ? { ...v, cost: e.target.value } : v) }))}
+                          onChange={(e) => setVariant({ cost: e.target.value })}
                         />
                       </Field>
-                      <Field label="المخزون">
+                      <Field label="المخزون (اختياري)">
                         <Input
                           type="number"
                           min="0"
@@ -771,10 +902,10 @@ export default function ProductsPage() {
                           dir="ltr"
                           className="num"
                           value={variant.stock}
-                          onChange={(e) => setForm((f) => ({ ...f, variants: f.variants.map((v, i) => i === index ? { ...v, stock: e.target.value } : v) }))}
+                          onChange={(e) => setVariant({ stock: e.target.value })}
                         />
                       </Field>
-                      <Field label="تنبيه نقص">
+                      <Field label="تنبيه نقص (اختياري)">
                         <Input
                           type="number"
                           min="0"
@@ -782,22 +913,17 @@ export default function ProductsPage() {
                           dir="ltr"
                           className="num"
                           value={variant.lowStockAt}
-                          onChange={(e) => setForm((f) => ({ ...f, variants: f.variants.map((v, i) => i === index ? { ...v, lowStockAt: e.target.value } : v) }))}
+                          onChange={(e) => setVariant({ lowStockAt: e.target.value })}
                         />
                       </Field>
                     </div>
-                    <div className="mt-2 flex justify-end">
-                      <button
-                        type="button"
-                        className="icon-btn danger"
-                        title="حذف الخيار"
-                        onClick={() => setForm((f) => ({ ...f, variants: f.variants.filter((_, i) => i !== index) }))}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
                   </div>
-                ))}
+                  );
+                })}
+                <p className="text-[11px] font-semibold text-[var(--faint)]">
+                  الخانات الفارغة التي لا تملؤها لا تُحفظ ولا تدخل في المخزون — تُحفظ
+                  فقط القيم التي تكتبها.
+                </p>
               </div>
             )}
           </div>

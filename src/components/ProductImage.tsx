@@ -13,7 +13,7 @@ const GRADS = [
 
 function pick(name: string) {
   let h = 0;
-  for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  for (const c of name) h = (c.charCodeAt(0) + h * 31) >>> 0;
   return GRADS[h % GRADS.length];
 }
 
@@ -22,28 +22,42 @@ export function ProductImage({
   name,
   size = 44,
   radius = 12,
+  fill = false,
+  contain = false,
   className,
 }: {
   src?: string;
   name: string;
   size?: number;
   radius?: number;
+  fill?: boolean;
+  contain?: boolean;
   className?: string;
 }) {
   const [err, setErr] = useState(false);
+  const box = fill
+    ? undefined
+    : {
+        width: size,
+        height: size,
+        borderRadius: radius,
+      };
   if (src && !err) {
     return (
       <img
         src={src}
         alt={name}
         onError={() => setErr(true)}
-        className={cls("shrink-0 object-cover", className)}
+        className={cls(
+          fill ? "h-full w-full" : "shrink-0",
+          contain ? "object-contain" : "object-cover",
+          className,
+        )}
         style={{
-          width: size,
-          height: size,
-          borderRadius: radius,
-          border: "1px solid var(--line-soft)",
+          ...box,
+          border: fill ? undefined : "1px solid var(--line-soft)",
           background: "#0b0f13",
+          borderRadius: fill ? undefined : radius,
         }}
       />
     );
@@ -51,16 +65,16 @@ export function ProductImage({
   return (
     <div
       className={cls(
-        "flex shrink-0 items-center justify-center font-extrabold text-white/90",
+        "flex items-center justify-center font-extrabold text-white/90",
+        fill ? "h-full w-full" : "shrink-0",
         className,
       )}
       style={{
-        width: size,
-        height: size,
-        borderRadius: radius,
+        ...box,
         background: pick(name),
-        fontSize: Math.max(11, size * 0.32),
-        border: "1px solid var(--line-soft)",
+        fontSize: fill ? 28 : Math.max(11, size * 0.32),
+        border: fill ? undefined : "1px solid var(--line-soft)",
+        borderRadius: fill ? undefined : radius,
       }}
     >
       {initials(name)}

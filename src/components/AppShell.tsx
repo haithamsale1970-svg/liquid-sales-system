@@ -76,6 +76,20 @@ export default function AppShell({
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+  // على الجوال: منع تمرير الصفحة خلف القائمة المفتوحة + الإغلاق بمفتاح Escape.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
   useEffect(() => {
     api<AppSettings>("/api/settings").then(setSettings).catch(() => {});
   }, []);
@@ -102,12 +116,13 @@ export default function AppShell({
 
   return (
     <ToastProvider>
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen overflow-x-hidden">
         {/* ===== sidebar ===== */}
         <aside
           data-sidebar
+          data-chrome
           className={cls(
-            "flex w-[252px] shrink-0 flex-col gap-1.5 border-e border-[var(--line-soft)] bg-[#050505]/95 p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:h-screen",
+            "flex w-[252px] max-w-[84vw] shrink-0 flex-col gap-1.5 border-e border-[var(--line-soft)] bg-[#050505]/95 p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:h-screen",
             open && "open",
           )}
         >
@@ -139,22 +154,22 @@ export default function AppShell({
           </div>
 
           <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
-            {visibleNav.map(
-              (n) => {
-                const Icon = n.icon;
-                const isActive = active === n.href;
-                return (
-                  <Link
-                    key={n.href}
-                    href={n.href}
-                    className={cls("navlink", isActive && "active")}
-                  >
-                    <Icon size={17} strokeWidth={2.3} />
-                    <span>{n.label}</span>
-                  </Link>
-                );
-              },
-            )}
+            {visibleNav.map((n) => {
+              const Icon = n.icon;
+              const isActive = active === n.href;
+              return (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  onClick={() => setOpen(false)}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cls("navlink", isActive && "active")}
+                >
+                  <Icon size={17} strokeWidth={2.3} />
+                  <span>{n.label}</span>
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="mt-2 rounded-2xl border border-[var(--line-soft)] bg-[rgba(255,255,255,.03)] p-3.5">
@@ -194,9 +209,9 @@ export default function AppShell({
         <div className="flex min-w-0 flex-1 flex-col">
           <header
             data-chrome
-            className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-[var(--line-soft)] bg-[#050505]/85 px-4 py-3 backdrop-blur-xl sm:px-6"
+            className="sticky top-0 z-40 flex min-w-0 items-center justify-between gap-2 border-b border-[var(--line-soft)] bg-[#050505]/90 px-3 py-2.5 backdrop-blur-xl sm:gap-3 sm:px-6 sm:py-3"
           >
-            <div className="flex min-w-0 items-center gap-3">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <button
                 className="icon-btn lg:hidden"
                 onClick={() => setOpen(true)}
@@ -209,7 +224,7 @@ export default function AppShell({
               </h1>
               <div className="glow-dot hidden sm:block" />
             </div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
               <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
               <span className="badge badge-slate hidden md:inline-flex">
                 {new Date().toLocaleDateString("ar-EG-u-nu-latn", {
@@ -226,7 +241,7 @@ export default function AppShell({
           </header>
           <main
             data-main
-            className="mx-auto w-full max-w-[1240px] flex-1 px-4 py-6 sm:px-6"
+            className="mx-auto w-full max-w-[1240px] flex-1 px-3 py-4 sm:px-6 sm:py-6"
           >
             <LowStockBanner />
             {children}

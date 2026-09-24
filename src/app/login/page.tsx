@@ -1,17 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import {
-  Droplets,
-  Eye,
-  EyeOff,
-  Lock,
-  LogIn,
-  Package,
-  ReceiptText,
-  ShieldCheck,
-  User,
-} from "lucide-react";
+import { Eye, EyeOff, Lock, LogIn, User } from "lucide-react";
+import { BrandMark } from "@/components/BrandMark";
 import { Spinner } from "@/components/ui";
 
 export default function LoginPage() {
@@ -42,180 +33,138 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden">
-      {/* background */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/images/login-art.jpg"
-        alt=""
-        className="absolute inset-0 h-full w-full object-cover opacity-55"
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/70 via-[#050505]/55 to-[#050505]" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-10">
+      {/* خلفية هادئة ونظيفة: تدرّج أسود عميق مع توهّج أحمر خافت جدًا */}
       <div
-        className="absolute -top-24 start-[-120px] h-[420px] w-[420px] rounded-full opacity-25 blur-3xl"
-        style={{ background: "radial-gradient(circle,#ff2222,transparent 65%)", animation: "floaty 9s ease-in-out infinite" }}
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(900px 520px at 50% -8%, rgba(196,0,0,.16), transparent 62%)," +
+            "radial-gradient(700px 480px at 50% 112%, rgba(143,0,0,.10), transparent 65%)," +
+            "linear-gradient(180deg, #0a0505 0%, #060303 55%, #050202 100%)",
+        }}
       />
       <div
-        className="absolute bottom-[-140px] end-[-100px] h-[480px] w-[480px] rounded-full opacity-20 blur-3xl"
-        style={{ background: "radial-gradient(circle,#7a0000,transparent 65%)", animation: "floaty 11s ease-in-out infinite reverse" }}
+        className="pointer-events-none absolute inset-0 opacity-[.55]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px)," +
+            "linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px)",
+          backgroundSize: "64px 64px",
+          maskImage:
+            "radial-gradient(circle at 50% 42%, black 0%, transparent 72%)",
+          WebkitMaskImage:
+            "radial-gradient(circle at 50% 42%, black 0%, transparent 72%)",
+        }}
       />
 
-      <div className="relative z-10 mx-auto grid min-h-screen max-w-[1240px] lg:grid-cols-2">
-        {/* brand side */}
-        <div className="hidden flex-col justify-between p-12 lg:flex">
-          <div className="anim-in flex items-center gap-3">
+      <div className="relative z-10 flex w-full max-w-[420px] flex-col items-center">
+        {/* الشعار الأحمر الأنيق */}
+        <div className="mb-7 flex flex-col items-center text-center">
+          <div
+            className="relative rounded-[26px] p-[1.5px]"
+            style={{
+              background:
+                "linear-gradient(160deg, rgba(255,77,77,.95), rgba(143,0,0,.55) 45%, rgba(255,77,77,.25))",
+              boxShadow:
+                "0 28px 70px -26px rgba(196,0,0,.75), inset 0 0 0 1px rgba(255,255,255,.05)",
+            }}
+          >
             <div
-              className="flex h-12 w-12 items-center justify-center rounded-2xl"
-              style={{
-                background: "linear-gradient(135deg,#ff2b2b 0%,#8f0000 60%,#000000 100%)",
-                boxShadow: "0 14px 34px -10px rgba(255,34,34,.6)",
-              }}
+              className="rounded-[25px]"
+              style={{ boxShadow: "inset 0 0 40px -14px rgba(0,0,0,.9)" }}
             >
-              <Droplets size={24} className="text-white" strokeWidth={2.7} />
-            </div>
-            <div className="leading-tight">
-              <div className="text-2xl font-black tracking-tight">Cloud Culture</div>
-              <div className="text-[11px] font-bold text-[var(--muted)]">
-                CLOUD CULTURE • SALES SUITE
-              </div>
+              <BrandMark size={92} />
             </div>
           </div>
-
-          <div>
-            <h1 className="anim-in anim-d1 max-w-[520px] text-[44px] font-black leading-[1.25] tracking-tight">
-              كل قطرة…
-              <br />
-              <span
-                className="bg-clip-text text-transparent"
-                style={{ backgroundImage: "linear-gradient(90deg,#ff2b2b,#ff7a7a,#ffffff)" }}
-              >
-                تحت السيطرة الكاملة
-              </span>
-            </h1>
-            <p className="anim-in anim-d2 mt-5 max-w-[440px] text-[15px] font-semibold leading-8 text-[var(--muted)]">
-              نظام Cloud Culture المتكامل لإدارة المنتجات: أصناف
-              ومخزون لحظي، فواتير احترافية بصور المنتجات، عملاء، صلاحيات،
-              تقارير مبيعات، ونسخ احتياطي — كل حركة مسجلة باسم من قام بها.
-            </p>
-            <div className="anim-in anim-d3 mt-8 flex flex-wrap gap-2.5">
-              {[
-                { icon: Package, t: "مخزون يُحدَّث تلقائيًا" },
-                { icon: ReceiptText, t: "فواتير قابلة للطباعة و PDF" },
-                { icon: ShieldCheck, t: "صلاحيات وتشفير كلمات المرور" },
-              ].map((c) => (
-                <span
-                  key={c.t}
-                  className="badge badge-slate !px-3.5 !py-2 !text-[12px]"
-                  style={{ background: "rgba(5,5,5,.55)", backdropFilter: "blur(8px)" }}
-                >
-                  <c.icon size={14} className="text-[var(--mint)]" />
-                  {c.t}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="anim-in anim-d4 text-[11.5px] font-bold text-[var(--faint)]">
-            نظام Cloud Culture v1.0 — إدارة ذكية لنشاطك التجاري
+          <h1 className="mt-5 text-[30px] font-black leading-none tracking-tight sm:text-[34px]">
+            Cloud Culture
+          </h1>
+          <div className="mt-3.5 flex items-center gap-2">
+            <span className="h-px w-10 bg-gradient-to-l from-transparent to-[var(--mint)]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--mint)] shadow-[0_0_10px_var(--mint)]" />
+            <span className="h-px w-10 bg-gradient-to-r from-transparent to-[var(--mint)]" />
           </div>
         </div>
 
-        {/* form side */}
-        <div className="flex items-center justify-center p-5 sm:p-10">
-          <div
-            className="anim-in w-full max-w-[430px] rounded-3xl border border-[var(--line)] p-7 sm:p-9"
-            style={{
-              background: "rgba(5,5,5,.72)",
-              backdropFilter: "blur(20px)",
-              boxShadow: "0 40px 90px -30px rgba(0,0,0,.8)",
-            }}
-          >
-            <div className="mb-7 flex items-center gap-3 lg:hidden">
-              <div
-                className="flex h-11 w-11 items-center justify-center rounded-2xl"
-                style={{ background: "linear-gradient(135deg,#ff2b2b,#8f0000)" }}
-              >
-                <Droplets size={22} className="text-white" strokeWidth={2.7} />
+        {/* نموذج تسجيل الدخول */}
+        <div
+          className="w-full rounded-[26px] border border-white/[.07] p-6 sm:p-7"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(22,8,8,.82) 0%, rgba(10,4,4,.88) 100%)",
+            backdropFilter: "blur(18px)",
+            boxShadow:
+              "0 34px 90px -40px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.05)",
+          }}
+        >
+          <h2 className="text-center text-[16.5px] font-black">تسجيل الدخول</h2>
+          <p className="mt-1.5 text-center text-[12px] font-semibold text-[var(--faint)]">
+            أدخل بياناتك للمتابعة إلى لوحة التحكم
+          </p>
+          <form onSubmit={submit} className="mt-6 space-y-4">
+            <div>
+              <label className="lbl">اسم المستخدم</label>
+              <div className="relative">
+                <input
+                  className="inp pe-11"
+                  placeholder="اسم المستخدم"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
+                  autoFocus
+                  dir="ltr"
+                  style={{ textAlign: "left" }}
+                />
+                <User
+                  size={17}
+                  className="pointer-events-none absolute end-3.5 top-1/2 -translate-y-1/2 text-[var(--faint)]"
+                />
               </div>
-              <div className="text-xl font-black">Cloud Culture</div>
+            </div>
+            <div>
+              <label className="lbl">كلمة المرور</label>
+              <div className="relative">
+                <input
+                  className="inp pe-11 ps-11"
+                  placeholder="••••••••"
+                  type={showPw ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  dir="ltr"
+                  style={{ textAlign: "left" }}
+                />
+                <Lock
+                  size={17}
+                  className="pointer-events-none absolute end-3.5 top-1/2 -translate-y-1/2 text-[var(--faint)]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw((s) => !s)}
+                  className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--faint)] transition-colors hover:text-[var(--text)]"
+                  aria-label="إظهار كلمة المرور"
+                >
+                  {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
             </div>
 
-            <h2 className="text-[22px] font-black">تسجيل الدخول</h2>
-            <p className="mt-1.5 text-[13px] font-semibold text-[var(--muted)]">
-              مرحبًا بعودتك — أدخل بيانات حسابك للمتابعة
-            </p>
-
-            <form onSubmit={submit} className="mt-7 space-y-4">
-              <div>
-                <label className="lbl">اسم المستخدم</label>
-                <div className="relative">
-                  <input
-                    className="inp pe-11"
-                    placeholder="admin"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    autoComplete="username"
-                    autoFocus
-                    dir="ltr"
-                    style={{ textAlign: "left" }}
-                  />
-                  <User
-                    size={17}
-                    className="pointer-events-none absolute end-3.5 top-1/2 -translate-y-1/2 text-[var(--faint)]"
-                  />
-                </div>
+            {error && (
+              <div className="badge badge-rose w-full !justify-center !py-2.5 !text-[12.5px]">
+                {error}
               </div>
-              <div>
-                <label className="lbl">كلمة المرور</label>
-                <div className="relative">
-                  <input
-                    className="inp pe-11 ps-11"
-                    placeholder="••••••••"
-                    type={showPw ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    dir="ltr"
-                    style={{ textAlign: "left" }}
-                  />
-                  <Lock
-                    size={17}
-                    className="pointer-events-none absolute end-3.5 top-1/2 -translate-y-1/2 text-[var(--faint)]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPw((s) => !s)}
-                    className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--faint)] transition-colors hover:text-[var(--text)]"
-                    aria-label="إظهار كلمة المرور"
-                  >
-                    {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
-                  </button>
-                </div>
-              </div>
+            )}
 
-              {error && (
-                <div className="badge badge-rose w-full !justify-center !py-2.5 !text-[12.5px]">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading || !username || !password}
-                className="btn btn-primary w-full !py-3 !text-[14.5px]"
-              >
-                {loading ? <Spinner size={16} /> : <LogIn size={16} />}
-                دخول إلى لوحة التحكم
-              </button>
-            </form>
-
-            <div className="hr" />
-            <p className="text-center text-[11.5px] font-bold leading-6 text-[var(--faint)]">
-              محاولات الدخول محدودة ومحمية — جميع كلمات المرور مشفّرة
-              <br />
-              الحساب الافتراضي: <span className="num text-[var(--muted)]">admin / admin123</span> (غيّره فورًا)
-            </p>
-          </div>
+            <button
+              type="submit"
+              disabled={loading || !username || !password}
+              className="btn btn-primary w-full !py-3 !text-[14.5px]"
+            >
+              {loading ? <Spinner size={16} /> : <LogIn size={16} />}
+              دخول
+            </button>
+          </form>
         </div>
       </div>
     </main>

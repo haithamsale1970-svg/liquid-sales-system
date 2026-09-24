@@ -10,7 +10,6 @@ import {
   Percent,
   Plus,
   ReceiptText,
-  Package,
   ScanLine,
   Search,
   ShoppingCart,
@@ -21,7 +20,7 @@ import {
 import Link from "next/link";
 import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
-import { Badge, Btn, Card, Field, Input, Modal, Select, Skeleton, Textarea } from "@/components/ui";
+import { Badge, Btn, Card, Field, Input, Select, Skeleton, Textarea } from "@/components/ui";
 import { ProductImage } from "@/components/ProductImage";
 import ClientPicker from "@/components/ClientPicker";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
@@ -55,7 +54,10 @@ export default function NewSalePage() {
   const [clients, setClients] = useState<ClientDTO[] | null>(null);
   const [q, setQ] = useState("");
   const [cart, setCart] = useState<Record<string, { product: ProductDTO; variant: ProductVariantDTO | null; priceType: PriceType; qty: number }>>({});
-  const [variantPicker, setVariantPicker] = useState<{ product: ProductDTO; variantId: string; priceType: PriceType } | null>(null);
+  const [variantPicker, setVariantPicker] = useState<{
+    product: ProductDTO;
+    priceType: PriceType;
+  } | null>(null);
 
   const [clientId, setClientId] = useState("");
   const [addClientOpen, setAddClientOpen] = useState(false);
@@ -216,7 +218,7 @@ export default function NewSalePage() {
       return;
     }
     if (hit.variants.length) {
-      openVariantPicker(hit);
+      toggleVariantPicker(hit);
     } else {
       addToCart(hit);
       toast.push("ok", `تمت إضافة "${hit.name}" عبر الباركود`);
@@ -243,12 +245,22 @@ export default function NewSalePage() {
     });
   }
 
-  function openVariantPicker(p: ProductDTO) {
+  function toggleVariantPicker(p: ProductDTO) {
+    // لا شيء يظهر افتراضيًا: الضغط على زر المنتج يفتح قائمة الخيارات المخزنة والمتاحة فقط.
     if (!p.variants.length) {
       addToCart(p);
       return;
     }
-    setVariantPicker({ product: p, variantId: String(p.variants[0].id), priceType: "retail" });
+    const available = p.variants.filter((v) => v.stock > 0);
+    if (available.length === 0) {
+      toast.push("err", `"${p.name}" لا يحتوي على خيارات متاحة حالياً`);
+      return;
+    }
+    setVariantPicker((cur) =>
+      cur?.product.id === p.id
+        ? null
+        : { product: { ...p, variants: available }, priceType: "retail" },
+    );
   }
 
   function setQty(key: string, qty: number) {
@@ -385,48 +397,135 @@ export default function NewSalePage() {
               const inCart = cartEntries
                 .filter((x) => x.product.id === p.id)
                 .reduce((sum, x) => sum + x.qty, 0);
+              const expanded = variantPicker?.product.id === p.id;
+              const options = expanded ? p.variants.filter((v) => v.stock > 0) : [];
               return (
-                <button
+                <div
                   key={p.id}
-                  onClick={() => !out && openVariantPicker(p)}
-                  disabled={out}
                   className={cls(
-                    "group relative overflow-hidden rounded-2xl border text-start transition-all",
-                    out
-                      ? "cursor-not-allowed border-[var(--line-soft)] opacity-45"
-                      : inCart > 0
-                        ? "border-[rgba(255,34,34,.5)] bg-[rgba(255,34,34,.06)]"
-                        : low
-                          ? "border-[rgba(255,170,0,.45)] bg-[rgba(255,170,0,.06)] hover:bg-[rgba(255,170,0,.1)]"
-                          : "border-[var(--line-soft)] bg-white/[.02] hover:border-[rgba(255,34,34,.35)] hover:bg-white/[.05]",
+                    "flex flex-col",
+                    expanded &&
+                      "col-span-2 rounded-2xl border border-[rgba(255,34,34,.35)] bg-white/[.04] p-2 md:col-span-3",
                   )}
                 >
-                  <div className="flex items-start gap-2.5 p-3">
-                    <ProductImage
-                      src={p.imageUrl}
-                      name={p.name}
-                      size={46}
-                      radius={12}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[12.5px] font-extrabold leading-5">{p.name}</div>
-                      <div className="num mt-0.5 text-[13px] font-black text-[var(--mint)]">{formatMoneyJOD(p.price, currency, rates)}</div>
-                      <div className={cls("num mt-0.5 text-[10.5px] font-bold", out ? "text-[var(--danger)]" : low ? "text-amber-400" : "text-[var(--faint)]")}>
-                        {out ? "نفد المخزون" : low ? `مخزون منخفض: ${p.stock}` : `متاح: ${p.stock}`}
+                  <button
+                    onClick={() => !out && toggleVariantPicker(p)}
+                    disabled={out}
+                    aria-expanded={expanded}
+                    className={cls(
+                      "group relative overflow-hidden rounded-2xl border text-start transition-all",
+                      out
+                        ? "cursor-not-allowed border-[var(--line-soft)] opacity-45"
+                        : inCart > 0
+                          ? "border-[rgba(255,34,34,.5)] bg-[rgba(255,34,34,.06)]"
+                          : low
+                            ? "border-[rgba(255,170,0,.45)] bg-[rgba(255,170,0,.06)] hover:bg-[rgba(255,170,0,.1)]"
+                            : "border-[var(--line-soft)] bg-white/[.02] hover:border-[rgba(255,34,34,.35)] hover:bg-white/[.05]",
+                    )}
+                  >
+                    <div className="flex items-start gap-2.5 p-3">
+                      <ProductImage
+                        src={p.imageUrl}
+                        name={p.name}
+                        size={46}
+                        radius={12}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[12.5px] font-extrabold leading-5">{p.name}</div>
+                        <div className="num mt-0.5 text-[13px] font-black text-[var(--mint)]">{formatMoneyJOD(p.price, currency, rates)}</div>
+                        <div className={cls("num mt-0.5 text-[10.5px] font-bold", out ? "text-[var(--danger)]" : low ? "text-amber-400" : "text-[var(--faint)]")}>
+                          {out ? "نفد المخزون" : low ? `مخزون منخفض: ${p.stock}` : `متاح: ${p.stock}`}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  {low && (
-                    <span className="absolute end-2.5 top-2.5 rounded-md bg-[rgba(255,170,0,.16)] px-1.5 py-0.5 text-[9.5px] font-black text-amber-400">
-                      حد التنبيه
-                    </span>
+                    {low && (
+                      <span className="absolute end-2.5 top-2.5 rounded-md bg-[rgba(255,170,0,.16)] px-1.5 py-0.5 text-[9.5px] font-black text-amber-400">
+                        حد التنبيه
+                      </span>
+                    )}
+                    {inCart > 0 && (
+                      <span className="absolute left-2.5 top-2.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--mint)] px-1 text-[12px] font-black text-[#04211a]">
+                        <span className="num">{inCart}</span>
+                      </span>
+                    )}
+                  </button>
+
+                  {/* الخيارات المخزنة والمتاحة فقط — تنزل أسفل الزر بضغطة واحدة */}
+                  {expanded && (
+                    <div className="anim-in mt-2 border-t border-[var(--line-soft)] pt-2">
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-[11px] font-extrabold text-[var(--muted)]">
+                          الخيارات المتاحة — {p.name}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setVariantPicker((v) =>
+                                v ? { ...v, priceType: "retail" } : v,
+                              )
+                            }
+                            className={cls(
+                              "rounded-lg border px-2 py-1 text-[10.5px] font-extrabold transition-colors",
+                              variantPicker.priceType === "retail"
+                                ? "border-[var(--mint)] bg-[rgba(255,34,34,.14)] text-[var(--mint)]"
+                                : "border-[var(--line-soft)] text-[var(--faint)]",
+                            )}
+                          >
+                            سعر الأفراد
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setVariantPicker((v) =>
+                                v ? { ...v, priceType: "wholesale" } : v,
+                              )
+                            }
+                            className={cls(
+                              "rounded-lg border px-2 py-1 text-[10.5px] font-extrabold transition-colors",
+                              variantPicker.priceType === "wholesale"
+                                ? "border-[var(--mint)] bg-[rgba(255,34,34,.14)] text-[var(--mint)]"
+                                : "border-[var(--line-soft)] text-[var(--faint)]",
+                            )}
+                          >
+                            سعر الجملة
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                        {options.map((v) => {
+                          const unit =
+                            variantPicker.priceType === "wholesale"
+                              ? v.wholesalePrice
+                              : v.retailPrice;
+                          return (
+                            <button
+                              key={v.id}
+                              type="button"
+                              onClick={() => {
+                                addToCart(p, v, variantPicker.priceType);
+                                setVariantPicker(null);
+                              }}
+                              className="flex items-center justify-between gap-2 rounded-xl border border-[var(--line-soft)] bg-white/[.03] px-3 py-2 text-start transition-colors hover:border-[rgba(255,34,34,.4)] hover:bg-white/[.07]"
+                            >
+                              <span className="num text-[12px] font-extrabold">
+                                {v.size} — {v.nicotine}
+                              </span>
+                              <span className="flex shrink-0 items-center gap-2">
+                                <span className="num text-[10.5px] font-bold text-[var(--faint)]">
+                                  متاح {v.stock}
+                                </span>
+                                <span className="num text-[12px] font-black text-[var(--mint)]">
+                                  {formatMoneyJOD(unit, currency, rates)}
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   )}
-                  {inCart > 0 && (
-                    <span className="absolute left-2.5 top-2.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--mint)] px-1 text-[12px] font-black text-[#04211a]">
-                      <span className="num">{inCart}</span>
-                    </span>
-                  )}
-                </button>
+                </div>
               );
             })}
           </div>
@@ -535,7 +634,7 @@ export default function NewSalePage() {
                                 key={f.productId}
                                 type="button"
                                 disabled={!p || p.stock <= 0}
-                                onClick={() => p && openVariantPicker(p)}
+                                onClick={() => p && toggleVariantPicker(p)}
                                 className={cls(
                                   "flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors",
                                   !p || p.stock <= 0
@@ -831,86 +930,6 @@ export default function NewSalePage() {
               بقيت خطوة: اختيار العميل لإتمام الحفظ
             </p>
           )}
-      {variantPicker && (
-        <Modal
-          open={!!variantPicker}
-          onClose={() => setVariantPicker(null)}
-          title={`اختيار تفاصيل: ${variantPicker.product.name}`}
-          icon={<Package size={17} />}
-        >
-          {(() => {
-            const selected = variantPicker.product.variants.find(
-              (v) => String(v.id) === variantPicker.variantId,
-            );
-            const unitPrice = selected
-              ? variantPicker.priceType === "wholesale"
-                ? selected.wholesalePrice
-                : selected.retailPrice
-              : variantPicker.product.price;
-            return (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="الحجم">
-                    <Select
-                      value={variantPicker.variantId}
-                      onChange={(e) =>
-                        setVariantPicker((v) => (v ? { ...v, variantId: e.target.value } : v))
-                      }
-                    >
-                      {variantPicker.product.variants.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.size} — {v.nicotine} (متاح {v.stock})
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  <Field label="نوع السعر">
-                    <Select
-                      value={variantPicker.priceType}
-                      onChange={(e) =>
-                        setVariantPicker((v) =>
-                          v ? { ...v, priceType: e.target.value as PriceType } : v,
-                        )
-                      }
-                    >
-                      <option value="retail">سعر الأفراد</option>
-                      <option value="wholesale">سعر المحلات/الجملة</option>
-                    </Select>
-                  </Field>
-                </div>
-                {selected && (
-                  <div className="rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-[12px] font-bold text-[var(--muted)]">المخزون المتاح</span>
-                      <span className="num text-[16px] font-black">{selected.stock}</span>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between gap-3">
-                      <span className="text-[12px] font-bold text-[var(--muted)]">سعر البيع</span>
-                      <span className="num text-[16px] font-black text-[var(--mint)]">
-                        {formatMoneyJOD(unitPrice, currency, rates)}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                <div className="flex justify-end gap-2 border-t border-[var(--line-soft)] pt-4">
-                  <Btn onClick={() => setVariantPicker(null)}>إلغاء</Btn>
-                  <Btn
-                    variant="primary"
-                    disabled={!selected || selected.stock <= 0}
-                    onClick={() => {
-                      if (!selected) return;
-                      addToCart(variantPicker.product, selected, variantPicker.priceType);
-                      setVariantPicker(null);
-                    }}
-                  >
-                    إضافة إلى الفاتورة
-                  </Btn>
-                </div>
-              </div>
-            );
-          })()}
-        </Modal>
-      )}
 
         </Card>
       </div>

@@ -93,7 +93,7 @@ export default function SalesPage() {
   return (
     <div className="space-y-5">
       {/* filters */}
-      <div className="anim-in flex flex-wrap items-end gap-2.5">
+      <div className="anim-in grid grid-cols-1 items-end gap-2.5 sm:grid-cols-2 xl:flex xl:flex-wrap">
         <div>
           <label className="lbl">من تاريخ</label>
           <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="!w-auto" />
@@ -102,9 +102,9 @@ export default function SalesPage() {
           <label className="lbl">إلى تاريخ</label>
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="!w-auto" />
         </div>
-        <div>
+        <div className="w-full min-w-0">
           <label className="lbl">العميل</label>
-          <Select value={clientId} onChange={(e) => setClientId(e.target.value)} className="!w-auto min-w-[150px]">
+          <Select value={clientId} onChange={(e) => setClientId(e.target.value)} className="!w-auto min-w-0 sm:min-w-[150px]">
             <option value="">كل العملاء</option>
             {clients.map((c) => (
               <option key={c.id} value={c.id}>
@@ -113,7 +113,7 @@ export default function SalesPage() {
             ))}
           </Select>
         </div>
-        <div>
+        <div className="w-full min-w-0 sm:w-auto">
           <label className="lbl">الحالة</label>
           <Select value={status} onChange={(e) => setStatus(e.target.value)} className="!w-auto">
             <option value="">الكل</option>
@@ -121,21 +121,23 @@ export default function SalesPage() {
             <option value="cancelled">ملغاة</option>
           </Select>
         </div>
-        <Btn variant="primary" size="sm" onClick={applyFilters} loading={loading}>
+        <Btn variant="primary" size="sm" onClick={applyFilters} loading={loading} className="w-full sm:w-auto">
           تصفية
         </Btn>
-        <Btn size="sm" onClick={resetFilters}>
+        <Btn size="sm" onClick={resetFilters} className="w-full sm:w-auto">
           <FilterX size={14} /> مسح
         </Btn>
-        <Link href="/sales/new" className="btn btn-primary btn-sm ms-auto">
+        <Link href="/sales/new" className="btn btn-primary btn-sm ms-auto w-full sm:w-auto">
           <Plus size={15} /> فاتورة جديدة
         </Link>
-        <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
+        <div className="w-full min-w-0 xl:w-auto">
+          <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
+        </div>
       </div>
 
       <Card
         className="anim-in anim-d1 overflow-hidden"
-        bodyClass="overflow-x-auto"
+        bodyClass="p-0"
         title={res ? `${fmtNum(res.totalCount)} فاتورة` : "الفواتير"}
         icon={<ReceiptText size={16} />}
       >
@@ -157,7 +159,49 @@ export default function SalesPage() {
             }
           />
         ) : (
-          <table className="tbl min-w-[860px]">
+          <>
+            {/* عرض بطاقات واضح ومناسب للهواتف الذكية */}
+            <div className="space-y-2.5 p-3 md:hidden">
+              {res.data.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => (window.location.href = `/sales/${s.id}`)}
+                  className="w-full rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-3.5 text-start transition-colors active:border-[rgba(255,34,34,.4)]"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="num font-black text-[var(--mint)]">{invoiceNo(s.id)}</span>
+                    <span className="num text-[15px] font-black">
+                      {formatMoneyJOD(s.total, currency, rates)}
+                    </span>
+                  </div>
+                  <div className="mt-1 truncate text-[13px] font-extrabold">{s.clientName}</div>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <Badge tone={s.status === "completed" ? "mint" : "rose"}>
+                      {s.status === "completed" ? "مكتملة" : "ملغاة"}
+                    </Badge>
+                    <Badge tone={s.paymentMethod === "credit" ? "rose" : "slate"}>
+                      {PAYMENT_METHODS[s.paymentMethod]}
+                    </Badge>
+                    {s.shippingType !== "none" && (
+                      <Badge tone={s.shippingType === "internal" ? "sky" : "violet"}>
+                        {SHIPPING_TYPES[s.shippingType]}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--line-soft)] pt-2 text-[11px] font-bold text-[var(--faint)]">
+                    <span className="num">
+                      {fmtNum(s.itemsCount)} صنف / {fmtNum(s.unitsCount)} قطعة
+                    </span>
+                    <span>{s.userName}</span>
+                    <span>{fmtDateTime(s.createdAt)}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* جدول كامل للشاشات الكبيرة */}
+            <div className="hidden md:block">
+            <table className="tbl min-w-[860px]">
             <thead>
               <tr>
                 <th>رقم الفاتورة</th>
@@ -218,6 +262,8 @@ export default function SalesPage() {
               ))}
             </tbody>
           </table>
+            </div>
+          </>
         )}
       </Card>
 

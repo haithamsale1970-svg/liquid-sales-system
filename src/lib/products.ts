@@ -199,6 +199,8 @@ export function parseProductInput(
     .filter((v) => PRODUCT_SIZES.includes(v.size as (typeof PRODUCT_SIZES)[number]))
     .filter((v) => NICOTINE_LEVELS.includes(v.nicotine as (typeof NICOTINE_LEVELS)[number]))
     .filter((v) => v.retailPrice >= 0 && v.wholesalePrice >= 0 && v.cost >= 0 && v.stock >= 0)
+    // الخانات الفارغة لا تُحفظ ولا تدخل المخزون.
+    .filter((v) => v.retailPrice > 0 || v.wholesalePrice > 0 || v.stock > 0)
     .slice(0, 100);
   const effectivePrice = variants[0]?.retailPrice ?? price;
   const effectiveCost = variants[0]?.cost ?? cost;

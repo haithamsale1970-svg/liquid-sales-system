@@ -82,8 +82,15 @@ export async function PATCH(req: Request, ctx: Ctx) {
         });
       }
       const existingById = new Map(existing.variants.map((v) => [v.id, v]));
+      const existingByKey = new Map(existing.variants.map((v) => [`${v.size}::${v.nicotine}`, v]));
+      const keptIds = new Set<number>();
       for (const v of data.variants) {
-        if (v.id && existingById.has(v.id)) {
+        const old =
+          (v.id && existingById.get(v.id)) ||
+          existingByKey.get(`${v.size}::${v.nicotine}`) ||
+          null;
+        if (old) {
+          keptIds.add(old.id);
           await tx
             .update(productVariants)
             .set({
@@ -97,7 +104,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
               active: true,
               updatedAt: new Date(),
             })
-            .where(eq(productVariants.id, v.id));
+            .where(eq(productVariants.id, old.id));
         } else {
           await tx.insert(productVariants).values({
             productId: id,
@@ -112,7 +119,6 @@ export async function PATCH(req: Request, ctx: Ctx) {
           });
         }
       }
-      const keptIds = new Set(data.variants.map((v) => v.id).filter((v): v is number => !!v));
       for (const old of existing.variants) {
         if (!keptIds.has(old.id)) {
           await tx
