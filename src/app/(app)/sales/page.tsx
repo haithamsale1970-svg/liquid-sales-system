@@ -93,45 +93,80 @@ export default function SalesPage() {
   return (
     <div className="space-y-5">
       {/* filters */}
-      <div className="anim-in grid grid-cols-1 items-end gap-2.5 sm:grid-cols-2 xl:flex xl:flex-wrap">
-        <div>
-          <label className="lbl">من تاريخ</label>
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="!w-auto" />
+      <div className="anim-in rounded-[20px] border border-[var(--line-soft)] bg-white/[.025] p-3 shadow-[0_16px_36px_-28px_rgba(0,0,0,.8)] sm:p-4">
+        <div className="grid grid-cols-2 items-end gap-2 sm:grid-cols-4 sm:gap-2.5">
+          <div className="min-w-0">
+            <label className="lbl mb-1.5">من تاريخ</label>
+            <Input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className="!w-full min-w-0 px-2.5 sm:px-3"
+            />
+          </div>
+          <div className="min-w-0">
+            <label className="lbl mb-1.5">إلى تاريخ</label>
+            <Input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="!w-full min-w-0 px-2.5 sm:px-3"
+            />
+          </div>
+          <div className="min-w-0">
+            <label className="lbl mb-1.5">العميل</label>
+            <Select
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              className="!w-full min-w-0"
+            >
+              <option value="">كل العملاء</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="min-w-0">
+            <label className="lbl mb-1.5">الحالة</label>
+            <Select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="!w-full min-w-0"
+            >
+              <option value="">الكل</option>
+              <option value="completed">مكتملة</option>
+              <option value="cancelled">ملغاة</option>
+            </Select>
+          </div>
         </div>
-        <div>
-          <label className="lbl">إلى تاريخ</label>
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="!w-auto" />
-        </div>
-        <div className="w-full min-w-0">
-          <label className="lbl">العميل</label>
-          <Select value={clientId} onChange={(e) => setClientId(e.target.value)} className="!w-auto min-w-0 sm:min-w-[150px]">
-            <option value="">كل العملاء</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div className="w-full min-w-0 sm:w-auto">
-          <label className="lbl">الحالة</label>
-          <Select value={status} onChange={(e) => setStatus(e.target.value)} className="!w-auto">
-            <option value="">الكل</option>
-            <option value="completed">مكتملة</option>
-            <option value="cancelled">ملغاة</option>
-          </Select>
-        </div>
-        <Btn variant="primary" size="sm" onClick={applyFilters} loading={loading} className="w-full sm:w-auto">
-          تصفية
-        </Btn>
-        <Btn size="sm" onClick={resetFilters} className="w-full sm:w-auto">
-          <FilterX size={14} /> مسح
-        </Btn>
-        <Link href="/sales/new" className="btn btn-primary btn-sm ms-auto w-full sm:w-auto">
-          <Plus size={15} /> فاتورة جديدة
-        </Link>
-        <div className="w-full min-w-0 xl:w-auto">
-          <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
+
+        <div className="mt-3 flex flex-col gap-2 border-t border-[var(--line-soft)] pt-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
+            <Btn
+              variant="primary"
+              size="sm"
+              onClick={applyFilters}
+              loading={loading}
+              className="w-full sm:w-auto"
+            >
+              تصفية
+            </Btn>
+            <Btn size="sm" onClick={resetFilters} className="w-full sm:w-auto">
+              <FilterX size={14} /> مسح
+            </Btn>
+            <Link
+              href="/sales/new"
+              className="btn btn-primary btn-sm col-span-2 w-full sm:ms-1 sm:w-auto"
+            >
+              <Plus size={15} /> فاتورة جديدة
+            </Link>
+          </div>
+          <div className="flex items-center justify-between gap-2 sm:justify-end">
+            <span className="text-[11.5px] font-bold text-[var(--faint)]">عملة العرض</span>
+            <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
+          </div>
         </div>
       </div>
 
