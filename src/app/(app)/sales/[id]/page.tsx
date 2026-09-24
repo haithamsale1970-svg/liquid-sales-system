@@ -111,7 +111,15 @@ export default function InvoicePage({
     setRetReason("");
     setRetCustomReason("");
     setRetNote("");
-    setRetMethod(sale?.paymentMethod === "credit" ? "cash" : sale?.paymentMethod ?? "cash");
+    // طريقة الاسترداد الافتراضية: لا تُختار "مستحقات شركة التوصيل"
+    // إلا إذا كانت الفاتورة نفسها بتسجيل توصيل فعلي.
+    setRetMethod(
+      sale?.paymentMethod === "delivery" && sale.shippingType === "none"
+        ? "cash"
+        : sale?.paymentMethod === "credit"
+          ? "cash"
+          : sale?.paymentMethod ?? "cash",
+    );
     setRetOpen(true);
     api<ProductDTO[]>("/api/products").then(setCatalog).catch(() => {});
   }
@@ -693,13 +701,14 @@ export default function InvoicePage({
                 value={retMethod}
                 onChange={(e) => setRetMethod(e.target.value as PaymentMethod)}
               >
-                {(["cash", "clink_haitham", "clink_lahsan", "delivery"] as PaymentMethod[]).map(
-                  (m) => (
+                {(["cash", "clink_haitham", "clink_lahsan", "delivery"] as PaymentMethod[])
+                  // "مستحقات شركة التوصيل" تظهر فقط إن كانت الفاتورة بتوصيل فعلي.
+                  .filter((m) => m !== "delivery" || sale.shippingType !== "none")
+                  .map((m) => (
                     <option key={m} value={m}>
                       {PAYMENT_METHODS[m]}
                     </option>
-                  ),
-                )}
+                  ))}
               </Select>
             </Field>
 

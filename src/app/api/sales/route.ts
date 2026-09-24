@@ -209,9 +209,12 @@ export async function POST(req: Request) {
   const requestedPaymentMethod: PaymentMethod = isPaymentMethod(body.paymentMethod)
     ? body.paymentMethod
     : "cash";
+  // "مستحقات شركة التوصيل" لا تُقبل إلا مع توصيل فعلي؛ وإلا تُعامل كطريقة دفع عادية.
   const paymentMethod: PaymentMethod = shippingType !== "none"
     ? "delivery"
-    : requestedPaymentMethod;
+    : requestedPaymentMethod === "delivery"
+      ? "cash"
+      : requestedPaymentMethod;
   if (paymentMethod === "credit" && user.role !== "admin") {
     return bad("خيار آجل (ذمة العميل) متاح للمدير فقط", 403);
   }

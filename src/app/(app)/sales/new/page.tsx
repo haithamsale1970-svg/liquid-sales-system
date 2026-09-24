@@ -30,6 +30,7 @@ import {
   CLIENT_TYPES,
   PAYMENT_METHODS,
   SHIPPING_TYPES,
+  availablePaymentMethods,
   cls,
   fmtDate,
   fmtNum,
@@ -158,12 +159,13 @@ export default function NewSalePage() {
     : 0;
   const total = Math.max(0, Number((subtotal + ship - discount).toFixed(2)));
   const isDeliveryShipping = shippingType !== "none";
-  // الموظف العادي لا يستطيع تفعيل الآجل حتى لو وصلت الحالة من طلب قديم.
+  // الموظف العادي لا يستطيع تفعيل الآجل حتى لو وصلت الحالة من طلب قديم،
+  // و"مستحقات شركة التوصيل" لا تُحفظ إطلاقًا بدون توصيل فعلي.
   const effectivePaymentMethod: PaymentMethod = isDeliveryShipping
     ? "delivery"
-    : isAdmin || paymentMethod !== "credit"
-      ? paymentMethod
-      : "cash";
+    : paymentMethod === "delivery" || (!isAdmin && paymentMethod === "credit")
+      ? "cash"
+      : paymentMethod;
   const isDeliverySale = isDeliveryShipping && effectivePaymentMethod === "delivery";
   // الصافي بذمة شركة التوصيل = الإجمالي النهائي للطلب − قيمة التوصيل فقط (مثال: 89 − 1.5 = 87.5).
   const deliveryReceivable = isDeliverySale
@@ -779,35 +781,31 @@ export default function NewSalePage() {
             </div>
           </div>
 
-          {/* طريقة الدفع */}
+          {/* طريقة الدفع — "مستحقات شركة التوصيل" تظهر فقط مع توصيل فعلي */}
           <div>
             <label className="lbl">طريقة الدفع *</label>
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-              {(
-                Object.keys(PAYMENT_METHODS) as PaymentMethod[]
-              )
-                .filter((m) => isAdmin || m !== "credit")
-                .filter((m) => !isDeliveryShipping || m === "delivery")
-                .map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => {
-                      if (isDeliveryShipping && m !== "delivery") return;
-                      setPaymentMethod(m);
-                    }}
-                    disabled={isDeliveryShipping && m !== "delivery"}
-                    className={cls(
-                      "rounded-xl border px-2 py-2 text-[11.5px] font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-40",
-                      paymentMethod === m
-                        ? "border-[rgba(255,34,34,.55)] bg-[rgba(255,34,34,.1)] text-[var(--mint)]"
-                        : "border-[var(--line-soft)] bg-white/[.02] text-[var(--muted)] hover:bg-white/[.05]",
-                    )}
-                  >
-                    {PAYMENT_METHODS[m]}
-                  </button>
-                ))}
+              {availablePaymentMethods(shippingType, isAdmin).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setPaymentMethod(m)}
+                  className={cls(
+                    "rounded-xl border px-2 py-2 text-[11.5px] font-extrabold transition-all",
+                    paymentMethod === m
+                      ? "border-[rgba(255,34,34,.55)] bg-[rgba(255,34,34,.1)] text-[var(--mint)]"
+                      : "border-[var(--line-soft)] bg-white/[.02] text-[var(--muted)] hover:bg-white/[.05]",
+                  )}
+                >
+                  {PAYMENT_METHODS[m]}
+                </button>
+              ))}
             </div>
+            {!isDeliveryShipping && (
+              <p className="mt-2 text-[11px] font-semibold text-[var(--faint)]">
+                "مستحقات شركة التوصيل" تظهر فقط عند اختيار توصيل داخلي أو خارجي.
+              </p>
+            )}
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Field
                 label={

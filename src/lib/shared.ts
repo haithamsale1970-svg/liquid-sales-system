@@ -32,6 +32,23 @@ export function isPaymentMethod(v: unknown): v is PaymentMethod {
   return v === "cash" || v === "clink_haitham" || v === "clink_lahsan" || v === "delivery" || v === "credit";
 }
 
+/**
+ * طرق الدفع المتاحة حسب خيار التوصيل المختار:
+ * - "مستحقات شركة التوصيل" لا تظهر إطلاقًا بدون توصيل (توصيل = none)،
+ *   لأنها لا معنى لها دون شركة توصيل أو تكلفة توصيل.
+ * - عند وجود توصيل فعلي (داخلي/خارجي) لا تظهر إلا هذه الطريقة،
+ *   لأن كامل الفاتورة تُسجَّل على ذمة شركة التوصيل.
+ * - "آجل (ذمة العميل)" متاحة للمدير فقط.
+ */
+export function availablePaymentMethods(
+  shippingType: ShippingType,
+  isAdmin: boolean,
+): PaymentMethod[] {
+  const all = Object.keys(PAYMENT_METHODS) as PaymentMethod[];
+  if (shippingType !== "none") return ["delivery"];
+  return all.filter((m) => m !== "delivery" && (isAdmin || m !== "credit"));
+}
+
 /** خيارات سعر البيع المرتبطة بالمتغير. */
 export const PRICE_TYPES = {
   retail: "سعر الأفراد",
