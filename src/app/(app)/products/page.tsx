@@ -433,7 +433,7 @@ export default function ProductsPage() {
                 )}
               >
                 {/* الصورة: مساحة ثابتة متناسقة في أعلى الكرت */}
-                <div className="relative h-[280px] w-full overflow-hidden border-b border-[var(--line-soft)] bg-[radial-gradient(120%_100%_at_50%_0%,rgba(255,34,34,.10),rgba(255,255,255,.02)_55%,transparent)] sm:h-[360px] lg:h-[420px] xl:h-[460px]">
+                <div className="relative h-[240px] w-full overflow-hidden border-b border-[var(--line-soft)] bg-[radial-gradient(120%_100%_at_50%_0%,rgba(255,34,34,.10),rgba(255,255,255,.02)_55%,transparent)] sm:h-[280px] md:h-[300px] lg:h-[320px] xl:h-[340px]">
                   <div className="flex h-full w-full items-center justify-center p-1.5 sm:p-2.5 lg:p-3">
                     <ProductImage
                       src={p.imageUrl}
