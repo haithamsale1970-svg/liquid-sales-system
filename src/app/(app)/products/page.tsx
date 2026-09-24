@@ -433,15 +433,16 @@ export default function ProductsPage() {
                 )}
               >
                 {/* الصورة: مساحة ثابتة متناسقة في أعلى الكرت */}
-                <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-[var(--line-soft)] bg-[radial-gradient(120%_100%_at_50%_0%,rgba(255,34,34,.10),rgba(255,255,255,.02)_55%,transparent)]">
-                  <div className="flex h-full w-full items-center justify-center p-3 sm:p-4">
+                <div className="relative h-[280px] w-full overflow-hidden border-b border-[var(--line-soft)] bg-[radial-gradient(120%_100%_at_50%_0%,rgba(255,34,34,.10),rgba(255,255,255,.02)_55%,transparent)] sm:h-[360px] lg:h-[420px] xl:h-[460px]">
+                  <div className="flex h-full w-full items-center justify-center p-1.5 sm:p-2.5 lg:p-3">
                     <ProductImage
                       src={p.imageUrl}
                       name={p.name}
-                      size={p.imageUrl ? 140 : 84}
-                      radius={p.imageUrl ? 0 : 20}
+                      fill={!!p.imageUrl}
+                      size={84}
+                      radius={20}
                       contain={!!p.imageUrl}
-                      className={p.imageUrl ? "h-full w-full" : undefined}
+                      className={p.imageUrl ? "h-full w-full object-contain" : undefined}
                     />
                   </div>
                   <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 bg-gradient-to-b from-black/45 to-transparent p-2.5">
