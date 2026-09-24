@@ -117,6 +117,8 @@ npm run dev
 | `npm run typecheck` | فحص أنواع TypeScript |
 | `npm run db:push` | إنشاء/تحديث جداول قاعدة البيانات من `src/db/schema.ts` |
 | `npm run db:seed` | تعبئة بيانات تجريبية (تعمل مرة واحدة فقط) |
+| `npm run db:reset` | تصفير بيانات التشغيل (فواتير/منتجات/عملاء/حركات) مع الحفاظ على المستخدمين — للمعاينة |
+| `npm run db:reset -- --yes` | تنفيذ التصفير فعليًا (يحذف بيانات التشغيل ويبقي المستخدمين كما هم) |
 | `npm run db:generate` | توليد ملفات Migration في مجلد `drizzle` |
 | `npm run db:studio` | واجهة رسومية لتصفح قاعدة البيانات |
 
@@ -155,6 +157,7 @@ npm run dev
 | `src/db/schema.ts` | تعريف الجداول (المصدر الرسمي) |
 | `src/db/schemaSql.ts` | نفس الجداول بصيغة SQL تُستخدم بتهيئة `/api/setup` |
 | `src/db/seed.ts` | بيانات تجريبية (`npm run db:seed`) |
+| `src/db/reset.ts` | تصفير بيانات التشغيل مع الحفاظ على المستخدمين (`npm run db:reset`) |
 | `drizzle.config.ts` | إعدادات drizzle-kit (تقرأ الرابط من البيئة) |
 | `.env.example` | قالب متغيّرات البيئة |
 | `src/app/api/health/route.ts` | صفحة تشخيص حالة الربط |
