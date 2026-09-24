@@ -110,6 +110,9 @@ export default function InventoryPage() {
           [
             "التاريخ",
             "الصنف",
+            "الحجم",
+            "النيكوتين",
+            "نوع السعر",
             "النوع",
             "الكمية",
             "الرصيد بعد",
@@ -121,6 +124,9 @@ export default function InventoryPage() {
           ...list.map((r) => [
             r.createdAt.slice(0, 19).replace("T", " "),
             r.productName,
+            r.size,
+            r.nicotine,
+            r.priceType === "wholesale" ? "جملة" : "أفراد",
             r.direction === "in" ? "دخول" : "خروج",
             r.delta,
             r.stockAfter,
@@ -250,6 +256,7 @@ export default function InventoryPage() {
               <tr>
                 <th>التاريخ</th>
                 <th>الصنف</th>
+                <th>المقاس / النيكوتين</th>
                 <th>النوع</th>
                 <th>الكمية</th>
                 <th>الرصيد بعد</th>
@@ -265,7 +272,14 @@ export default function InventoryPage() {
                   <td className="text-[11.5px] font-bold text-[var(--faint)]">
                     {fmtDateTime(r.createdAt)}
                   </td>
-                  <td className="font-extrabold">{r.productName}</td>
+                  <td>
+                    <div className="font-extrabold">{r.productName}</div>
+                    {r.size && (
+                      <div className="mt-0.5 text-[10px] font-bold text-[var(--faint)]">
+                        {r.size} • {r.nicotine} • {r.priceType === "wholesale" ? "جملة" : "أفراد"}
+                      </div>
+                    )}
+                  </td>
                   <td>
                     <Badge tone={r.direction === "in" ? "mint" : "rose"}>
                       {r.direction === "in" ? (

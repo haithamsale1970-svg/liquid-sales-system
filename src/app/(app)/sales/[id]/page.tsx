@@ -6,19 +6,21 @@ import { ArrowRight, Ban, Droplets, Printer, Trash2, Undo2 } from "lucide-react"
 import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
 import { Badge, Btn, ConfirmDialog, Field, Input, Modal, Select, Skeleton } from "@/components/ui";
-import { ProductImage } from "@/components/ProductImage";
+import ImageZoom from "@/components/ProductImage";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { useCurrency } from "@/components/useCurrency";
 import { formatMoneyJOD, isCurrencyCode, type CurrencyCode } from "@/lib/currency";
 import {
   CLIENT_TYPES,
   PAYMENT_METHODS,
+  RETURN_REASONS,
   SHIPPING_TYPES,
   cls,
   fmtDateTime,
   invoiceNo,
   type PaymentMethod,
   type ProductDTO,
+  type PriceType,
   type SaleDetailDTO,
   type SessionUserDTO,
 } from "@/lib/shared";
@@ -40,9 +42,13 @@ export default function InvoicePage({
   // مرتجع / استبدال
   const [retOpen, setRetOpen] = useState(false);
   const [retQty, setRetQty] = useState<Record<number, number>>({});
-  const [exch, setExch] = useState<Array<{ productId: number; quantity: number; name: string }>>([]);
+  const [exch, setExch] = useState<Array<{ productId: number; variantId: number | null; priceType: PriceType; quantity: number; name: string }>>([]);
   const [exchPick, setExchPick] = useState("");
+  const [exchVariantPick, setExchVariantPick] = useState("");
+  const [exchPriceType, setExchPriceType] = useState<PriceType>("retail");
   const [exchCount, setExchCount] = useState("1");
+  const [retReason, setRetReason] = useState("");
+  const [retCustomReason, setRetCustomReason] = useState("");
   const [retNote, setRetNote] = useState("");
   const [retMethod, setRetMethod] = useState<PaymentMethod>("cash");
   const [retLoading, setRetLoading] = useState(false);
@@ -99,7 +105,11 @@ export default function InvoicePage({
     setRetQty({});
     setExch([]);
     setExchPick("");
+    setExchVariantPick("");
+    setExchPriceType("retail");
     setExchCount("1");
+    setRetReason("");
+    setRetCustomReason("");
     setRetNote("");
     setRetMethod(sale?.paymentMethod === "credit" ? "cash" : sale?.paymentMethod ?? "cash");
     setRetOpen(true);
@@ -109,11 +119,27 @@ export default function InvoicePage({
   async function submitReturn() {
     if (retLoading || !sale) return;
     const returned = sale.items
-      .map((it) => ({ productId: it.productId, quantity: retQty[it.productId] ?? 0 }))
+      .map((it) => ({
+        saleItemId: it.id,
+        productId: it.productId,
+        variantId: it.variantId,
+        priceType: it.priceType,
+        quantity: retQty[it.id] ?? 0,
+      }))
       .filter((l) => l.quantity > 0);
-    const exchange = exch.map((l) => ({ productId: l.productId, quantity: l.quantity }));
+    const exchange = exch.map((l) => ({
+      productId: l.productId,
+      variantId: l.variantId,
+      priceType: l.priceType,
+      quantity: l.quantity,
+    }));
     if (!returned.length && !exchange.length) {
       toast.push("info", "حدد كميات للإرجاع أو أضف أصناف استبدال");
+      return;
+    }
+    const reason = (retReason === "أخرى" ? retCustomReason : retReason).trim();
+    if (!reason) {
+      toast.push("err", "حدد سبب الإرجاع أو الاستبدال");
       return;
     }
     setRetLoading(true);
@@ -124,6 +150,7 @@ export default function InvoicePage({
           saleId: sale.id,
           returned,
           exchange,
+          reason,
           note: retNote,
           method: retMethod,
         },
@@ -160,6 +187,10 @@ export default function InvoicePage({
 
   const cancelled = sale.status === "cancelled";
   const units = sale.items.reduce((a, i) => a + i.quantity, 0);
+  const exchangeProduct = catalog.find((p) => p.id === Number(exchPick));
+  const exchangeVariant = exchangeProduct?.variants.find(
+    (v) => String(v.id) === exchVariantPick,
+  );
 
   return (
     <div className="space-y-4">
@@ -293,9 +324,21 @@ export default function InvoicePage({
                   <td>
                     <div className="flex items-center gap-3">
                       <span style={{ filter: "none" }}>
-                        <ProductImage src={it.imageUrl} name={it.productName} size={44} radius={10} />
+                        <ImageZoom
+                           src={it.imageUrl}
+                           name={it.productName}
+                           size={44}
+                           radius={10}
+                         />
                       </span>
-                      <span className="font-extrabold text-[#14222c]">{it.productName}</span>
+                      <span className="font-extrabold text-[#14222c]">
+                         {it.productName}
+                         {it.size && (
+                           <span className="block text-[9.5px] font-bold text-[#71808b]">
+                             {it.size} • {it.nicotine} • {it.priceType === "wholesale" ? "جملة" : "أفراد"}
+                           </span>
+                         )}
+                       </span>
                     </div>
                   </td>
                   <td>
@@ -343,6 +386,12 @@ export default function InvoicePage({
                 <span>المدفوع</span>
                 <span className="num">{formatMoneyJOD(sale.paid, currency, rates)}</span>
               </div>
+              {sale.deliveryReceivable > 0 && (
+                <div className="flex justify-between font-black text-[var(--amber)]">
+                  <span>بذمة شركة التوصيل</span>
+                  <span className="num">{formatMoneyJOD(sale.deliveryReceivable, currency, rates)}</span>
+                </div>
+              )}
               {sale.remaining > 0 && (
                 <div className="flex justify-between font-black text-[var(--danger)]">
                   <span>المتبقي (دين)</span>
@@ -438,6 +487,12 @@ export default function InvoicePage({
           <span>المدفوع</span>
           <span>{formatMoneyJOD(sale.paid, currency, rates)}</span>
         </div>
+        {sale.deliveryReceivable > 0 && (
+          <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800 }}>
+            <span>بذمة شركة التوصيل</span>
+            <span>{formatMoneyJOD(sale.deliveryReceivable, currency, rates)}</span>
+          </div>
+        )}
         {sale.remaining > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800 }}>
             <span>المتبقي</span>
@@ -462,7 +517,7 @@ export default function InvoicePage({
               <p className="lbl">أصناف الفاتورة — حدد كمية الإرجاع (تعود للمخزون)</p>
               <ul className="max-h-[220px] space-y-2 overflow-y-auto pe-1">
                 {sale.items.map((it) => {
-                  const already = sale.returnedQty?.[it.productId] ?? 0;
+                  const already = sale.returnedQty?.[it.id] ?? 0;
                   const allowed = it.quantity - already;
                   return (
                     <li
@@ -471,6 +526,11 @@ export default function InvoicePage({
                     >
                       <span className="min-w-0 flex-1 truncate text-[12.5px] font-extrabold">
                         {it.productName}
+                         {it.variantId !== null && (
+                           <span className="ms-2 text-[10px] font-bold text-[var(--faint)]">
+                             {it.size} • {it.nicotine} • {it.priceType === "wholesale" ? "جملة" : "أفراد"}
+                           </span>
+                         )}
                       </span>
                       <span className="num shrink-0 text-[11px] font-bold text-[var(--faint)]">
                         بيع {it.quantity} • مرتجع {already}
@@ -480,13 +540,13 @@ export default function InvoicePage({
                         min={0}
                         max={allowed}
                         className="num !w-20 shrink-0"
-                        value={retQty[it.productId] ?? ""}
+                        value={retQty[it.id] ?? ""}
                         placeholder="0"
                         disabled={allowed <= 0}
                         onChange={(e) =>
                           setRetQty((q) => ({
                             ...q,
-                            [it.productId]: Math.max(
+                            [it.id]: Math.max(
                               0,
                               Math.min(allowed, Math.trunc(Number(e.target.value) || 0)),
                             ),
@@ -501,10 +561,14 @@ export default function InvoicePage({
 
             <div>
               <p className="lbl">أصناف الاستبدال (تُخصم من المخزون)</p>
+
               <div className="flex gap-2">
                 <Select
                   value={exchPick}
-                  onChange={(e) => setExchPick(e.target.value)}
+                  onChange={(e) => {
+                    setExchPick(e.target.value);
+                    setExchVariantPick("");
+                  }}
                   className="min-w-0 flex-1"
                 >
                   <option value="">— اختر صنفًا —</option>
@@ -516,31 +580,73 @@ export default function InvoicePage({
                       </option>
                     ))}
                 </Select>
-                <Input
-                  type="number"
-                  min="1"
-                  className="num !w-20"
-                  value={exchCount}
-                  onChange={(e) => setExchCount(e.target.value)}
-                />
-                <Btn
-                  size="sm"
-                  onClick={() => {
-                    const p = catalog.find((x) => x.id === Number(exchPick));
-                    if (!p) return;
-                    const qty = Math.max(1, Math.trunc(Number(exchCount) || 1));
-                    if (qty > p.stock) {
-                      toast.push("info", `المتاح من "${p.name}" هو ${p.stock} فقط`);
-                      return;
-                    }
-                    setExch((xs) => [...xs, { productId: p.id, quantity: qty, name: p.name }]);
-                    setExchPick("");
-                    setExchCount("1");
-                  }}
-                  disabled={!exchPick}
-                >
-                  إضافة
-                </Btn>
+                {exchangeProduct && exchangeProduct.variants.length > 0 && (
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <Select
+                      value={exchVariantPick}
+                      onChange={(e) => setExchVariantPick(e.target.value)}
+                    >
+                      <option value="">— المقاس / النيكوتين —</option>
+                      {exchangeProduct.variants.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.size} — {v.nicotine} (متاح {v.stock})
+                        </option>
+                      ))}
+                    </Select>
+                    <Select
+                      value={exchPriceType}
+                      onChange={(e) => setExchPriceType(e.target.value as PriceType)}
+                    >
+                      <option value="retail">سعر الأفراد</option>
+                      <option value="wholesale">سعر المحلات/الجملة</option>
+                    </Select>
+                  </div>
+                )}
+                <div className="mt-2 flex gap-2">
+                  <Input
+                    type="number"
+                    min="1"
+                    className="num !w-20"
+                    value={exchCount}
+                    onChange={(e) => setExchCount(e.target.value)}
+                  />
+                  <Btn
+                    size="sm"
+                    onClick={() => {
+                      const p = catalog.find((x) => x.id === Number(exchPick));
+                      if (!p) return;
+                      const selectedVariant = p.variants.find(
+                        (v) => String(v.id) === exchVariantPick,
+                      );
+                      if (p.variants.length && !selectedVariant) {
+                        toast.push("info", "اختر المقاس والنيكوتين أولًا");
+                        return;
+                      }
+                      const available = selectedVariant ? selectedVariant.stock : p.stock;
+                      const qty = Math.max(1, Math.trunc(Number(exchCount) || 1));
+                      if (qty > available) {
+                        toast.push("info", `المتاح من "${p.name}" هو ${available} فقط`);
+                        return;
+                      }
+                      setExch((xs) => [
+                        ...xs,
+                        {
+                          productId: p.id,
+                          variantId: selectedVariant?.id ?? null,
+                          priceType: selectedVariant ? exchPriceType : "retail",
+                          quantity: qty,
+                          name: `${p.name}${selectedVariant ? ` — ${selectedVariant.size} / ${selectedVariant.nicotine}` : ""}`,
+                        },
+                      ]);
+                      setExchPick("");
+                      setExchVariantPick("");
+                      setExchCount("1");
+                    }}
+                    disabled={!exchPick}
+                  >
+                    إضافة
+                  </Btn>
+              </div>
               </div>
               {exch.length > 0 && (
                 <ul className="mt-2 space-y-1.5">
@@ -565,6 +671,23 @@ export default function InvoicePage({
               )}
             </div>
 
+             <Field label="سبب الإرجاع أو الاستبدال *">
+               <Select value={retReason} onChange={(e) => setRetReason(e.target.value)}>
+                 <option value="">— اختر السبب —</option>
+                 {RETURN_REASONS.map((reason) => (
+                   <option key={reason} value={reason}>{reason}</option>
+                 ))}
+               </Select>
+             </Field>
+             {retReason === "أخرى" && (
+               <Field label="سبب مخصص *">
+                 <Input
+                   value={retCustomReason}
+                   onChange={(e) => setRetCustomReason(e.target.value)}
+                   placeholder="اكتب سبب الإرجاع أو الاستبدال"
+                 />
+               </Field>
+             )}
             <Field label="طريقة الاسترداد / فرق الاستبدال">
               <Select
                 value={retMethod}

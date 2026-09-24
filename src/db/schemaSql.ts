@@ -78,6 +78,30 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 CREATE INDEX IF NOT EXISTS "product_fields_product_idx" ON "product_fields" ("product_id");
 
+CREATE TABLE IF NOT EXISTS "product_variants" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "product_id" integer NOT NULL,
+  "size" text NOT NULL,
+  "nicotine" text NOT NULL,
+  "retail_price" numeric(12, 2) DEFAULT '0' NOT NULL,
+  "wholesale_price" numeric(12, 2) DEFAULT '0' NOT NULL,
+  "cost" numeric(12, 2) DEFAULT '0' NOT NULL,
+  "stock" integer DEFAULT 0 NOT NULL,
+  "low_stock_at" integer DEFAULT 5 NOT NULL,
+  "active" boolean DEFAULT true NOT NULL,
+  "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+  "updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+DO $$ BEGIN
+  ALTER TABLE "product_variants" ADD CONSTRAINT "product_variants_product_id_products_id_fk"
+    FOREIGN KEY ("product_id") REFERENCES "products" ("id") ON DELETE cascade;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+ALTER TABLE "product_variants" ADD COLUMN IF NOT EXISTS "active" boolean DEFAULT true NOT NULL;
+CREATE INDEX IF NOT EXISTS "product_variants_product_idx" ON "product_variants" ("product_id");
+CREATE INDEX IF NOT EXISTS "product_variants_size_nicotine_idx" ON "product_variants" ("product_id", "size", "nicotine");
+
 CREATE TABLE IF NOT EXISTS "clients" (
   "id" serial PRIMARY KEY NOT NULL,
   "name" text NOT NULL,
@@ -100,6 +124,7 @@ CREATE TABLE IF NOT EXISTS "sales" (
   "shipping_type" "shipping_type" DEFAULT 'none' NOT NULL,
   "shipping_cost" numeric(12, 2) DEFAULT '0' NOT NULL,
   "total" numeric(12, 2) DEFAULT '0' NOT NULL,
+  "delivery_receivable" numeric(12, 2) DEFAULT '0' NOT NULL,
   "profit" numeric(12, 2) DEFAULT '0' NOT NULL,
   "currency" text DEFAULT 'JOD' NOT NULL,
   "rate" numeric(14, 6) DEFAULT '1' NOT NULL,
@@ -124,8 +149,12 @@ CREATE TABLE IF NOT EXISTS "sale_items" (
   "id" serial PRIMARY KEY NOT NULL,
   "sale_id" integer NOT NULL,
   "product_id" integer NOT NULL,
+  "variant_id" integer,
   "product_name" text NOT NULL,
   "image_url" text DEFAULT '' NOT NULL,
+  "size" text DEFAULT '' NOT NULL,
+  "nicotine" text DEFAULT '' NOT NULL,
+  "price_type" text DEFAULT 'retail' NOT NULL,
   "price" numeric(12, 2) NOT NULL,
   "cost" numeric(12, 2) DEFAULT '0' NOT NULL,
   "quantity" integer NOT NULL,
@@ -182,7 +211,6 @@ ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "barcode" text DEFAULT '' NOT NU
 ALTER TABLE "clients" ADD COLUMN IF NOT EXISTS "phone2" text DEFAULT '' NOT NULL;
 ALTER TABLE "app_settings" ADD COLUMN IF NOT EXISTS "allow_users_edit_clients" boolean DEFAULT false NOT NULL;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "can_edit_clients" boolean DEFAULT false NOT NULL;
-
 CREATE TABLE IF NOT EXISTS "client_payments" (
   "id" serial PRIMARY KEY NOT NULL,
   "client_id" integer NOT NULL,
@@ -228,10 +256,12 @@ CREATE TABLE IF NOT EXISTS "returns" (
   "user_name" text DEFAULT '' NOT NULL,
   "refund" numeric(12, 2) DEFAULT '0' NOT NULL,
   "method" text DEFAULT 'cash' NOT NULL,
+  "reason" text DEFAULT 'غير محدد' NOT NULL,
   "note" text DEFAULT '' NOT NULL,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 ALTER TABLE "returns" ADD COLUMN IF NOT EXISTS "method" text DEFAULT 'cash' NOT NULL;
+ALTER TABLE "returns" ADD COLUMN IF NOT EXISTS "reason" text DEFAULT 'غير محدد' NOT NULL;
 
 DO $$ BEGIN
   ALTER TABLE "returns" ADD CONSTRAINT "returns_sale_id_sales_id_fk"
@@ -249,7 +279,12 @@ CREATE INDEX IF NOT EXISTS "returns_created_idx" ON "returns" ("created_at");
 CREATE TABLE IF NOT EXISTS "return_items" (
   "id" serial PRIMARY KEY NOT NULL,
   "return_id" integer NOT NULL,
+  "sale_item_id" integer,
   "product_id" integer NOT NULL,
+  "variant_id" integer,
+  "size" text DEFAULT '' NOT NULL,
+  "nicotine" text DEFAULT '' NOT NULL,
+  "price_type" text DEFAULT 'retail' NOT NULL,
   "product_name" text NOT NULL,
   "price" numeric(12, 2) NOT NULL,
   "cost" numeric(12, 2) DEFAULT '0' NOT NULL,
@@ -268,6 +303,10 @@ ALTER TABLE "return_items" ADD COLUMN IF NOT EXISTS "cost" numeric(12, 2) DEFAUL
 CREATE TABLE IF NOT EXISTS "inventory_movements" (
   "id" serial PRIMARY KEY NOT NULL,
   "product_id" integer NOT NULL,
+  "variant_id" integer,
+  "size" text DEFAULT '' NOT NULL,
+  "nicotine" text DEFAULT '' NOT NULL,
+  "price_type" text DEFAULT 'retail' NOT NULL,
   "product_name" text NOT NULL,
   "direction" text NOT NULL,
   "delta" integer NOT NULL,
@@ -288,4 +327,21 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 CREATE INDEX IF NOT EXISTS "inv_movements_product_idx" ON "inventory_movements" ("product_id");
 CREATE INDEX IF NOT EXISTS "inv_movements_created_idx" ON "inventory_movements" ("created_at");
+
+-- ترقية القواعد القديمة بأمان (لا تحذف أي بيانات).
+ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "delivery_receivable" numeric(12, 2) DEFAULT '0' NOT NULL;
+ALTER TABLE "sale_items" ADD COLUMN IF NOT EXISTS "variant_id" integer;
+ALTER TABLE "sale_items" ADD COLUMN IF NOT EXISTS "size" text DEFAULT '' NOT NULL;
+ALTER TABLE "sale_items" ADD COLUMN IF NOT EXISTS "nicotine" text DEFAULT '' NOT NULL;
+ALTER TABLE "sale_items" ADD COLUMN IF NOT EXISTS "price_type" text DEFAULT 'retail' NOT NULL;
+ALTER TABLE "returns" ADD COLUMN IF NOT EXISTS "reason" text DEFAULT 'غير محدد' NOT NULL;
+ALTER TABLE "return_items" ADD COLUMN IF NOT EXISTS "sale_item_id" integer;
+ALTER TABLE "return_items" ADD COLUMN IF NOT EXISTS "variant_id" integer;
+ALTER TABLE "return_items" ADD COLUMN IF NOT EXISTS "size" text DEFAULT '' NOT NULL;
+ALTER TABLE "return_items" ADD COLUMN IF NOT EXISTS "nicotine" text DEFAULT '' NOT NULL;
+ALTER TABLE "return_items" ADD COLUMN IF NOT EXISTS "price_type" text DEFAULT 'retail' NOT NULL;
+ALTER TABLE "inventory_movements" ADD COLUMN IF NOT EXISTS "variant_id" integer;
+ALTER TABLE "inventory_movements" ADD COLUMN IF NOT EXISTS "size" text DEFAULT '' NOT NULL;
+ALTER TABLE "inventory_movements" ADD COLUMN IF NOT EXISTS "nicotine" text DEFAULT '' NOT NULL;
+ALTER TABLE "inventory_movements" ADD COLUMN IF NOT EXISTS "price_type" text DEFAULT 'retail' NOT NULL;
 `;

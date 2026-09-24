@@ -86,6 +86,10 @@ export async function GET(_req: Request, ctx: Ctx) {
         .map((it) => ({
           productName: it.productName,
           imageUrl: it.imageUrl,
+          variantId: it.variantId,
+          size: it.size,
+          nicotine: it.nicotine,
+          priceType: it.priceType === "wholesale" ? "wholesale" : "retail",
           quantity: it.quantity,
           price: num(it.price),
           lineTotal: num(it.lineTotal),

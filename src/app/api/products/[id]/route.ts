@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { productFields, products } from "@/db/schema";
+import { productFields, productVariants, products } from "@/db/schema";
 import {
   bad,
   isErr,
@@ -67,7 +67,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
         })
         .where(eq(products.id, id));
       await tx.delete(productFields).where(eq(productFields.productId, id));
-      if (data.stock !== existing.stock) {
+      if (!data.variants.length && data.stock !== existing.stock) {
         await logMovement(tx, {
           productId: id,
           productName: data.name,
@@ -80,6 +80,46 @@ export async function PATCH(req: Request, ctx: Ctx) {
           userName: user.name,
           note: "تغيير الكمية من نموذج المنتج",
         });
+      }
+      const existingById = new Map(existing.variants.map((v) => [v.id, v]));
+      for (const v of data.variants) {
+        if (v.id && existingById.has(v.id)) {
+          await tx
+            .update(productVariants)
+            .set({
+              size: v.size,
+              nicotine: v.nicotine,
+              retailPrice: f2(v.retailPrice),
+              wholesalePrice: f2(v.wholesalePrice),
+              cost: f2(v.cost),
+              stock: v.stock,
+              lowStockAt: v.lowStockAt,
+              active: true,
+              updatedAt: new Date(),
+            })
+            .where(eq(productVariants.id, v.id));
+        } else {
+          await tx.insert(productVariants).values({
+            productId: id,
+            size: v.size,
+            nicotine: v.nicotine,
+            retailPrice: f2(v.retailPrice),
+            wholesalePrice: f2(v.wholesalePrice),
+            cost: f2(v.cost),
+            stock: v.stock,
+            lowStockAt: v.lowStockAt,
+            active: true,
+          });
+        }
+      }
+      const keptIds = new Set(data.variants.map((v) => v.id).filter((v): v is number => !!v));
+      for (const old of existing.variants) {
+        if (!keptIds.has(old.id)) {
+          await tx
+            .update(productVariants)
+            .set({ active: false, updatedAt: new Date() })
+            .where(eq(productVariants.id, old.id));
+        }
       }
       if (data.fields.length) {
         await tx
@@ -102,19 +142,39 @@ export async function PATCH(req: Request, ctx: Ctx) {
     if (!isAdmin) return bad("تعديل المخزون يتطلب صلاحية المدير", 403);
     const delta = Math.trunc(num(body.delta));
     const note = String(body.note ?? "").slice(0, 160);
+    const variantId = body.variantId == null ? null : Math.trunc(num(body.variantId));
     if (!delta) return bad("أدخل قيمة تعديل صحيحة");
+    if (existing.variants.length && variantId === null)
+      return bad("اختر الحجم والنيكوتين قبل تعديل مخزون المنتج");
+    const existingVariant = variantId === null ? null : existing.variants.find((v) => v.id === variantId);
+    if (variantId !== null && !existingVariant)
+      return bad("تفاصيل المخزون المحددة غير موجودة");
     const next = existing.stock + delta;
-    if (next < 0) return bad("لا يمكن أن يصبح المخزون سالبًا");
+    const nextVariantStock = existingVariant ? existingVariant.stock + delta : null;
+    if (next < 0 || (nextVariantStock !== null && nextVariantStock < 0))
+      return bad("لا يمكن أن يصبح المخزون سالبًا");
     await db.transaction(async (tx: DbOrTx) => {
+      if (existingVariant) {
+        await tx
+          .update(productVariants)
+          .set({ stock: nextVariantStock ?? 0, updatedAt: new Date() })
+          .where(eq(productVariants.id, existingVariant.id));
+      }
       await tx
         .update(products)
         .set({ stock: next, updatedAt: new Date() })
         .where(eq(products.id, id));
       await logMovement(tx, {
         productId: id,
-        productName: existing.name,
+        variantId: existingVariant?.id ?? null,
+        size: existingVariant?.size ?? "",
+        nicotine: existingVariant?.nicotine ?? "",
+        priceType: "retail",
+        productName: existingVariant
+          ? `${existing.name} — ${existingVariant.size} / ${existingVariant.nicotine}`
+          : existing.name,
         delta,
-        stockAfter: next,
+        stockAfter: nextVariantStock ?? next,
         reason: "تسوية يدوية",
         refType: "product",
         refId: id,
@@ -128,7 +188,9 @@ export async function PATCH(req: Request, ctx: Ctx) {
         action: "تعديل مخزون",
         entity: "منتج",
         entityId: id,
-        details: `تعديل مخزون "${existing.name}" من ${existing.stock} إلى ${next}${
+        details: `تعديل مخزون "${existing.name}"${
+          existingVariant ? ` — ${existingVariant.size} / ${existingVariant.nicotine}` : ""
+        } من ${existingVariant?.stock ?? existing.stock} إلى ${nextVariantStock ?? next}${
           note ? ` — ${note}` : ""
         }`,
       });

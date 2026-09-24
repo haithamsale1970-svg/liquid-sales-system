@@ -5,6 +5,10 @@ import type { DbOrTx } from "./api";
 
 export type MovementInput = {
   productId: number;
+  variantId?: number | null;
+  size?: string;
+  nicotine?: string;
+  priceType?: "retail" | "wholesale";
   productName: string;
   delta: number; // موجب = دخول، سالب = خروج
   stockAfter: number;
@@ -24,6 +28,10 @@ export async function logMovement(conn: DbOrTx, m: MovementInput) {
   if (!m.delta) return;
   await conn.insert(inventoryMovements).values({
     productId: m.productId,
+    variantId: m.variantId ?? null,
+    size: m.size ?? "",
+    nicotine: m.nicotine ?? "",
+    priceType: m.priceType ?? "retail",
     productName: m.productName,
     direction: m.delta > 0 ? "in" : "out",
     delta: Math.abs(Math.trunc(m.delta)),

@@ -16,8 +16,11 @@ export const SHIPPING_TYPES = {
 } as const;
 export type ShippingType = keyof typeof SHIPPING_TYPES;
 
+  // المفاتيح القديمة محفوظة للتوافق مع الفواتير المسجلة سابقًا؛ النصوص الظاهرة وحيدة.
 export const PAYMENT_METHODS = {
   cash: "CASH",
+  // أسماء المستودع القديمة محفوظة للتوافق مع الفواتير القديمة؛
+  // النصوص الظاهرة للمستخدم موحّدة حسب المتطلبات.
   clink_haitham: "QLICK - HAITHAM",
   clink_lahsan: "QLICK - HASAN",
   delivery: "مستحقات شركة التوصيل",
@@ -28,6 +31,30 @@ export type PaymentMethod = keyof typeof PAYMENT_METHODS;
 export function isPaymentMethod(v: unknown): v is PaymentMethod {
   return v === "cash" || v === "clink_haitham" || v === "clink_lahsan" || v === "delivery" || v === "credit";
 }
+
+/** خيارات سعر البيع المرتبطة بالمتغير. */
+export const PRICE_TYPES = {
+  retail: "سعر الأفراد",
+  wholesale: "سعر المحلات/الجملة",
+} as const;
+export type PriceType = keyof typeof PRICE_TYPES;
+
+/** قوائم ثابتة لتفاصيل عبوات المنتجات. */
+export const PRODUCT_SIZES = ["10ml", "30ml", "60ml", "100ml", "120ml"] as const;
+export type ProductSize = (typeof PRODUCT_SIZES)[number];
+
+export const NICOTINE_LEVELS = ["0mg", "3mg", "6mg", "12mg", "20mg", "30mg", "50mg"] as const;
+export type NicotineLevel = (typeof NICOTINE_LEVELS)[number];
+
+export const RETURN_REASONS = [
+  "عيب مصنعي",
+  "خطأ في الصنف",
+  "تغيير رأي العميل",
+  "تلف",
+  "فرق في المواصفات",
+  "أخرى",
+] as const;
+export type ReturnReason = (typeof RETURN_REASONS)[number];
 
 export const DISCOUNT_TYPES = {
   none: "بدون خصم",
@@ -138,6 +165,18 @@ export type SessionUserDTO = {
 
 export type ProductField = { id?: number; label: string; value: string };
 
+export type ProductVariantDTO = {
+  id: number;
+  size: string;
+  nicotine: string;
+  retailPrice: number;
+  wholesalePrice: number;
+  cost: number;
+  stock: number;
+  lowStockAt: number;
+  active: boolean;
+};
+
 export type ProductDTO = {
   id: number;
   name: string;
@@ -151,6 +190,7 @@ export type ProductDTO = {
   imageUrl: string;
   archived: boolean;
   fields: ProductField[];
+  variants: ProductVariantDTO[];
   createdAt: string;
 };
 
@@ -212,6 +252,10 @@ export type ClientHistoryDTO = {
     items: Array<{
       productName: string;
       imageUrl: string;
+      variantId?: number | null;
+      size?: string;
+      nicotine?: string;
+      priceType?: PriceType;
       quantity: number;
       price: number;
       lineTotal: number;
@@ -240,6 +284,8 @@ export type SaleListDTO = {
   shippingType: ShippingType;
   shippingCost: number;
   total: number;
+  /** المبلغ الثابت بذمة شركة التوصيل = الإجمالي - سعر التوصيل. */
+  deliveryReceivable: number;
   profit: number;
   currency?: string;
   rate?: number;
@@ -254,8 +300,12 @@ export type SaleListDTO = {
 export type SaleItemDTO = {
   id: number;
   productId: number;
+  variantId: number | null;
   productName: string;
   imageUrl: string;
+  size: string;
+  nicotine: string;
+  priceType: PriceType;
   price: number;
   quantity: number;
   lineTotal: number;
@@ -275,6 +325,7 @@ export type SaleDetailDTO = {
   discount: number;
   paid: number;
   remaining: number;
+  deliveryReceivable: number;
   returnedQty?: Record<number, number>;
   notes: string;
   createdAt: string;
@@ -292,6 +343,7 @@ export type SaleDetailDTO = {
     id: number;
     refund: number;
     method: string;
+    reason: string;
     createdAt: string;
   }>;
 };
@@ -350,7 +402,12 @@ export type ExpenseDTO = {
 // ---------- DTO: المرتجعات والاستبدال ----------
 export type ReturnItemDTO = {
   productId: number;
+  saleItemId?: number | null;
+  variantId: number | null;
   productName: string;
+  size: string;
+  nicotine: string;
+  priceType: PriceType;
   price: number;
   cost: number;
   quantity: number;
@@ -364,6 +421,8 @@ export type ReturnDTO = {
   userName: string;
   refund: number;
   method: string;
+  /** سبب الإرجاع/الاستبدال الإلزامي الذي حُفظ في سجل الحركة. */
+  reason: string;
   note: string;
   createdAt: string;
   items: ReturnItemDTO[];
@@ -373,7 +432,11 @@ export type ReturnDTO = {
 export type InventoryMovementDTO = {
   id: number;
   productId: number;
+  variantId: number | null;
   productName: string;
+  size: string;
+  nicotine: string;
+  priceType: PriceType;
   direction: "in" | "out";
   delta: number;
   stockAfter: number;

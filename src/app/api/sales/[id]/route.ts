@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { clients, products, returnItems, returns, saleItems, sales, users } from "@/db/schema";
+import { clients, products, productVariants, returnItems, returns, saleItems, sales, users } from "@/db/schema";
 import {
   BizError,
   bad,
@@ -54,21 +54,24 @@ export async function GET(_req: Request, ctx: Ctx) {
     // الكميات المرتجعة سابقًا لكل صنف (لمنع الإرجاع الزائد).
     const returnedRows = await db
       .select({
-        productId: returnItems.productId,
+        saleItemId: returnItems.saleItemId,
         qty: sql<number>`coalesce(sum(${returnItems.quantity}), 0)::int`,
       })
       .from(returnItems)
       .innerJoin(returns, eq(returnItems.returnId, returns.id))
       .where(and(eq(returns.saleId, id), eq(returnItems.direction, "in")))
-      .groupBy(returnItems.productId);
+      .groupBy(returnItems.saleItemId);
     const returnedQty: Record<number, number> = {};
-    for (const r of returnedRows) returnedQty[r.productId] = r.qty;
+    for (const r of returnedRows) {
+      if (r.saleItemId !== null) returnedQty[r.saleItemId] = r.qty;
+    }
 
     const returnRows = await db
       .select({
         id: returns.id,
         refund: returns.refund,
         method: returns.method,
+        reason: returns.reason,
         createdAt: returns.createdAt,
       })
       .from(returns)
@@ -83,6 +86,7 @@ export async function GET(_req: Request, ctx: Ctx) {
       shippingType: row.sale.shippingType,
       shippingCost: num(row.sale.shippingCost),
       total: num(row.sale.total),
+      deliveryReceivable: num(row.sale.deliveryReceivable),
       // الربح للأدمن فقط.
       profit: isAdmin ? num(row.sale.profit) : 0,
       currency: row.sale.currency ?? "JOD",
@@ -115,8 +119,12 @@ export async function GET(_req: Request, ctx: Ctx) {
       items: items.map((it) => ({
         id: it.id,
         productId: it.productId,
+        variantId: it.variantId,
         productName: it.productName,
         imageUrl: it.imageUrl,
+        size: it.size,
+        nicotine: it.nicotine,
+        priceType: it.priceType === "wholesale" ? "wholesale" : "retail",
         price: num(it.price),
         quantity: it.quantity,
         lineTotal: num(it.lineTotal),
@@ -125,6 +133,7 @@ export async function GET(_req: Request, ctx: Ctx) {
         id: r.id,
         refund: num(r.refund),
         method: r.method,
+        reason: r.reason,
         createdAt: r.createdAt.toISOString(),
       })),
       // التكلفة مخفية عن المستخدم العادي.
@@ -172,6 +181,23 @@ export async function PATCH(req: Request, ctx: Ctx) {
         .from(saleItems)
         .where(eq(saleItems.saleId, id));
       for (const it of items) {
+        let variantAfter: number | null = null;
+        if (it.variantId !== null) {
+          const variantRows = await tx
+            .select()
+            .from(productVariants)
+            .where(eq(productVariants.id, it.variantId))
+            .for("update")
+            .limit(1);
+          const variant = variantRows[0];
+          if (variant) {
+            variantAfter = variant.stock + it.quantity;
+            await tx
+              .update(productVariants)
+              .set({ stock: variantAfter, updatedAt: new Date() })
+              .where(eq(productVariants.id, variant.id));
+          }
+        }
         await tx
           .update(products)
           .set({
@@ -186,9 +212,13 @@ export async function PATCH(req: Request, ctx: Ctx) {
           .limit(1);
         await logMovement(tx, {
           productId: it.productId,
+          variantId: it.variantId,
+          size: it.size,
+          nicotine: it.nicotine,
+          priceType: it.priceType === "wholesale" ? "wholesale" : "retail",
           productName: it.productName,
           delta: it.quantity,
-          stockAfter: afterRows[0]?.stock ?? 0,
+          stockAfter: variantAfter ?? afterRows[0]?.stock ?? 0,
           reason: "إلغاء فاتورة",
           refType: "sale",
           refId: id,

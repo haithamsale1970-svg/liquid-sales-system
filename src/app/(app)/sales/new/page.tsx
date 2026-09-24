@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { PriceType, ProductVariantDTO } from "@/lib/shared";
 import {
   CheckCircle2,
   History,
@@ -9,6 +10,7 @@ import {
   Percent,
   Plus,
   ReceiptText,
+  Package,
   ScanLine,
   Search,
   ShoppingCart,
@@ -19,8 +21,8 @@ import {
 import Link from "next/link";
 import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
-import { Badge, Btn, Card, Field, Input, Select, Skeleton, Textarea } from "@/components/ui";
-import { ProductImage } from "@/components/ProductImage";
+import { Badge, Btn, Card, Field, Input, Modal, Select, Skeleton, Textarea } from "@/components/ui";
+import ImageZoom, { ProductImage } from "@/components/ProductImage";
 import ClientPicker from "@/components/ClientPicker";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { useCurrency } from "@/components/useCurrency";
@@ -52,7 +54,8 @@ export default function NewSalePage() {
   const [products, setProducts] = useState<ProductDTO[] | null>(null);
   const [clients, setClients] = useState<ClientDTO[] | null>(null);
   const [q, setQ] = useState("");
-  const [cart, setCart] = useState<Record<number, number>>({});
+  const [cart, setCart] = useState<Record<string, { product: ProductDTO; variant: ProductVariantDTO | null; priceType: PriceType; qty: number }>>({});
+  const [variantPicker, setVariantPicker] = useState<{ product: ProductDTO; variantId: string; priceType: PriceType } | null>(null);
 
   const [clientId, setClientId] = useState("");
   const [addClientOpen, setAddClientOpen] = useState(false);
@@ -120,20 +123,25 @@ export default function NewSalePage() {
     return (products ?? []).filter((p) => !n || `${p.name} ${p.category}`.toLowerCase().includes(n));
   }, [products, q]);
 
-  const cartEntries = useMemo(
-    () =>
-      Object.entries(cart)
-        .map(([pid, qty]) => ({ product: byId.get(Number(pid)), qty }))
-        .filter((x): x is { product: ProductDTO; qty: number } => !!x.product),
-    [cart, byId],
+  const cartEntries = useMemo(() => Object.values(cart), [cart]);
+  const subtotal = cartEntries.reduce(
+    (a, x) => a + (x.variant ? (x.priceType === "wholesale" ? x.variant.wholesalePrice : x.variant.retailPrice) : x.product.price) * x.qty,
+    0,
   );
-
-  const subtotal = cartEntries.reduce((a, x) => a + x.product.price * x.qty, 0);
   // المستخدم العادي محجوب عن الكلف/الأرباح — نحسب الربح للأدمن فقط للعرض.
   const isAdmin = me?.role === "admin";
   const canManageClients =
     isAdmin || (settings?.allowUsersEditClients === true && me?.canEditClients === true);
-  const profit = isAdmin ? cartEntries.reduce((a, x) => a + (x.product.price - x.product.cost) * x.qty, 0) : 0;
+  const profit = isAdmin
+    ? cartEntries.reduce(
+        (a, x) =>
+          a +
+          ((x.variant ? (x.priceType === "wholesale" ? x.variant.wholesalePrice : x.variant.retailPrice) : x.product.price) -
+            (x.variant ? x.variant.cost : x.product.cost)) *
+            x.qty,
+        0,
+      )
+    : 0;
   // التوصيل ثابت من إعدادات الأدمن (داخلي 1.5 / خارجي 2 افتراضيًا).
   const ship =
     shippingType === "none" ? 0 : shippingType === "internal" ? (settings?.shippingInternal ?? 1.5) : (settings?.shippingExternal ?? 2);
@@ -195,42 +203,66 @@ export default function NewSalePage() {
       setScan("");
       return;
     }
-    const already = cart[hit.id] ?? 0;
+    const already = cartEntries
+      .filter((x) => x.product.id === hit.id)
+      .reduce((sum, x) => sum + x.qty, 0);
     if (already >= hit.stock) {
       toast.push("info", `"${hit.name}" — وصلت للكمية المتاحة (${hit.stock})`);
       setScan("");
       return;
     }
-    addToCart(hit);
-    toast.push("ok", `تمت إضافة "${hit.name}" عبر الباركود`);
+    if (hit.variants.length) {
+      openVariantPicker(hit);
+    } else {
+      addToCart(hit);
+      toast.push("ok", `تمت إضافة "${hit.name}" عبر الباركود`);
+    }
     setScan("");
     scanRef.current?.focus();
   }
 
-  function addToCart(p: ProductDTO) {
+  function lineKey(p: ProductDTO, variant: ProductVariantDTO | null, priceType: PriceType) {
+    return `${p.id}:${variant?.id ?? "base"}:${priceType}`;
+  }
+
+  function addToCart(p: ProductDTO, variant: ProductVariantDTO | null = null, priceType: PriceType = "retail") {
+    const key = lineKey(p, variant, priceType);
+    const available = variant ? variant.stock : p.stock;
     setCart((c) => {
-      const next = (c[p.id] ?? 0) + 1;
-      if (next > p.stock) {
-        toast.push("info", `"${p.name}" — المتاح ${p.stock} فقط`);
+      const current = c[key];
+      const next = (current?.qty ?? 0) + 1;
+      if (next > available) {
+        toast.push("info", `"${p.name}" — المتاح ${available} فقط`);
         return c;
       }
-      return { ...c, [p.id]: next };
+      return { ...c, [key]: { product: p, variant, priceType, qty: next } };
     });
   }
 
-  function setQty(p: ProductDTO, qty: number) {
+  function openVariantPicker(p: ProductDTO) {
+    if (!p.variants.length) {
+      addToCart(p);
+      return;
+    }
+    setVariantPicker({ product: p, variantId: String(p.variants[0].id), priceType: "retail" });
+  }
+
+  function setQty(key: string, qty: number) {
     setCart((c) => {
+      const line = c[key];
+      if (!line) return c;
       if (qty <= 0) {
-        const { [p.id]: _drop, ...rest } = c;
+        const { [key]: _drop, ...rest } = c;
         return rest;
       }
-      return { ...c, [p.id]: Math.min(qty, p.stock) };
+      const available = line.variant ? line.variant.stock : line.product.stock;
+      return { ...c, [key]: { ...line, qty: Math.min(qty, available) } };
     });
   }
 
-  function removeLine(pid: number) {
+  function removeLine(key: string) {
     setCart((c) => {
-      const { [pid]: _drop, ...rest } = c;
+      const { [key]: _drop, ...rest } = c;
       return rest;
     });
   }
@@ -269,7 +301,12 @@ export default function NewSalePage() {
         method: "POST",
         body: {
           clientId: Number(clientId),
-          items: cartEntries.map((x) => ({ productId: x.product.id, quantity: x.qty })),
+          items: cartEntries.map((x) => ({
+            productId: x.product.id,
+            variantId: x.variant?.id ?? null,
+            priceType: x.priceType,
+            quantity: x.qty,
+          })),
           shippingType,
           currency,
           notes,
@@ -341,11 +378,13 @@ export default function NewSalePage() {
             {filtered.map((p) => {
               const out = p.stock === 0;
               const low = !out && p.stock <= p.lowStockAt;
-              const inCart = cart[p.id] ?? 0;
+              const inCart = cartEntries
+                .filter((x) => x.product.id === p.id)
+                .reduce((sum, x) => sum + x.qty, 0);
               return (
                 <button
                   key={p.id}
-                  onClick={() => !out && addToCart(p)}
+                  onClick={() => !out && openVariantPicker(p)}
                   disabled={out}
                   className={cls(
                     "group relative overflow-hidden rounded-2xl border text-start transition-all",
@@ -359,7 +398,12 @@ export default function NewSalePage() {
                   )}
                 >
                   <div className="flex items-start gap-2.5 p-3">
-                    <ProductImage src={p.imageUrl} name={p.name} size={46} radius={12} />
+                    <ImageZoom
+                      src={p.imageUrl}
+                      name={p.name}
+                      size={46}
+                      radius={12}
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[12.5px] font-extrabold leading-5">{p.name}</div>
                       <div className="num mt-0.5 text-[13px] font-black text-[var(--mint)]">{formatMoneyJOD(p.price, currency, rates)}</div>
@@ -487,7 +531,7 @@ export default function NewSalePage() {
                                 key={f.productId}
                                 type="button"
                                 disabled={!p || p.stock <= 0}
-                                onClick={() => p && addToCart(p)}
+                                onClick={() => p && openVariantPicker(p)}
                                 className={cls(
                                   "flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors",
                                   !p || p.stock <= 0
@@ -542,29 +586,49 @@ export default function NewSalePage() {
               </div>
             ) : (
               <ul className="max-h-[260px] space-y-2 overflow-y-auto pe-1">
-                {cartEntries.map(({ product: p, qty }) => (
-                  <li key={p.id} className="flex items-center gap-2.5 rounded-2xl border border-[var(--line-soft)] bg-white/[.02] p-2.5">
-                    <ProductImage src={p.imageUrl} name={p.name} size={40} radius={10} />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[12.5px] font-extrabold">{p.name}</div>
-                      <div className="num text-[11px] font-bold text-[var(--muted)]">
-                        {formatMoneyJOD(p.price, currency, rates)} × {qty} = <span className="text-[var(--mint)]">{formatMoneyJOD(p.price * qty, currency, rates)}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button className="icon-btn !h-7 !w-7" onClick={() => setQty(p, qty - 1)}>
-                        <Minus size={13} />
-                      </button>
-                      <span className="num w-7 text-center text-[13px] font-black">{qty}</span>
-                      <button className="icon-btn !h-7 !w-7" onClick={() => setQty(p, qty + 1)} disabled={qty >= p.stock}>
-                        <Plus size={13} />
-                      </button>
-                      <button className="icon-btn danger !h-7 !w-7" onClick={() => removeLine(p.id)}>
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </li>
-                ))}
+                {cartEntries.map((line) => {
+                  const { product: p, variant, priceType, qty } = line;
+                  const unitPrice = variant
+                    ? priceType === "wholesale"
+                      ? variant.wholesalePrice
+                      : variant.retailPrice
+                    : p.price;
+                  const available = variant ? variant.stock : p.stock;
+                  const key = lineKey(p, variant, priceType);
+                  return (
+                   <li key={key} className="flex items-center gap-2.5 rounded-2xl border border-[var(--line-soft)] bg-white/[.02] p-2.5">
+                     <ImageZoom
+                       src={p.imageUrl}
+                       name={p.name}
+                       size={40}
+                       radius={10}
+                     />
+                     <div className="min-w-0 flex-1">
+                       <div className="truncate text-[12.5px] font-extrabold">{p.name}</div>
+                       {variant && (
+                         <div className="text-[10.5px] font-bold text-[var(--faint)]">
+                           {variant.size} • {variant.nicotine} • {priceType === "wholesale" ? "سعر الجملة" : "سعر الأفراد"}
+                         </div>
+                       )}
+                       <div className="num text-[11px] font-bold text-[var(--muted)]">
+                         {formatMoneyJOD(unitPrice, currency, rates)} × {qty} = <span className="text-[var(--mint)]">{formatMoneyJOD(unitPrice * qty, currency, rates)}</span>
+                       </div>
+                     </div>
+                     <div className="flex items-center gap-1">
+                       <button className="icon-btn !h-7 !w-7" onClick={() => setQty(key, qty - 1)}>
+                         <Minus size={13} />
+                       </button>
+                       <span className="num w-7 text-center text-[13px] font-black">{qty}</span>
+                       <button className="icon-btn !h-7 !w-7" onClick={() => setQty(key, qty + 1)} disabled={qty >= available}>
+                         <Plus size={13} />
+                       </button>
+                       <button className="icon-btn danger !h-7 !w-7" onClick={() => removeLine(key)}>
+                         <Trash2 size={13} />
+                       </button>
+                     </div>
+                   </li>
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -763,6 +827,87 @@ export default function NewSalePage() {
               بقيت خطوة: اختيار العميل لإتمام الحفظ
             </p>
           )}
+      {variantPicker && (
+        <Modal
+          open={!!variantPicker}
+          onClose={() => setVariantPicker(null)}
+          title={`اختيار تفاصيل: ${variantPicker.product.name}`}
+          icon={<Package size={17} />}
+        >
+          {(() => {
+            const selected = variantPicker.product.variants.find(
+              (v) => String(v.id) === variantPicker.variantId,
+            );
+            const unitPrice = selected
+              ? variantPicker.priceType === "wholesale"
+                ? selected.wholesalePrice
+                : selected.retailPrice
+              : variantPicker.product.price;
+            return (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="الحجم">
+                    <Select
+                      value={variantPicker.variantId}
+                      onChange={(e) =>
+                        setVariantPicker((v) => (v ? { ...v, variantId: e.target.value } : v))
+                      }
+                    >
+                      {variantPicker.product.variants.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.size} — {v.nicotine} (متاح {v.stock})
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field label="نوع السعر">
+                    <Select
+                      value={variantPicker.priceType}
+                      onChange={(e) =>
+                        setVariantPicker((v) =>
+                          v ? { ...v, priceType: e.target.value as PriceType } : v,
+                        )
+                      }
+                    >
+                      <option value="retail">سعر الأفراد</option>
+                      <option value="wholesale">سعر المحلات/الجملة</option>
+                    </Select>
+                  </Field>
+                </div>
+                {selected && (
+                  <div className="rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[12px] font-bold text-[var(--muted)]">المخزون المتاح</span>
+                      <span className="num text-[16px] font-black">{selected.stock}</span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between gap-3">
+                      <span className="text-[12px] font-bold text-[var(--muted)]">سعر البيع</span>
+                      <span className="num text-[16px] font-black text-[var(--mint)]">
+                        {formatMoneyJOD(unitPrice, currency, rates)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div className="flex justify-end gap-2 border-t border-[var(--line-soft)] pt-4">
+                  <Btn onClick={() => setVariantPicker(null)}>إلغاء</Btn>
+                  <Btn
+                    variant="primary"
+                    disabled={!selected || selected.stock <= 0}
+                    onClick={() => {
+                      if (!selected) return;
+                      addToCart(variantPicker.product, selected, variantPicker.priceType);
+                      setVariantPicker(null);
+                    }}
+                  >
+                    إضافة إلى الفاتورة
+                  </Btn>
+                </div>
+              </div>
+            );
+          })()}
+        </Modal>
+      )}
+
         </Card>
       </div>
     </div>

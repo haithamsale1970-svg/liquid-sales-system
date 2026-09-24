@@ -87,6 +87,36 @@ export const productFields = pgTable(
   (t) => [index("product_fields_product_idx").on(t.productId)],
 );
 
+// متغيرات المنتج: كل صف يربط الحجم والنيكوتين بسعر الأفراد والجملة ومخزون مستقل.
+// يبقى products.price/stock كقيمة توافقية مجمّعة/احتياطية للمنتجات القديمة.
+export const productVariants = pgTable(
+  "product_variants",
+  {
+    id: serial("id").primaryKey(),
+    productId: integer("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    size: text("size").notNull(),
+    nicotine: text("nicotine").notNull(),
+    retailPrice: numeric("retail_price", { precision: 12, scale: 2 }).notNull().default("0"),
+    wholesalePrice: numeric("wholesale_price", { precision: 12, scale: 2 }).notNull().default("0"),
+    cost: numeric("cost", { precision: 12, scale: 2 }).notNull().default("0"),
+    stock: integer("stock").notNull().default(0),
+    lowStockAt: integer("low_stock_at").notNull().default(5),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("product_variants_product_idx").on(t.productId),
+    index("product_variants_size_nicotine_idx").on(t.productId, t.size, t.nicotine),
+  ],
+);
+
 export const clients = pgTable(
   "clients",
   {
@@ -124,13 +154,17 @@ export const sales = pgTable(
       .notNull()
       .default("0"),
     total: numeric("total", { precision: 12, scale: 2 }).notNull().default("0"),
+    /** المبلغ الذي يبقى بذمة شركة التوصيل: الإجمالي - سعر التوصيل. */
+    deliveryReceivable: numeric("delivery_receivable", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0"),
     profit: numeric("profit", { precision: 12, scale: 2 })
       .notNull()
       .default("0"),
     // عملة العرض المحفوظة مع الفاتورة (القيم مخزّنة دائمًا بالدينار JOD)
     currency: text("currency").notNull().default("JOD"),
     rate: numeric("rate", { precision: 14, scale: 6 }).notNull().default("1"),
-    // طريقة الدفع: نقدي / كليك هيثم / كليك لحسن / شركة التوصيل / آجل
+    // طريقة الدفع: CASH / QLICK - HAITHAM / QLICK - HASAN / شركة التوصيل / آجل
     paymentMethod: text("payment_method").notNull().default("cash"),
     // خصم الفاتورة (نسبة أو مبلغ) — يُخصم من الإجمالي ويقلل الربح
     discount: numeric("discount", { precision: 12, scale: 2 }).notNull().default("0"),
@@ -157,8 +191,14 @@ export const saleItems = pgTable(
     productId: integer("product_id")
       .notNull()
       .references(() => products.id),
+    // مرجع المتغير وقت البيع؛ nullable للسجلات القديمة.
+    variantId: integer("variant_id"),
     productName: text("product_name").notNull(),
     imageUrl: text("image_url").notNull().default(""),
+    // لقطة историية ثابتة حتى لا تتغير تفاصيل المرتجع عند تعديل المنتج لاحقًا.
+    size: text("size").notNull().default(""),
+    nicotine: text("nicotine").notNull().default(""),
+    priceType: text("price_type").notNull().default("retail"),
     price: numeric("price", { precision: 12, scale: 2 }).notNull(),
     cost: numeric("cost", { precision: 12, scale: 2 }).notNull().default("0"),
     quantity: integer("quantity").notNull(),
@@ -262,6 +302,8 @@ export const returns = pgTable(
       .notNull()
       .default("0"),
     method: text("method").notNull().default("cash"),
+    /** سبب الإرجاع/الاستبدال الإلزامي. */
+    reason: text("reason").notNull().default("غير محدد"),
     note: text("note").notNull().default(""),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -280,7 +322,13 @@ export const returnItems = pgTable(
     returnId: integer("return_id")
       .notNull()
       .references(() => returns.id, { onDelete: "cascade" }),
+    saleItemId: integer("sale_item_id"),
     productId: integer("product_id").notNull(),
+    // لقطة المتغير/السعر وقت الحركة؛ nullable للتوافق مع السجلات القديمة.
+    variantId: integer("variant_id"),
+    size: text("size").notNull().default(""),
+    nicotine: text("nicotine").notNull().default(""),
+    priceType: text("price_type").notNull().default("retail"),
     productName: text("product_name").notNull(),
     price: numeric("price", { precision: 12, scale: 2 }).notNull(),
     // تكلفة الصنف وقت المرتجع/الاستبدال، чтобы يبقى أثر الربح دقيقًا.
@@ -300,6 +348,10 @@ export const inventoryMovements = pgTable(
     productId: integer("product_id")
       .notNull()
       .references(() => products.id),
+    variantId: integer("variant_id"),
+    size: text("size").notNull().default(""),
+    nicotine: text("nicotine").notNull().default(""),
+    priceType: text("price_type").notNull().default("retail"),
     productName: text("product_name").notNull(),
     direction: text("direction").notNull(), // in | out
     delta: integer("delta").notNull(),

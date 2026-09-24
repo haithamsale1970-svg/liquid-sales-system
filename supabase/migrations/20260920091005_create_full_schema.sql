@@ -176,6 +176,7 @@ CREATE TABLE IF NOT EXISTS sales (
   shipping_type shipping_type NOT NULL DEFAULT 'none',
   shipping_cost numeric(12,2) NOT NULL DEFAULT '0',
   total numeric(12,2) NOT NULL DEFAULT '0',
+  delivery_receivable numeric(12,2) NOT NULL DEFAULT '0',
   profit numeric(12,2) NOT NULL DEFAULT '0',
   notes text NOT NULL DEFAULT '',
   created_at timestamptz NOT NULL DEFAULT now()
@@ -200,8 +201,12 @@ CREATE TABLE IF NOT EXISTS sale_items (
   id serial PRIMARY KEY,
   sale_id integer NOT NULL REFERENCES sales(id) ON DELETE CASCADE,
   product_id integer NOT NULL REFERENCES products(id),
+  variant_id integer,
   product_name text NOT NULL,
   image_url text NOT NULL DEFAULT '',
+  size text NOT NULL DEFAULT '',
+  nicotine text NOT NULL DEFAULT '',
+  price_type text NOT NULL DEFAULT 'retail',
   price numeric(12,2) NOT NULL,
   cost numeric(12,2) NOT NULL DEFAULT '0',
   quantity integer NOT NULL,
@@ -245,3 +250,151 @@ DROP POLICY IF EXISTS "anon_update_activity_logs" ON activity_logs;
 CREATE POLICY "anon_update_activity_logs" ON activity_logs FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "anon_delete_activity_logs" ON activity_logs;
 CREATE POLICY "anon_delete_activity_logs" ON activity_logs FOR DELETE TO anon, authenticated USING (true);
+
+-- ============== PRODUCT VARIANTS ==============
+CREATE TABLE IF NOT EXISTS product_variants (
+  id serial PRIMARY KEY,
+  product_id integer NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  size text NOT NULL,
+  nicotine text NOT NULL,
+  retail_price numeric(12,2) NOT NULL DEFAULT '0',
+  wholesale_price numeric(12,2) NOT NULL DEFAULT '0',
+  cost numeric(12,2) NOT NULL DEFAULT '0',
+  stock integer NOT NULL DEFAULT 0,
+  low_stock_at integer NOT NULL DEFAULT 5,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS active boolean NOT NULL DEFAULT true;
+CREATE INDEX IF NOT EXISTS product_variants_product_idx ON product_variants(product_id);
+CREATE INDEX IF NOT EXISTS product_variants_size_nicotine_idx ON product_variants(product_id, size, nicotine);
+ALTER TABLE product_variants ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_select_product_variants" ON product_variants;
+CREATE POLICY "anon_select_product_variants" ON product_variants FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "anon_insert_product_variants" ON product_variants;
+CREATE POLICY "anon_insert_product_variants" ON product_variants FOR INSERT TO anon, authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_update_product_variants" ON product_variants;
+CREATE POLICY "anon_update_product_variants" ON product_variants FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_delete_product_variants" ON product_variants;
+CREATE POLICY "anon_delete_product_variants" ON product_variants FOR DELETE TO anon, authenticated USING (true);
+
+-- ============== RETURNS ==============
+CREATE TABLE IF NOT EXISTS returns (
+  id serial PRIMARY KEY,
+  sale_id integer NOT NULL REFERENCES sales(id),
+  client_id integer NOT NULL REFERENCES clients(id),
+  user_id integer,
+  user_name text NOT NULL DEFAULT '',
+  refund numeric(12,2) NOT NULL DEFAULT '0',
+  method text NOT NULL DEFAULT 'cash',
+  reason text NOT NULL DEFAULT 'غير محدد',
+  note text NOT NULL DEFAULT '',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE returns ADD COLUMN IF NOT EXISTS method text NOT NULL DEFAULT 'cash';
+ALTER TABLE returns ADD COLUMN IF NOT EXISTS reason text NOT NULL DEFAULT 'غير محدد';
+CREATE INDEX IF NOT EXISTS returns_sale_idx ON returns(sale_id);
+CREATE INDEX IF NOT EXISTS returns_created_idx ON returns(created_at);
+ALTER TABLE returns ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_select_returns" ON returns;
+CREATE POLICY "anon_select_returns" ON returns FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "anon_insert_returns" ON returns;
+CREATE POLICY "anon_insert_returns" ON returns FOR INSERT TO anon, authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_update_returns" ON returns;
+CREATE POLICY "anon_update_returns" ON returns FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_delete_returns" ON returns;
+CREATE POLICY "anon_delete_returns" ON returns FOR DELETE TO anon, authenticated USING (true);
+
+CREATE TABLE IF NOT EXISTS return_items (
+  id serial PRIMARY KEY,
+  return_id integer NOT NULL REFERENCES returns(id) ON DELETE CASCADE,
+  sale_item_id integer,
+  product_id integer NOT NULL REFERENCES products(id),
+  variant_id integer,
+  size text NOT NULL DEFAULT '',
+  nicotine text NOT NULL DEFAULT '',
+  price_type text NOT NULL DEFAULT 'retail',
+  product_name text NOT NULL,
+  price numeric(12,2) NOT NULL,
+  cost numeric(12,2) NOT NULL DEFAULT '0',
+  quantity integer NOT NULL,
+  direction text NOT NULL DEFAULT 'in'
+);
+CREATE INDEX IF NOT EXISTS return_items_return_idx ON return_items(return_id);
+ALTER TABLE return_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_select_return_items" ON return_items;
+CREATE POLICY "anon_select_return_items" ON return_items FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "anon_insert_return_items" ON return_items;
+CREATE POLICY "anon_insert_return_items" ON return_items FOR INSERT TO anon, authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_update_return_items" ON return_items;
+CREATE POLICY "anon_update_return_items" ON return_items FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_delete_return_items" ON return_items;
+CREATE POLICY "anon_delete_return_items" ON return_items FOR DELETE TO anon, authenticated USING (true);
+
+-- ============== STOCK MOVEMENTS ==============
+CREATE TABLE IF NOT EXISTS inventory_movements (
+  id serial PRIMARY KEY,
+  product_id integer NOT NULL REFERENCES products(id),
+  variant_id integer,
+  size text NOT NULL DEFAULT '',
+  nicotine text NOT NULL DEFAULT '',
+  price_type text NOT NULL DEFAULT 'retail',
+  product_name text NOT NULL,
+  direction text NOT NULL,
+  delta integer NOT NULL,
+  stock_after integer NOT NULL,
+  reason text NOT NULL,
+  ref_type text NOT NULL DEFAULT '',
+  ref_id integer,
+  user_id integer,
+  user_name text NOT NULL DEFAULT '',
+  note text NOT NULL DEFAULT '',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS inventory_movements_product_idx ON inventory_movements(product_id);
+CREATE INDEX IF NOT EXISTS inventory_movements_created_idx ON inventory_movements(created_at);
+ALTER TABLE inventory_movements ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_select_inventory_movements" ON inventory_movements;
+CREATE POLICY "anon_select_inventory_movements" ON inventory_movements FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "anon_insert_inventory_movements" ON inventory_movements;
+CREATE POLICY "anon_insert_inventory_movements" ON inventory_movements FOR INSERT TO anon, authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_update_inventory_movements" ON inventory_movements;
+CREATE POLICY "anon_update_inventory_movements" ON inventory_movements FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_delete_inventory_movements" ON inventory_movements;
+CREATE POLICY "anon_delete_inventory_movements" ON inventory_movements FOR DELETE TO anon, authenticated USING (true);
+CREATE INDEX IF NOT EXISTS return_items_return_idx ON return_items(return_id);
+ALTER TABLE return_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_select_return_items" ON return_items;
+CREATE POLICY "anon_select_return_items" ON return_items FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "anon_insert_return_items" ON return_items;
+CREATE POLICY "anon_insert_return_items" ON return_items FOR INSERT TO anon, authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_update_return_items" ON return_items;
+CREATE POLICY "anon_update_return_items" ON return_items FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "anon_delete_return_items" ON return_items;
+CREATE POLICY "anon_delete_return_items" ON return_items FOR DELETE TO anon, authenticated USING (true);
+
+-- Safe upgrades for existing databases.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS can_edit_clients boolean NOT NULL DEFAULT false;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode text NOT NULL DEFAULT '';
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS phone2 text NOT NULL DEFAULT '';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS delivery_receivable numeric(12,2) NOT NULL DEFAULT '0';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS currency text NOT NULL DEFAULT 'JOD';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS rate numeric(14,6) NOT NULL DEFAULT '1';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS payment_method text NOT NULL DEFAULT 'cash';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS discount numeric(12,2) NOT NULL DEFAULT '0';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS paid numeric(12,2);
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS cost numeric(12,2) NOT NULL DEFAULT '0';
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS variant_id integer;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS size text NOT NULL DEFAULT '';
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS nicotine text NOT NULL DEFAULT '';
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS price_type text NOT NULL DEFAULT 'retail';
+ALTER TABLE return_items ADD COLUMN IF NOT EXISTS sale_item_id integer;
+ALTER TABLE return_items ADD COLUMN IF NOT EXISTS variant_id integer;
+ALTER TABLE return_items ADD COLUMN IF NOT EXISTS size text NOT NULL DEFAULT '';
+ALTER TABLE return_items ADD COLUMN IF NOT EXISTS nicotine text NOT NULL DEFAULT '';
+ALTER TABLE return_items ADD COLUMN IF NOT EXISTS price_type text NOT NULL DEFAULT 'retail';
+ALTER TABLE inventory_movements ADD COLUMN IF NOT EXISTS variant_id integer;
+ALTER TABLE inventory_movements ADD COLUMN IF NOT EXISTS size text NOT NULL DEFAULT '';
+ALTER TABLE inventory_movements ADD COLUMN IF NOT EXISTS nicotine text NOT NULL DEFAULT '';
+ALTER TABLE inventory_movements ADD COLUMN IF NOT EXISTS price_type text NOT NULL DEFAULT 'retail';

@@ -328,7 +328,7 @@ export async function GET(req: Request) {
         revenue: num(e.revenue),
         profit: isAdmin ? num(e.profit) : 0,
       })),
-      // تفصيل طرق الدفع يومًا بيوم — أساس المطابقة المالية (كاش/كليك/التوصيل).
+      // تفصيل طرق الدفع يومًا بيوم — أساس المطابقة المالية (CASH / QLICK / التوصيل).
       paymentSeries: paymentSeriesRows.map((r) => ({
         date: r.date,
         method: (isPaymentMethod(r.method) ? r.method : "cash") as PaymentMethod,

@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { clients, products, saleItems, sales, users } from "@/db/schema";
+import { clients, products, productVariants, saleItems, sales, users } from "@/db/schema";
 import {
   BizError,
   bad,
@@ -17,7 +17,14 @@ import { f2 } from "@/lib/products";
 import { getAppSettings } from "@/lib/settings";
 import { isCurrencyCode } from "@/lib/currency";
 import { logMovement } from "@/lib/inventory";
-import { PAYMENT_METHODS, invoiceNo, isPaymentMethod, type PaymentMethod, type SaleListDTO } from "@/lib/shared";
+import {
+  PAYMENT_METHODS,
+  invoiceNo,
+  isPaymentMethod,
+  type PaymentMethod,
+  type PriceType,
+  type SaleListDTO,
+} from "@/lib/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +78,7 @@ export async function GET(req: Request) {
         shippingType: sales.shippingType,
         shippingCost: sales.shippingCost,
         total: sales.total,
+        deliveryReceivable: sales.deliveryReceivable,
         profit: sales.profit,
         currency: sales.currency,
         rate: sales.rate,
@@ -115,6 +123,7 @@ export async function GET(req: Request) {
       shippingType: r.shippingType,
       shippingCost: num(r.shippingCost),
       total: num(r.total),
+      deliveryReceivable: num(r.deliveryReceivable),
       // الربح للأدمن فقط — المستخدم العادي يرى إجمالي المبيعات فقط.
       profit: isAdmin ? num(r.profit) : 0,
       currency: (r.currency as string) ?? "JOD",
@@ -139,7 +148,12 @@ export async function GET(req: Request) {
   }
 }
 
-type SaleItemInput = { productId?: number; quantity?: number };
+type SaleItemInput = {
+  productId?: number;
+  variantId?: number | null;
+  quantity?: number;
+  priceType?: string;
+};
 
 export async function POST(req: Request) {
   const auth = await requireUser();
@@ -163,12 +177,26 @@ export async function POST(req: Request) {
   const clientId = Math.trunc(num(body.clientId));
   if (!clientId) return bad("اختر العميل أولاً");
 
-  // merge duplicate products
-  const wanted = new Map<number, number>();
+  // merge duplicate lines by product + variant + price type
+  const wanted = new Map<
+    string,
+    { productId: number; variantId: number | null; priceType: PriceType; quantity: number }
+  >();
   for (const it of Array.isArray(body.items) ? body.items : []) {
     const pid = Math.trunc(num(it.productId));
+    const vid = it.variantId == null ? null : Math.trunc(num(it.variantId));
     const qty = Math.trunc(num(it.quantity));
-    if (pid > 0 && qty > 0) wanted.set(pid, (wanted.get(pid) ?? 0) + qty);
+    const priceType: PriceType = it.priceType === "wholesale" ? "wholesale" : "retail";
+    if (pid > 0 && qty > 0) {
+      const key = `${pid}:${vid ?? "base"}:${priceType}`;
+      const current = wanted.get(key);
+      wanted.set(key, {
+        productId: pid,
+        variantId: vid,
+        priceType,
+        quantity: (current?.quantity ?? 0) + qty,
+      });
+    }
   }
   if (!wanted.size) return bad("أضف صنفًا واحدًا على الأقل للفاتورة");
 
@@ -221,56 +249,111 @@ export async function POST(req: Request) {
       const client = clientRows[0];
       if (!client) throw new BizError("العميل غير موجود", 404);
 
-      const ids = [...wanted.keys()];
+      const productIds = [...new Set([...wanted.values()].map((w) => w.productId))];
       const rows = await tx
         .select()
         .from(products)
-        .where(inArray(products.id, ids))
+        .where(inArray(products.id, productIds))
         .for("update");
+      const variantRows = productIds.length
+        ? await tx
+            .select()
+            .from(productVariants)
+            .where(inArray(productVariants.productId, productIds))
+            .for("update")
+        : [];
+      const variantMap = new Map(variantRows.map((v) => [v.id, v]));
+      const productsWithActiveVariants = new Set(
+        variantRows.filter((v) => v.active).map((v) => v.productId),
+      );
+      const productStockAfter = new Map<number, number>();
+      const variantStockAfter = new Map<number, number>();
 
       let subtotal = 0;
-      const stockAfterMap = new Map<number, number>();
+      const stockAfterMap = new Map<string, number>();
       let profit = 0;
       const lines: Array<{
         saleId?: number;
+        lineKey: string;
         productId: number;
+        variantId: number | null;
         productName: string;
         imageUrl: string;
+        size: string;
+        nicotine: string;
+        priceType: PriceType;
         price: string;
         cost: string;
         quantity: number;
         lineTotal: string;
       }> = [];
 
-      for (const [pid, qty] of wanted) {
+      for (const [lineKey, requested] of wanted) {
+        const { productId: pid, variantId, priceType, quantity: qty } = requested;
         const p = rows.find((r) => r.id === pid);
         if (!p || p.archived)
           throw new BizError("أحد الأصناف المطلوبة لم يعد متاحًا");
-        if (p.stock < qty)
+        if (variantId === null && productsWithActiveVariants.has(pid))
+          throw new BizError(`اختر الحجم والنيكوتين للمنتج "${p.name}"`);
+        const variant = variantId === null ? null : variantMap.get(variantId);
+        if (variantId !== null && (!variant || !variant.active || variant.productId !== pid))
+          throw new BizError("تفاصيل المنتج المختارة غير صالحة");
+        const availableStock = variant
+          ? (variantStockAfter.get(variant.id) ?? variant.stock)
+          : (productStockAfter.get(pid) ?? p.stock);
+        if (availableStock < qty)
           throw new BizError(
-            `الكمية المطلوبة من "${p.name}" غير متاحة — المتبقي ${p.stock} فقط`,
+            `الكمية المطلوبة من "${p.name}"${variant ? ` (${variant.size} / ${variant.nicotine})` : ""} غير متاحة — المتبقي ${availableStock} فقط`,
           );
-        const price = num(p.price);
-        const cost = num(p.cost);
+        const price = variant
+          ? priceType === "wholesale"
+            ? num(variant.wholesalePrice)
+            : num(variant.retailPrice)
+          : num(p.price);
+        const cost = variant ? num(variant.cost) : num(p.cost);
+        if (variant && price <= 0)
+          throw new BizError(`سعر ${priceType === "wholesale" ? "الجملة" : "الأفراد"} للصنف المحدد غير صالح`);
         subtotal += price * qty;
         profit += (price - cost) * qty;
+        const size = variant?.size ?? "";
+        const nicotine = variant?.nicotine ?? "";
         lines.push({
+          lineKey,
           productId: pid,
+          variantId,
           productName: p.name,
           imageUrl: p.imageUrl,
+          size,
+          nicotine,
+          priceType,
           price: f2(price),
           cost: f2(cost),
           quantity: qty,
           lineTotal: f2(price * qty),
         });
-        await tx
-          .update(products)
-          .set({
-            stock: sql`${products.stock} - ${qty}`,
-            updatedAt: new Date(),
-          })
-          .where(eq(products.id, pid));
-        stockAfterMap.set(pid, p.stock - qty);
+        if (variant) {
+          const nextVariantStock = (variantStockAfter.get(variant.id) ?? variant.stock) - qty;
+          variantStockAfter.set(variant.id, nextVariantStock);
+          await tx
+            .update(productVariants)
+            .set({ stock: nextVariantStock, updatedAt: new Date() })
+            .where(eq(productVariants.id, variant.id));
+          const nextProductStock = (productStockAfter.get(pid) ?? p.stock) - qty;
+          productStockAfter.set(pid, nextProductStock);
+          await tx
+            .update(products)
+            .set({ stock: nextProductStock, updatedAt: new Date() })
+            .where(eq(products.id, pid));
+          stockAfterMap.set(lineKey, nextVariantStock);
+        } else {
+          const nextProductStock = (productStockAfter.get(pid) ?? p.stock) - qty;
+          productStockAfter.set(pid, nextProductStock);
+          await tx
+            .update(products)
+            .set({ stock: nextProductStock, updatedAt: new Date() })
+            .where(eq(products.id, pid));
+          stockAfterMap.set(lineKey, nextProductStock);
+        }
       }
 
       // الخصم (للأدمن فقط): نسبة من الفرعي أو مبلغ ثابت — يُخصم من الإجمالي ويقلل الربح.
@@ -283,6 +366,10 @@ export async function POST(req: Request) {
       }
       const total = Math.max(0, subtotal + shippingCost - discount);
       const finalProfit = profit - discount;
+      // مثبّت حسابي: ذمة شركة التوصيل = الإجمالي النهائي - سعر التوصيل.
+      const deliveryReceivable = isDeliverySale
+        ? Math.max(0, total - shippingCost)
+        : 0;
       // مستحقات شركة التوصيل: يدفع المُستحق سعر التوصيل فقط، والباقي يبقى بذمتها.
       const paidDefault = isDeliverySale ? shippingCost : paymentMethod === "credit" ? 0 : total;
       const paid = isDeliverySale
@@ -297,6 +384,7 @@ export async function POST(req: Request) {
           shippingType,
           shippingCost: f2(shippingCost),
           total: f2(total),
+          deliveryReceivable: f2(deliveryReceivable),
           profit: f2(finalProfit),
           paymentMethod,
           discount: f2(discount),
@@ -307,16 +395,20 @@ export async function POST(req: Request) {
         })
         .returning({ id: sales.id });
       const saleId = saleRows[0].id;
-      await tx
-        .insert(saleItems)
-        .values(lines.map((l) => ({ ...l, saleId })));
+      await tx.insert(saleItems).values(
+        lines.map(({ lineKey: _lineKey, ...line }) => ({ ...line, saleId })),
+      );
       // سجل حركات المخزون — خروج كل صنف مع الرصيد بعد البيع.
       for (const l of lines) {
         await logMovement(tx, {
           productId: l.productId,
+          variantId: l.variantId,
+          size: l.size,
+          nicotine: l.nicotine,
+          priceType: l.priceType,
           productName: l.productName,
           delta: -l.quantity,
-          stockAfter: stockAfterMap.get(l.productId) ?? 0,
+          stockAfter: stockAfterMap.get(l.lineKey) ?? 0,
           reason: "بيع",
           refType: "sale",
           refId: saleId,
@@ -335,7 +427,9 @@ export async function POST(req: Request) {
           total,
         )} (${lines.length} صنف) — ${PAYMENT_METHODS[paymentMethod]}${
           paid < total ? ` • المتبقي ${f2(total - paid)}` : " • مدفوعة بالكامل"
-        }${discount > 0 ? ` • خصم ${f2(discount)}` : ""}`,
+        }${discount > 0 ? ` • خصم ${f2(discount)}` : ""}${
+          isDeliverySale ? ` • ذمة شركة التوصيل ${f2(deliveryReceivable)}` : ""
+        }`,
       });
       return saleId;
     });

@@ -90,7 +90,7 @@ export default function ReturnsPage() {
             ["كميات بديلة (استبدال)", stats.exchangeQty],
             ["إجمالي الفرق المالي", stats.refundNet.toFixed(2)],
             [],
-            ["المرجع", "الفاتورة", "العميل", "التاريخ", "الفرق المالي", "طريقة الدفع", "المنفّذ", "ملاحظة"],
+            ["المرجع", "الفاتورة", "العميل", "التاريخ", "الفرق المالي", "طريقة الدفع", "السبب", "المنفّذ", "ملاحظة"],
             ...list.map((r) => [
               `RET-${r.id}`,
               invoiceNo(r.saleId),
@@ -98,6 +98,7 @@ export default function ReturnsPage() {
               r.createdAt.slice(0, 19).replace("T", " "),
               r.refund.toFixed(2),
               r.method,
+               r.reason,
               r.userName,
               r.note,
             ]),
@@ -106,12 +107,15 @@ export default function ReturnsPage() {
         {
           name: "أصناف المرتجعات",
           rows: [
-            ["المرجع", "الفاتورة", "الصنف", "النوع", "الكمية", "سعر الوحدة", "القيمة"],
+            ["المرجع", "الفاتورة", "الصنف", "الحجم", "النيكوتين", "السعر", "النوع", "الكمية", "سعر الوحدة", "القيمة"],
             ...list.flatMap((r) =>
               r.items.map((it) => [
                 `RET-${r.id}`,
                 invoiceNo(r.saleId),
                 it.productName,
+                it.size,
+                it.nicotine,
+                it.priceType === "wholesale" ? "جملة" : "أفراد",
                 it.direction === "in" ? "مرتجع (دخول)" : "بديل (خروج)",
                 it.quantity,
                 it.price.toFixed(2),
@@ -236,6 +240,10 @@ export default function ReturnsPage() {
                 </span>
               </div>
 
+              <div className="mt-1.5 rounded-lg border border-[var(--line-soft)] bg-white/[.03] px-2.5 py-1.5 text-[11.5px] font-extrabold text-[var(--muted)]">
+                السبب: {r.reason}
+              </div>
+
               {r.note && (
                 <p className="mt-1.5 text-[11.5px] font-bold text-[var(--muted)]">
                   {r.note}
@@ -259,6 +267,11 @@ export default function ReturnsPage() {
                       <ArrowUpFromLine size={11} />
                     )}
                     {it.productName}
+                    {it.size && (
+                      <span className="opacity-70">
+                        {" "}• {it.size}/{it.nicotine} • {it.priceType === "wholesale" ? "جملة" : "أفراد"}
+                      </span>
+                    )}
                     <span className="num">×{it.quantity}</span>
                     <span className="num opacity-70">
                       {formatMoneyJOD(it.price * it.quantity, currency, rates)}

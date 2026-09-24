@@ -30,16 +30,29 @@ import {
   Skeleton,
   Textarea,
 } from "@/components/ui";
-import { ProductImage } from "@/components/ProductImage";
+import ImageZoom, { ProductImage } from "@/components/ProductImage";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { useCurrency } from "@/components/useCurrency";
 import { formatMoneyJOD } from "@/lib/currency";
 import {
   cls,
   fmtNum,
+  NICOTINE_LEVELS,
+  PRODUCT_SIZES,
   type ProductDTO,
   type SessionUserDTO,
 } from "@/lib/shared";
+
+type FormVariant = {
+  id?: number;
+  size: string;
+  nicotine: string;
+  retailPrice: string;
+  wholesalePrice: string;
+  cost: string;
+  stock: string;
+  lowStockAt: string;
+};
 
 type FormState = {
   name: string;
@@ -52,6 +65,7 @@ type FormState = {
   barcode: string;
   imageUrl: string;
   fields: Array<{ label: string; value: string }>;
+  variants: FormVariant[];
 };
 
 const EMPTY_FORM: FormState = {
@@ -65,9 +79,19 @@ const EMPTY_FORM: FormState = {
   barcode: "",
   imageUrl: "",
   fields: [],
+  variants: [],
 };
 
-const FIELD_PRESETS = ["نسبة النيكوتين", "حجم الزجاجة", "VG / PG", "بلد الصنع", "نوع الكويل"];
+const FIELD_PRESETS = ["VG / PG", "بلد الصنع", "نوع الكويل"];
+const EMPTY_VARIANT: FormVariant = {
+  size: "60ml",
+  nicotine: "30mg",
+  retailPrice: "",
+  wholesalePrice: "",
+  cost: "",
+  stock: "0",
+  lowStockAt: "5",
+};
 
 export default function ProductsPage() {
   const toast = useToast();
@@ -86,6 +110,7 @@ export default function ProductsPage() {
   const [stockTarget, setStockTarget] = useState<ProductDTO | null>(null);
   const [delta, setDelta] = useState("");
   const [stockNote, setStockNote] = useState("");
+  const [stockVariantId, setStockVariantId] = useState("");
   const [adjusting, setAdjusting] = useState(false);
 
   const [archiveTarget, setArchiveTarget] = useState<ProductDTO | null>(null);
@@ -151,6 +176,16 @@ export default function ProductsPage() {
       barcode: p.barcode,
       imageUrl: p.imageUrl,
       fields: p.fields.map((f) => ({ label: f.label, value: f.value })),
+      variants: p.variants.map((v) => ({
+        id: v.id,
+        size: v.size,
+        nicotine: v.nicotine,
+        retailPrice: String(v.retailPrice),
+        wholesalePrice: String(v.wholesalePrice),
+        cost: String(v.cost),
+        stock: String(v.stock),
+        lowStockAt: String(v.lowStockAt),
+      })),
     });
     setFormOpen(true);
   }
@@ -169,6 +204,14 @@ export default function ProductsPage() {
       barcode: form.barcode,
       imageUrl: form.imageUrl,
       fields: form.fields.filter((f) => f.label.trim() && f.value.trim()),
+      variants: form.variants.map((v) => ({
+        ...v,
+        retailPrice: Number(v.retailPrice) || 0,
+        wholesalePrice: Number(v.wholesalePrice) || 0,
+        cost: v.cost.trim() ? Number(v.cost) : Number(form.cost) || 0,
+        stock: Number(v.stock) || 0,
+        lowStockAt: Number(v.lowStockAt) || 0,
+      })),
     };
     try {
       if (editing) {
@@ -201,12 +244,18 @@ export default function ProductsPage() {
     try {
       const updated = await api<ProductDTO>(`/api/products/${stockTarget.id}`, {
         method: "PATCH",
-        body: { mode: "adjustStock", delta: d, note: stockNote },
+        body: {
+          mode: "adjustStock",
+          delta: d,
+          note: stockNote,
+          ...(stockVariantId ? { variantId: Number(stockVariantId) } : {}),
+        },
       });
       toast.push("ok", `مخزون "${updated.name}" أصبح ${updated.stock}`);
       setStockTarget(null);
       setDelta("");
       setStockNote("");
+      setStockVariantId("");
       await load();
     } catch (e) {
       toast.push("err", e instanceof Error ? e.message : "تعذر التعديل");
@@ -254,7 +303,21 @@ export default function ProductsPage() {
   }
 
   const profit = (Number(form.price) || 0) - (Number(form.cost) || 0);
-  const valid = form.name.trim().length >= 2 && Number(form.price) > 0;
+  const validVariants = form.variants.every(
+    (v) =>
+      PRODUCT_SIZES.includes(v.size as (typeof PRODUCT_SIZES)[number]) &&
+      NICOTINE_LEVELS.includes(v.nicotine as (typeof NICOTINE_LEVELS)[number]) &&
+      Number(v.retailPrice) >= 0 &&
+      Number(v.wholesalePrice) >= 0 &&
+      (v.cost.trim() === "" || Number(v.cost) >= 0) &&
+      Number(v.stock) >= 0,
+  );
+  const valid =
+    form.name.trim().length >= 2 &&
+    validVariants &&
+    (form.variants.length > 0
+      ? form.variants.some((v) => Number(v.retailPrice) > 0 || Number(v.wholesalePrice) > 0)
+      : Number(form.price) > 0);
 
   return (
     <div className="space-y-5">
@@ -357,11 +420,13 @@ export default function ProductsPage() {
               >
                 <div className="relative">
                   {p.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <ImageZoom
                       src={p.imageUrl}
-                      alt={p.name}
-                      className="h-40 w-full object-cover"
+                      name={p.name}
+                      size={160}
+                      radius={0}
+                      className="group block h-40 w-full"
+                      imageClassName="h-full w-full rounded-none"
                     />
                   ) : (
                     <div className="flex h-40 items-center justify-center">
@@ -436,6 +501,7 @@ export default function ProductsPage() {
                             setStockTarget(p);
                             setDelta("");
                             setStockNote("");
+                            setStockVariantId(p.variants[0] ? String(p.variants[0].id) : "");
                           }}
                         >
                           <Boxes size={15} />
@@ -565,11 +631,13 @@ export default function ProductsPage() {
             <div className="flex flex-wrap items-center gap-3">
               {form.imageUrl ? (
                 <div className="relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <ImageZoom
                     src={form.imageUrl}
-                    alt=""
-                    className="h-24 w-24 rounded-2xl border border-[var(--line)] object-cover"
+                    name={form.name || "صورة المنتج"}
+                    size={96}
+                    radius={16}
+                    className="h-24 w-24"
+                    imageClassName="h-full w-full rounded-2xl"
                   />
                   <button
                     type="button"
@@ -605,6 +673,135 @@ export default function ProductsPage() {
                 />
               </div>
             </div>
+          </div>
+
+          <div className="md:col-span-2">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div>
+                <label className="lbl !mb-0">المقاسات والنيكوتين والأسعار</label>
+                <p className="mt-1 text-[11px] font-semibold text-[var(--faint)]">
+                  اربط كل حجم ونيكوتين بسعر الأفراد وسعر المحلات/الجملة ومخزون مستقل.
+                </p>
+              </div>
+              <Btn
+                type="button"
+                size="xs"
+                onClick={() =>
+                  setForm((f) => ({ ...f, variants: [...f.variants, { ...EMPTY_VARIANT }] }))
+                }
+              >
+                <Plus size={13} /> إضافة خيار
+              </Btn>
+            </div>
+            {form.variants.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-[var(--line)] p-4 text-center text-[12px] font-bold text-[var(--faint)]">
+                لا توجد خيارات بعد — اضغط «إضافة خيار» لتحديد الحجم والنيكوتين وأسعاره.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {form.variants.map((variant, index) => (
+                  <div key={variant.id ?? `new-${index}`} className="rounded-2xl border border-[var(--line-soft)] bg-white/[.02] p-3">
+                    <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
+                      <Field label="الحجم *">
+                        <Select
+                          value={variant.size}
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              variants: f.variants.map((v, i) =>
+                                i === index ? { ...v, size: e.target.value } : v,
+                              ),
+                            }))
+                          }
+                        >
+                          {PRODUCT_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
+                        </Select>
+                      </Field>
+                      <Field label="النيكوتين *">
+                        <Select
+                          value={variant.nicotine}
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              variants: f.variants.map((v, i) =>
+                                i === index ? { ...v, nicotine: e.target.value } : v,
+                              ),
+                            }))
+                          }
+                        >
+                          {NICOTINE_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
+                        </Select>
+                      </Field>
+                      <Field label="سعر الأفراد *">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="any"
+                          dir="ltr"
+                          className="num"
+                          value={variant.retailPrice}
+                          onChange={(e) => setForm((f) => ({ ...f, variants: f.variants.map((v, i) => i === index ? { ...v, retailPrice: e.target.value } : v) }))}
+                        />
+                      </Field>
+                      <Field label="سعر الجملة *">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="any"
+                          dir="ltr"
+                          className="num"
+                          value={variant.wholesalePrice}
+                          onChange={(e) => setForm((f) => ({ ...f, variants: f.variants.map((v, i) => i === index ? { ...v, wholesalePrice: e.target.value } : v) }))}
+                        />
+                      </Field>
+                      <Field label="تكلفة الخيار">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="any"
+                          dir="ltr"
+                          className="num"
+                          value={variant.cost}
+                          onChange={(e) => setForm((f) => ({ ...f, variants: f.variants.map((v, i) => i === index ? { ...v, cost: e.target.value } : v) }))}
+                        />
+                      </Field>
+                      <Field label="المخزون">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          dir="ltr"
+                          className="num"
+                          value={variant.stock}
+                          onChange={(e) => setForm((f) => ({ ...f, variants: f.variants.map((v, i) => i === index ? { ...v, stock: e.target.value } : v) }))}
+                        />
+                      </Field>
+                      <Field label="تنبيه نقص">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          dir="ltr"
+                          className="num"
+                          value={variant.lowStockAt}
+                          onChange={(e) => setForm((f) => ({ ...f, variants: f.variants.map((v, i) => i === index ? { ...v, lowStockAt: e.target.value } : v) }))}
+                        />
+                      </Field>
+                    </div>
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        type="button"
+                        className="icon-btn danger"
+                        title="حذف الخيار"
+                        onClick={() => setForm((f) => ({ ...f, variants: f.variants.filter((_, i) => i !== index) }))}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* dynamic fields */}
@@ -712,7 +909,21 @@ export default function ProductsPage() {
             <span className="text-[12.5px] font-bold text-[var(--muted)]">الرصيد الحالي</span>
             <span className="num text-[20px] font-black">{stockTarget?.stock ?? 0}</span>
           </div>
-          <Field label="قيمة التعديل (+ إضافة / − خصم)" hint="مثال: 24+ لاستلام شحنة، أو 3- لتالف">
+           {stockTarget && stockTarget.variants.length > 0 && (
+             <Field label="الحجم والنيكوتين *">
+               <Select
+                 value={stockVariantId}
+                 onChange={(e) => setStockVariantId(e.target.value)}
+               >
+                 {stockTarget.variants.map((v) => (
+                   <option key={v.id} value={v.id}>
+                     {v.size} — {v.nicotine} (الحالي {v.stock})
+                   </option>
+                 ))}
+               </Select>
+             </Field>
+           )}
+           <Field label="قيمة التعديل (+ إضافة / − خصم)" hint="مثال: 24+ لاستلام شحنة، أو 3- لتالف">
             <Input
               type="number"
               step="1"

@@ -1,6 +1,6 @@
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { clients, products, returnItems, returns, saleItems, sales } from "@/db/schema";
+import { clients, products, productVariants, returnItems, returns, saleItems, sales } from "@/db/schema";
 import {
   BizError,
   bad,
@@ -19,7 +19,13 @@ import { invoiceNo, isPaymentMethod, type PaymentMethod } from "@/lib/shared";
 
 export const dynamic = "force-dynamic";
 
-type Line = { productId: number; quantity: number };
+type Line = {
+  productId: number;
+  saleItemId?: number;
+  variantId?: number | null;
+  priceType?: string;
+  quantity: number;
+};
 
 // قائمة المرتجعات (الأدمن فقط).
 export async function GET() {
@@ -44,13 +50,19 @@ export async function GET() {
         userName: r.ret.userName,
         refund: num(r.ret.refund),
         method: r.ret.method,
+        reason: r.ret.reason,
         note: r.ret.note,
         createdAt: r.ret.createdAt.toISOString(),
         items: items
           .filter((i) => i.returnId === r.ret.id)
           .map((i) => ({
             productId: i.productId,
+            saleItemId: i.saleItemId,
+            variantId: i.variantId,
             productName: i.productName,
+            size: i.size,
+            nicotine: i.nicotine,
+            priceType: i.priceType === "wholesale" ? "wholesale" : "retail",
             price: num(i.price),
             cost: num(i.cost),
             quantity: i.quantity,
@@ -73,6 +85,7 @@ export async function POST(req: Request) {
     saleId?: number;
     returned?: Line[];
     exchange?: Line[];
+    reason?: string;
     note?: string;
     method?: string;
   }>(req);
@@ -83,17 +96,24 @@ export async function POST(req: Request) {
   const returned = (Array.isArray(body.returned) ? body.returned : [])
     .map((l) => ({
       productId: Math.trunc(num(l.productId)),
+      saleItemId: Math.trunc(num(l.saleItemId)) || undefined,
+      variantId: l.variantId == null ? null : Math.trunc(num(l.variantId)),
+      priceType: l.priceType === "wholesale" ? "wholesale" : "retail",
       quantity: Math.trunc(num(l.quantity)),
     }))
     .filter((l) => l.productId > 0 && l.quantity > 0);
   const exchange = (Array.isArray(body.exchange) ? body.exchange : [])
     .map((l) => ({
       productId: Math.trunc(num(l.productId)),
+      variantId: l.variantId == null ? null : Math.trunc(num(l.variantId)),
+      priceType: l.priceType === "wholesale" ? "wholesale" : "retail",
       quantity: Math.trunc(num(l.quantity)),
     }))
     .filter((l) => l.productId > 0 && l.quantity > 0);
   if (!returned.length && !exchange.length)
     return bad("حدد أصناف الإرجاع أو الاستبدال أولاً");
+  const reason = String(body.reason ?? "").trim().slice(0, 200);
+  if (!reason) return bad("سبب الإرجاع أو الاستبدال مطلوب");
   const note = String(body.note ?? "").slice(0, 200);
   const method: PaymentMethod = isPaymentMethod(body.method) ? body.method : "cash";
 
@@ -116,51 +136,116 @@ export async function POST(req: Request) {
         .where(eq(saleItems.saleId, saleId));
       const priorRows = await tx
         .select({
+          saleItemId: returnItems.saleItemId,
           productId: returnItems.productId,
-          qty: sql<number>`coalesce(sum(${returnItems.quantity}), 0)::int`,
+          variantId: returnItems.variantId,
+          qty: returnItems.quantity,
         })
         .from(returnItems)
         .innerJoin(returns, eq(returnItems.returnId, returns.id))
-        .where(and(eq(returns.saleId, saleId), eq(returnItems.direction, "in")))
-        .groupBy(returnItems.productId);
-      const prior = new Map(priorRows.map((r) => [r.productId, r.qty]));
+        .where(and(eq(returns.saleId, saleId), eq(returnItems.direction, "in")));
+      const prior = new Map<number, number>();
+      for (const r of priorRows) {
+        if (r.saleItemId !== null) {
+          prior.set(r.saleItemId, (prior.get(r.saleItemId) ?? 0) + r.qty);
+        }
+      }
 
-      // التحقق من الكميات + قيمة المرتجع بسعر الفاتورة الأصلي.
+      // التحقق من الكميات + قيمة المرتجع بسعر الفاتورة الأصلي، مع الرجوع لسطر البيع.
       let retValue = 0;
+      const resolvedReturned: Array<{
+        line: (typeof returned)[number];
+        item: (typeof sold)[number];
+      }> = [];
       for (const l of returned) {
-        const item = sold.find((s) => s.productId === l.productId);
-        if (!item) throw new BizError("أحد الأصناف غير موجود في الفاتورة");
-        const allowed = item.quantity - (prior.get(l.productId) ?? 0);
+        const item = l.saleItemId
+          ? sold.find((s) => s.id === l.saleItemId)
+          : sold.find(
+              (s) =>
+                s.productId === l.productId &&
+                (l.variantId === null ? s.variantId === null : s.variantId === l.variantId),
+            );
+        if (!item || item.productId !== l.productId)
+          throw new BizError("أحد أصناف الإرجاع غير موجود في الفاتورة");
+        if (item.variantId !== l.variantId)
+          throw new BizError(`تفاصيل الصنف لا تطابق سطر الفاتورة: "${item.productName}"`);
+        const allowed = item.quantity - (prior.get(item.id) ?? 0);
         if (l.quantity > allowed)
           throw new BizError(
             `لا يمكن إرجاع ${l.quantity} من "${item.productName}" — المسموح ${Math.max(0, allowed)} فقط`,
           );
+        prior.set(item.id, (prior.get(item.id) ?? 0) + l.quantity);
+        resolvedReturned.push({ line: l, item });
         retValue += num(item.price) * l.quantity;
       }
 
       const pids = [...new Set([...returned, ...exchange].map((l) => l.productId))];
-      const prodRows = await tx
-        .select()
-        .from(products)
-        .where(inArray(products.id, pids))
-        .for("update");
+      const prodRows = pids.length
+        ? await tx
+            .select()
+            .from(products)
+            .where(inArray(products.id, pids))
+            .for("update")
+        : [];
       const prodMap = new Map(prodRows.map((p) => [p.id, p]));
+
+      const allVariants = pids.length
+        ? await tx
+            .select()
+            .from(productVariants)
+            .where(inArray(productVariants.productId, pids))
+            .for("update")
+        : [];
+      const allVariantMap = new Map(allVariants.map((v) => [v.id, v]));
 
       let exchValue = 0;
       const deltaMap = new Map<number, number>();
+      const exchangeResolved: Array<{
+        line: (typeof exchange)[number];
+        product: (typeof prodRows)[number];
+        variant: (typeof allVariants)[number] | null | undefined;
+        price: number;
+        cost: number;
+      }> = [];
+      const exchangeReserved = new Map<string, number>();
       for (const l of returned)
         deltaMap.set(l.productId, (deltaMap.get(l.productId) ?? 0) + l.quantity);
       for (const l of exchange) {
         const p = prodMap.get(l.productId);
+        const v = l.variantId === null ? null : allVariantMap.get(l.variantId);
         if (!p || p.archived)
           throw new BizError("أحد أصناف الاستبدال لم يعد متاحًا");
-        const delta = deltaMap.get(l.productId) ?? 0;
-        if (p.stock + delta < l.quantity)
+        if (l.variantId === null && allVariants.some((v) => v.productId === p.id && v.active))
+          throw new BizError("اختر المقاس والنيكوتين لصنف الاستبدال");
+        if (l.variantId !== null && (!v || !v.active || v.productId !== p.id))
+          throw new BizError("تفاصيل صنف الاستبدال غير صالحة");
+        const available = v ? v.stock : p.stock;
+        const returnedSame = returned
+          .filter((r) => (v ? r.variantId === v.id : r.variantId === null && r.productId === p.id))
+          .reduce((sum, r) => sum + r.quantity, 0);
+        const reservationKey = v ? `variant:${v.id}` : `product:${p.id}`;
+        const reserved = exchangeReserved.get(reservationKey) ?? 0;
+        const effectiveAvailable = available + returnedSame - reserved;
+        if (effectiveAvailable < l.quantity)
           throw new BizError(
-            `الكمية غير متافية من "${p.name}" — المتاح ${Math.max(0, p.stock + delta)}`,
+            `الكمية غير متاحة من "${p.name}"${v ? ` (${v.size} / ${v.nicotine})` : ""} — المتاح ${Math.max(0, effectiveAvailable)}`,
           );
-        deltaMap.set(l.productId, delta - l.quantity);
-        exchValue += num(p.price) * l.quantity;
+        exchangeReserved.set(reservationKey, reserved + l.quantity);
+        const price = v
+          ? l.priceType === "wholesale"
+            ? num(v.wholesalePrice)
+            : num(v.retailPrice)
+          : num(p.price);
+        const cost = v ? num(v.cost) : num(p.cost);
+        deltaMap.set(l.productId, (deltaMap.get(l.productId) ?? 0) - l.quantity);
+        exchangeResolved.push({
+          line: l,
+          product: p,
+          variant: v,
+          price,
+          cost,
+        });
+        exchValue += price * l.quantity;
       }
       for (const [pid, delta] of deltaMap) {
         const p = prodMap.get(pid);
@@ -179,79 +264,110 @@ export async function POST(req: Request) {
           userName: user.name,
           refund: f2(netRefund),
           method,
+          reason,
           note,
         })
         .returning({ id: returns.id });
       const returnId = retRows[0].id;
 
       await tx.insert(returnItems).values([
-        ...returned.map((l) => {
-          const item = sold.find((s) => s.productId === l.productId)!;
-          return {
-            returnId,
-            productId: l.productId,
-            productName: item.productName,
-            price: f2(num(item.price)),
-            cost: f2(num(item.cost)),
-            quantity: l.quantity,
-            direction: "in",
-          };
-        }),
-        ...exchange.map((l) => {
-          const p = prodMap.get(l.productId)!;
-          return {
-            returnId,
-            productId: l.productId,
-            productName: p.name,
-            price: f2(num(p.price)),
-            cost: f2(num(p.cost)),
-            quantity: l.quantity,
-            direction: "out",
-          };
-        }),
+        ...resolvedReturned.map(({ line: l, item }) => ({
+          returnId,
+          saleItemId: item.id,
+          productId: item.productId,
+          variantId: item.variantId,
+          size: item.size,
+          nicotine: item.nicotine,
+          priceType: item.priceType === "wholesale" ? "wholesale" : "retail",
+          productName: item.productName,
+          price: f2(num(item.price)),
+          cost: f2(num(item.cost)),
+          quantity: l.quantity,
+          direction: "in",
+        })),
+        ...exchangeResolved.map(({ line: l, product: p, variant: v, price, cost }) => ({
+          returnId,
+          saleItemId: null,
+          productId: p.id,
+          variantId: l.variantId,
+          size: v?.size ?? "",
+          nicotine: v?.nicotine ?? "",
+          priceType: l.priceType === "wholesale" ? "wholesale" : "retail",
+          productName: p.name,
+          price: f2(price),
+          cost: f2(cost),
+          quantity: l.quantity,
+          direction: "out",
+        })),
       ]);
 
       // تطبيق المخزون: المرتجع يدخل أولًا ثم يخرج بديل الاستبدال.
       const running = new Map(prodRows.map((p) => [p.id, p.stock]));
-      for (const l of returned) {
-        const after = (running.get(l.productId) ?? 0) + l.quantity;
-        running.set(l.productId, after);
+      const runningVariants = new Map(allVariants.map((v) => [v.id, v.stock]));
+      for (const { line: l, item } of resolvedReturned) {
+        const after = (running.get(item.productId) ?? 0) + l.quantity;
+        running.set(item.productId, after);
         await tx
           .update(products)
           .set({ stock: after, updatedAt: new Date() })
-          .where(eq(products.id, l.productId));
+          .where(eq(products.id, item.productId));
+        let variantAfter: number | undefined;
+        if (item.variantId !== null) {
+          variantAfter = (runningVariants.get(item.variantId) ?? 0) + l.quantity;
+          runningVariants.set(item.variantId, variantAfter);
+          await tx
+            .update(productVariants)
+            .set({ stock: variantAfter, updatedAt: new Date() })
+            .where(eq(productVariants.id, item.variantId));
+        }
         await logMovement(tx, {
-          productId: l.productId,
-          productName:
-            sold.find((s) => s.productId === l.productId)?.productName ?? "",
+          productId: item.productId,
+          variantId: item.variantId,
+          size: item.size,
+          nicotine: item.nicotine,
+          priceType: item.priceType === "wholesale" ? "wholesale" : "retail",
+          productName: item.productName,
           delta: l.quantity,
-          stockAfter: after,
+          stockAfter: variantAfter ?? after,
           reason: "مرتجع",
           refType: "return",
           refId: returnId,
           userId: user.id,
           userName: user.name,
-          note: invoiceNo(saleId),
+          note: `${invoiceNo(saleId)} • السبب: ${reason}`,
         });
       }
-      for (const l of exchange) {
-        const after = (running.get(l.productId) ?? 0) - l.quantity;
-        running.set(l.productId, after);
+      for (const { line: l, product: p, variant: v } of exchangeResolved) {
+        const after = (running.get(p.id) ?? 0) - l.quantity;
+        running.set(p.id, after);
         await tx
           .update(products)
           .set({ stock: after, updatedAt: new Date() })
-          .where(eq(products.id, l.productId));
+          .where(eq(products.id, p.id));
+        let variantAfter: number | undefined;
+        if (l.variantId !== null) {
+          variantAfter = (runningVariants.get(l.variantId) ?? 0) - l.quantity;
+          runningVariants.set(l.variantId, variantAfter);
+          await tx
+            .update(productVariants)
+            .set({ stock: variantAfter, updatedAt: new Date() })
+            .where(eq(productVariants.id, l.variantId));
+        }
         await logMovement(tx, {
-          productId: l.productId,
-          productName: prodMap.get(l.productId)?.name ?? "",
+          productId: p.id,
+          variantId: l.variantId,
+          size: v?.size ?? "",
+          nicotine: v?.nicotine ?? "",
+          priceType: l.priceType === "wholesale" ? "wholesale" : "retail",
+          productName: p.name,
           delta: -l.quantity,
-          stockAfter: after,
+          stockAfter: variantAfter ?? after,
           reason: "استبدال",
           refType: "return",
           refId: returnId,
           userId: user.id,
           userName: user.name,
-          note: invoiceNo(saleId),
+          note: `${invoiceNo(saleId)} • السبب: ${reason}`,
         });
       }
 
@@ -262,7 +378,7 @@ export async function POST(req: Request) {
           returned.length && exchange.length ? "استبدال" : returned.length ? "مرتجع" : "استبدال",
         entity: "مرتجع",
         entityId: returnId,
-        details: `فاتورة ${invoiceNo(saleId)} — ${returned.length} مرتجع / ${exchange.length} بديل${
+        details: `فاتورة ${invoiceNo(saleId)} — ${returned.length} مرتجع / ${exchange.length} بديل — السبب: ${reason}${
           netRefund !== 0 ? ` • الفرق ${f2(netRefund)}` : " • بدون فرق مالي"
         }${note ? ` — ${note}` : ""}`,
       });

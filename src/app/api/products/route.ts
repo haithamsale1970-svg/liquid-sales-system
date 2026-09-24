@@ -1,11 +1,12 @@
 import { and, desc, eq, ilike, or } from "drizzle-orm";
 import { db } from "@/db";
-import { productFields, products } from "@/db/schema";
+import { productFields, productVariants, products } from "@/db/schema";
 import { bad, isErr, logActivity, ok, readBody, requireUser, type DbOrTx } from "@/lib/api";
 import { logMovement } from "@/lib/inventory";
 import {
   f2,
   loadFieldsMap,
+  loadVariantsMap,
   mapProduct,
   parseProductInput,
 } from "@/lib/products";
@@ -36,9 +37,21 @@ export async function GET(req: Request) {
     .where(conds.length ? and(...conds) : undefined)
     .orderBy(desc(products.createdAt));
 
-  const fieldsMap = await loadFieldsMap(rows.map((r) => r.id));
+  const [fieldsMap, variantsMap] = await Promise.all([
+    loadFieldsMap(rows.map((r) => r.id)),
+    loadVariantsMap(rows.map((r) => r.id)),
+  ]);
   // المستخدم العادي لا يرى الكلف أبدًا — تُصفَّر قبل الإرسال.
-  return ok(rows.map((r) => mapProduct(r, fieldsMap.get(r.id) ?? [], { hideCost: !isAdmin })));
+  return ok(
+    rows.map((r) =>
+      mapProduct(
+        r,
+        fieldsMap.get(r.id) ?? [],
+        variantsMap.get(r.id) ?? [],
+        { hideCost: !isAdmin },
+      ),
+    ),
+  );
 }
 
 export async function POST(req: Request) {
@@ -70,7 +83,8 @@ export async function POST(req: Request) {
       .returning({ id: products.id });
     const id = rows[0].id;
     // رصيد افتتاحي — يُسجّل كحركة دخول في سجل المخزون.
-    if (data.stock > 0) {
+    // عند وجود متغيرات، يُسجّل الرصيد لكل متغير فقط لتجنب مضاعفة المخزون.
+    if (data.stock > 0 && !data.variants.length) {
       await logMovement(tx, {
         productId: id,
         productName: data.name,
@@ -87,6 +101,48 @@ export async function POST(req: Request) {
       await tx.insert(productFields).values(
         data.fields.map((f) => ({ productId: id, label: f.label, value: f.value })),
       );
+    }
+    if (data.variants.length) {
+      const createdVariants = await tx
+        .insert(productVariants)
+        .values(
+          data.variants.map((v) => ({
+            productId: id,
+            size: v.size,
+            nicotine: v.nicotine,
+            retailPrice: f2(v.retailPrice),
+            wholesalePrice: f2(v.wholesalePrice),
+            cost: f2(v.cost),
+            stock: v.stock,
+            lowStockAt: v.lowStockAt,
+            active: true,
+          })),
+        )
+        .returning({
+          id: productVariants.id,
+          size: productVariants.size,
+          nicotine: productVariants.nicotine,
+          stock: productVariants.stock,
+        });
+      for (const v of createdVariants) {
+        if (v.stock > 0) {
+          await logMovement(tx, {
+            productId: id,
+            variantId: v.id,
+            size: v.size,
+            nicotine: v.nicotine,
+            priceType: "retail",
+            productName: `${data.name} — ${v.size} / ${v.nicotine}`,
+            delta: v.stock,
+            stockAfter: v.stock,
+            reason: "رصيد افتتاحي",
+            refType: "product",
+            refId: id,
+            userId: user.id,
+            userName: user.name,
+          });
+        }
+      }
     }
     await logActivity(tx, {
       userId: user.id,

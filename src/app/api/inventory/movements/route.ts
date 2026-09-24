@@ -47,7 +47,11 @@ export async function GET(req: Request) {
       rows.map((r) => ({
         id: r.id,
         productId: r.productId,
+        variantId: r.variantId,
         productName: r.productName,
+        size: r.size,
+        nicotine: r.nicotine,
+        priceType: r.priceType === "wholesale" ? "wholesale" : "retail",
         direction: (r.direction === "out" ? "out" : "in") as "in" | "out",
         delta: r.delta,
         stockAfter: r.stockAfter,
