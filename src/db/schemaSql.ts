@@ -109,6 +109,8 @@ CREATE TABLE IF NOT EXISTS "clients" (
   "phone" text DEFAULT '' NOT NULL,
   "phone2" text DEFAULT '' NOT NULL,
   "address" text DEFAULT '' NOT NULL,
+  "google_maps_url" text DEFAULT '' NOT NULL,
+  "distribution_map_url" text DEFAULT '' NOT NULL,
   "notes" text DEFAULT '' NOT NULL,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -344,4 +346,6 @@ ALTER TABLE "inventory_movements" ADD COLUMN IF NOT EXISTS "variant_id" integer;
 ALTER TABLE "inventory_movements" ADD COLUMN IF NOT EXISTS "size" text DEFAULT '' NOT NULL;
 ALTER TABLE "inventory_movements" ADD COLUMN IF NOT EXISTS "nicotine" text DEFAULT '' NOT NULL;
 ALTER TABLE "inventory_movements" ADD COLUMN IF NOT EXISTS "price_type" text DEFAULT 'retail' NOT NULL;
+ALTER TABLE "clients" ADD COLUMN IF NOT EXISTS "google_maps_url" text DEFAULT '' NOT NULL;
+ALTER TABLE "clients" ADD COLUMN IF NOT EXISTS "distribution_map_url" text DEFAULT '' NOT NULL;
 `;

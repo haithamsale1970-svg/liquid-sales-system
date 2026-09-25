@@ -3,7 +3,7 @@
 // بحث ذكي عن العميل (Autocomplete) داخل الفاتورة:
 // - نتائج مطابقة فورية أثناء الكتابة (الاسم / الهاتف / الهاتف الثاني).
 // - تنقّل بالكيبورد (↑ ↓ Enter Esc) — يعمل مع الماوس ولوحة المفاتيح.
-// - زر سريع لإضافة عميل جديد إذا لم يكن مسجّلًا (مع تعبئة الاسم المكتوب).
+// - زر سريع لإضافة عميل جديد متاح للمدير فقط.
 // - يعرض تاريخ العميل المختصر: عدد الطلبات، إجمالي مشترياته، دينه، آخر طلب.
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -35,7 +35,7 @@ export default function ClientPicker({
   value,
   onChange,
   onQuickAdd,
-  canQuickAdd = true,
+  canQuickAdd = false,
 }: {
   clients: ClientDTO[];
   value: string;

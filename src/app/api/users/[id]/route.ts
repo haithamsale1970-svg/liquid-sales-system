@@ -81,17 +81,6 @@ export async function PATCH(req: Request, ctx: Ctx) {
     }
   }
 
-  if (typeof body.canEditClients === "boolean") {
-    if (user.role !== "admin")
-      return bad("تغيير صلاحية تعديل العملاء للمدير فقط", 403);
-    if (isSelf) return bad("لا يمكنك تغيير صلاحيتك بنفسك");
-    const canEditClients = body.canEditClients;
-    if (canEditClients !== target.canEditClients) {
-      updates.canEditClients = canEditClients;
-      changes.push("صلاحية تعديل العملاء");
-    }
-  }
-
   if (!Object.keys(updates).length) return bad("لا يوجد تعديل");
 
   // self-service password change requires the current password

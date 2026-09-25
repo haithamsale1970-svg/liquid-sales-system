@@ -9,6 +9,16 @@ export const CLIENT_TYPES = {
 } as const;
 export type ClientType = keyof typeof CLIENT_TYPES;
 
+export const CLIENT_SECTIONS = {
+  individuals: "العملاء الأفراد",
+  shops: "المحلات والمتاجر",
+} as const;
+export type ClientSection = keyof typeof CLIENT_SECTIONS;
+
+export function isShopClient(type: ClientType): boolean {
+  return type === "store" || type === "company";
+}
+
 export const SHIPPING_TYPES = {
   none: "بدون توصيل",
   internal: "توصيل داخلي",
@@ -177,7 +187,6 @@ export type SessionUserDTO = {
   username: string;
   name: string;
   role: "admin" | "user";
-  canEditClients: boolean;
 };
 
 export type ProductField = { id?: number; label: string; value: string };
@@ -219,6 +228,8 @@ export type ClientDTO = {
   /** رقم هاتف ثانٍ — يُستخدم للتواصل ويظهر في البحث السريع بالفاتورة. */
   phone2: string;
   address: string;
+  googleMapsUrl: string;
+  distributionMapUrl: string;
   notes: string;
   createdAt: string;
   ordersCount: number;
@@ -238,6 +249,8 @@ export type ClientHistoryDTO = {
     phone: string;
     phone2: string;
     address: string;
+    googleMapsUrl: string;
+    distributionMapUrl: string;
     notes: string;
     createdAt: string;
     userName?: string;

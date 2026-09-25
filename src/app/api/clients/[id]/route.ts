@@ -10,11 +10,11 @@ import {
   num,
   ok,
   readBody,
+  requireAdmin,
   requireUser,
 } from "@/lib/api";
-import { getAppSettings } from "@/lib/settings";
-import { ensureSchema } from "@/lib/migrate";
 import { CLIENT_TYPES, invoiceNo, type ClientType } from "@/lib/shared";
+import { ensureSchema } from "@/lib/migrate";
 
 export const dynamic = "force-dynamic";
 
@@ -142,6 +142,8 @@ export async function GET(_req: Request, ctx: Ctx) {
         phone: client.phone,
         phone2: client.phone2 ?? "",
         address: client.address,
+        googleMapsUrl: client.googleMapsUrl,
+        distributionMapUrl: client.distributionMapUrl,
         notes: client.notes,
         createdAt: client.createdAt.toISOString(),
       },
@@ -161,23 +163,12 @@ export async function GET(_req: Request, ctx: Ctx) {
 }
 
 export async function PATCH(req: Request, ctx: Ctx) {
-  const auth = await requireUser();
+  const auth = await requireAdmin();
   if (isErr(auth)) return auth.res;
   const { user } = auth;
-  const isAdmin = user.role === "admin";
   const { id: rawId } = await ctx.params;
   const id = Math.trunc(num(rawId));
   if (!id) return bad("معرّف غير صالح");
-
-  // الإعداد العام مفتاح master، ثم يُمنح الموظف صلاحية فردية من صفحة المستخدمين.
-  if (!isAdmin) {
-    const settings = await getAppSettings();
-    if (!settings.allowUsersEditClients || !user.canEditClients)
-      return bad(
-        "تعديل بيانات العملاء يتطلب صلاحية المدير — اطلب من الماستر تفعيل الإعداد العام ثم منح صلاحية هذا الموظف",
-        403,
-      );
-  }
 
   const body = await readBody<Record<string, unknown>>(req);
   if (!body) return bad("طلب غير صالح");
@@ -192,44 +183,40 @@ export async function PATCH(req: Request, ctx: Ctx) {
     const before = beforeRows[0];
     if (!before) return bad("العميل غير موجود", 404);
 
-    const nextPhone = cleanPhone(body.phone);
-    const nextPhone2 = cleanPhone(body.phone2);
-
-    // الموظف يصلح بيانات التواصل (الهاتف/الهاتف الثاني/العنوان/الملاحظات) فقط،
-    // أما الاسم والنوع فيبقيان للمدير حفاظًا على هوية العميل وسجلاته.
-    const name = isAdmin ? String(body.name ?? "").trim() : before.name;
-    if (isAdmin && name.length < 2) return bad("اسم العميل مطلوب");
+    const name = String(body.name ?? "").trim();
+    if (name.length < 2) return bad("اسم العميل مطلوب");
     const typeRaw = String(body.type ?? before.type);
     const type = (
       TYPE_VALUES.has(typeRaw) ? typeRaw : before.type
     ) as ClientType;
-    const address = isAdmin
-      ? String(body.address ?? "").trim().slice(0, 200)
-      : before.address;
-    const notes = isAdmin
-      ? String(body.notes ?? "").trim().slice(0, 300)
-      : before.notes;
+    const phone = cleanPhone(body.phone);
+    const phone2 = cleanPhone(body.phone2);
+    const address = type === "individual"
+      ? ""
+      : String(body.address ?? "").trim().slice(0, 200);
+    const googleMapsUrl = type === "individual"
+      ? ""
+      : String(body.googleMapsUrl ?? "").trim().slice(0, 500);
+    const distributionMapUrl = type === "individual"
+      ? ""
+      : String(body.distributionMapUrl ?? "").trim().slice(0, 500);
+    const notes = String(body.notes ?? "").trim().slice(0, 300);
 
     const changes: string[] = [];
-    if (nextPhone !== before.phone)
-      changes.push(
-        `هاتف: "${before.phone || "—"}" ← "${nextPhone || "—"}"`,
-      );
-    if (nextPhone2 !== (before.phone2 ?? ""))
-      changes.push(
-        `هاتف 2: "${before.phone2 || "—"}" ← "${nextPhone2 || "—"}"`,
-      );
     if (name !== before.name) changes.push(`الاسم ← "${name}"`);
-    if (type !== before.type)
-      changes.push(`النوع ← ${CLIENT_TYPES[type as ClientType]}`);
+    if (type !== before.type) changes.push(`النوع ← ${CLIENT_TYPES[type]}`);
+    if (phone !== before.phone) changes.push(`هاتف: "${before.phone || "—"}" ← "${phone || "—"}"`);
+    if (phone2 !== before.phone2) changes.push(`هاتف 2: "${before.phone2 || "—"}" ← "${phone2 || "—"}"`);
     if (address !== before.address) changes.push("العنوان");
+    if (googleMapsUrl !== before.googleMapsUrl) changes.push("رابط Google Maps");
+    if (distributionMapUrl !== before.distributionMapUrl) changes.push("خريطة التوزيع");
     if (notes !== before.notes) changes.push("الملاحظات");
 
     if (!changes.length) return ok({ ok: true, unchanged: true });
 
     await db
       .update(clients)
-      .set({ name: name.slice(0, 120), type, phone: nextPhone, phone2: nextPhone2, address, notes })
+      .set({ name: name.slice(0, 120), type, phone, phone2, address, googleMapsUrl, distributionMapUrl, notes })
       .where(eq(clients.id, id));
 
     await logActivity(db, {
@@ -238,9 +225,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
       action: "تعديل عميل",
       entity: "عميل",
       entityId: id,
-      details: `${isAdmin ? "تعديل" : "تصحيح بيانات"} العميل "${
-        before.name
-      }" — ${changes.join(" • ")}`,
+      details: `تعديل العميل "${before.name}" — ${changes.join(" • ")}`,
     });
     return ok({ ok: true });
   } catch (e) {
@@ -249,10 +234,9 @@ export async function PATCH(req: Request, ctx: Ctx) {
 }
 
 export async function DELETE(_req: Request, ctx: Ctx) {
-  const auth = await requireUser();
+  const auth = await requireAdmin();
   if (isErr(auth)) return auth.res;
   const { user } = auth;
-  if (user.role !== "admin") return bad("حذف العملاء يتطلب صلاحية المدير", 403);
   const { id: rawId } = await ctx.params;
   const id = Math.trunc(num(rawId));
   if (!id) return bad("معرّف غير صالح");

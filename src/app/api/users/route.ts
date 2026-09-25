@@ -24,7 +24,6 @@ export async function GET() {
         username: users.username,
         name: users.name,
         role: users.role,
-        canEditClients: users.canEditClients,
         createdAt: users.createdAt,
         salesCount: sql<number>`coalesce((select count(*)::int from sales s where s.user_id = ${users.id}), 0)`,
       })
@@ -49,8 +48,6 @@ export async function POST(req: Request) {
   const name = String(body.name ?? "").trim();
   const password = String(body.password ?? "");
   const role = body.role === "admin" ? "admin" : "user";
-  const canEditClients = body.canEditClients === true;
-
   if (!/^[a-z0-9_.-]{3,30}$/.test(username))
     return bad("اسم المستخدم: 3-30 حرفًا إنجليزيًا أو أرقامًا بدون مسافات");
   if (name.length < 2) return bad("الاسم المعروض مطلوب");
@@ -67,7 +64,7 @@ export async function POST(req: Request) {
     const passwordHash = await hashPassword(password);
     const rows = await db
       .insert(users)
-      .values({ username, name: name.slice(0, 80), passwordHash, role, canEditClients })
+      .values({ username, name: name.slice(0, 80), passwordHash, role })
       .returning({ id: users.id });
 
     await logActivity(db, {

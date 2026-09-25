@@ -13,7 +13,6 @@ export type SessionUser = {
   username: string;
   name: string;
   role: "admin" | "user";
-  canEditClients: boolean;
 };
 
 export async function createSession(userId: number) {
@@ -45,7 +44,6 @@ export async function getSessionUser(): Promise<SessionUser | null> {
         username: users.username,
         name: users.name,
         role: users.role,
-        canEditClients: users.canEditClients,
       })
       .from(sessions)
       .innerJoin(users, eq(sessions.userId, users.id))
@@ -58,7 +56,6 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       username: row.username,
       name: row.name,
       role: row.role,
-      canEditClients: row.canEditClients,
     };
   } catch {
     return null;

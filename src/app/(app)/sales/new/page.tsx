@@ -35,6 +35,7 @@ import {
   fmtDate,
   fmtNum,
   invoiceNo,
+  isShopClient,
   relTime,
   type ClientDTO,
   type ClientHistoryDTO,
@@ -67,6 +68,9 @@ export default function NewSalePage() {
     type: "individual" as ClientType,
     phone: "",
     phone2: "",
+    address: "",
+    googleMapsUrl: "",
+    distributionMapUrl: "",
   });
   const [addingClient, setAddingClient] = useState(false);
 
@@ -133,8 +137,7 @@ export default function NewSalePage() {
   );
   // المستخدم العادي محجوب عن الكلف/الأرباح — نحسب الربح للأدمن فقط للعرض.
   const isAdmin = me?.role === "admin";
-  const canManageClients =
-    isAdmin || (settings?.allowUsersEditClients === true && me?.canEditClients === true);
+  const canManageClients = isAdmin;
   const profit = isAdmin
     ? cartEntries.reduce(
         (a, x) =>
@@ -295,7 +298,15 @@ export default function NewSalePage() {
       setClients(all);
       setClientId(String(r.id));
       setAddClientOpen(false);
-      setNewClient({ name: "", type: "individual", phone: "", phone2: "" });
+      setNewClient({
+        name: "",
+        type: "individual",
+        phone: "",
+        phone2: "",
+        address: "",
+        googleMapsUrl: "",
+        distributionMapUrl: "",
+      });
     } catch (e) {
       toast.push("err", e instanceof Error ? e.message : "تعذر الإضافة");
     } finally {
@@ -560,12 +571,26 @@ export default function NewSalePage() {
             {addClientOpen && canManageClients && (
               <div className="mt-2 space-y-2 rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-3">
                 <Input placeholder="اسم العميل" value={newClient.name} onChange={(e) => setNewClient((n) => ({ ...n, name: e.target.value }))} />
+
                 <div className="flex gap-2">
-                  <Select value={newClient.type} onChange={(e) => setNewClient((n) => ({ ...n, type: e.target.value as ClientType }))}>
-                    <option value="store">محل</option>
-                    <option value="company">شركة</option>
-                    <option value="individual">فرد</option>
-                  </Select>
+                  <Select
+                     value={isShopClient(newClient.type) ? "shops" : "individuals"}
+                     onChange={(e) => {
+                       const shop = e.target.value === "shops";
+                       setNewClient((n) => ({
+                         ...n,
+                         type: shop ? "store" : "individual",
+                         ...(shop ? {} : { address: "", googleMapsUrl: "", distributionMapUrl: "" }),
+                       }));
+                     }}
+                     aria-label="قسم العميل"
+                   >
+                     <option value="individuals">العملاء الأفراد</option>
+                     <option value="shops">المحلات والمتاجر</option>
+                   </Select>
+                    
+                    
+                    
                   <Input placeholder="الهاتف" dir="ltr" className="num" value={newClient.phone} onChange={(e) => setNewClient((n) => ({ ...n, phone: e.target.value }))} />
                 </div>
                 <Input
@@ -575,6 +600,30 @@ export default function NewSalePage() {
                   value={newClient.phone2}
                   onChange={(e) => setNewClient((n) => ({ ...n, phone2: e.target.value }))}
                 />
+                 {isShopClient(newClient.type) && (
+                   <>
+                     <Input
+                       placeholder="عنوان المحل"
+                       value={newClient.address}
+                       onChange={(e) => setNewClient((n) => ({ ...n, address: e.target.value }))}
+                     />
+                     <Input
+                       placeholder="Google Maps Location URL"
+                       type="url"
+                       dir="ltr"
+                       value={newClient.googleMapsUrl}
+                       onChange={(e) => setNewClient((n) => ({ ...n, googleMapsUrl: e.target.value }))}
+                     />
+                     <Input
+                       placeholder="Distribution Map URL"
+                       type="url"
+                       dir="ltr"
+                       value={newClient.distributionMapUrl}
+                       onChange={(e) => setNewClient((n) => ({ ...n, distributionMapUrl: e.target.value }))}
+                     />
+                   </>
+                 )}
+
                 <Btn size="sm" variant="primary" onClick={quickAddClient} loading={addingClient} disabled={newClient.name.trim().length < 2} className="w-full">
                   حفظ العميل واختياره
                 </Btn>

@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       details: `قام ${user.name} بتسجيل الدخول`,
     });
     const res = ok(
-      { id: user.id, username: user.username, name: user.name, role: user.role, canEditClients: user.canEditClients },
+      { id: user.id, username: user.username, name: user.name, role: user.role },
       { status: 200 },
     );
     res.cookies.set(SESSION_COOKIE, token, {

@@ -29,7 +29,6 @@ export type UserRow = {
   username: string;
   name: string;
   role: "admin" | "user";
-  canEditClients: boolean;
   createdAt: string;
   salesCount: number;
 };
@@ -40,7 +39,7 @@ export default function UsersPage() {
   const [rows, setRows] = useState<UserRow[] | null>(null);
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({ username: "", name: "", password: "", role: "user", canEditClients: false });
+  const [form, setForm] = useState({ username: "", name: "", password: "", role: "user" });
   const [saving, setSaving] = useState(false);
 
   const [pwTarget, setPwTarget] = useState<UserRow | null>(null);
@@ -72,7 +71,7 @@ export default function UsersPage() {
       await api("/api/users", { method: "POST", body: form });
       toast.push("ok", `تم إنشاء حساب "${form.username}"`);
       setCreateOpen(false);
-      setForm({ username: "", name: "", password: "", role: "user", canEditClients: false });
+      setForm({ username: "", name: "", password: "", role: "user" });
       await load();
     } catch (e) {
       toast.push("err", e instanceof Error ? e.message : "تعذر الإنشاء");
@@ -88,17 +87,6 @@ export default function UsersPage() {
       await load();
     } catch (e) {
       toast.push("err", e instanceof Error ? e.message : "تعذر التحديث");
-      await load();
-    }
-  }
-
-  async function changeClientPermission(u: UserRow, canEditClients: boolean) {
-    try {
-      await api(`/api/users/${u.id}`, { method: "PATCH", body: { canEditClients } });
-      toast.push("ok", `تم تحديث صلاحية تعديل بيانات العميل لـ "${u.name}"`);
-      await load();
-    } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر تحديث الصلاحية");
       await load();
     }
   }
@@ -156,7 +144,6 @@ export default function UsersPage() {
                 <th>المستخدم</th>
                 <th>اسم الدخول</th>
                 <th>الصلاحية</th>
-                <th>تعديل بيانات العملاء</th>
                 <th>الفواتير</th>
                 <th>تاريخ الإنشاء</th>
                 <th></th>
@@ -196,20 +183,7 @@ export default function UsersPage() {
                         <option value="user">مستخدم (شريك)</option>
                       </Select>
                     </td>
-                     <td>
-                       {u.role === "admin" ? (
-                         <Badge tone="mint">صلاحية كاملة</Badge>
-                       ) : (
-                         <Select
-                           value={u.canEditClients ? "yes" : "no"}
-                           onChange={(e) => changeClientPermission(u, e.target.value === "yes")}
-                           className="!w-auto !py-1.5 !text-[12px]"
-                         >
-                           <option value="no">غير مسموح</option>
-                           <option value="yes">مسموح</option>
-                         </Select>
-                       )}
-                     </td>
+
                     <td><span className="num font-black">{fmtNum(u.salesCount)}</span></td>
                     <td><span className="text-[12px] font-bold text-[var(--faint)]">{fmtDate(u.createdAt)}</span></td>
                     <td>
@@ -261,15 +235,7 @@ export default function UsersPage() {
               </Select>
             </Field>
           </div>
-           <Field label="صلاحية تعديل بيانات العملاء" hint="تُمنح لكل موظف على حدة من صفحة المستخدمين">
-             <Select
-               value={form.canEditClients ? "yes" : "no"}
-               onChange={(e) => setForm((f) => ({ ...f, canEditClients: e.target.value === "yes" }))}
-             >
-               <option value="no">غير مسموح</option>
-               <option value="yes">مسموح</option>
-             </Select>
-           </Field>
+
           <div className="flex justify-end gap-2 border-t border-[var(--line-soft)] pt-4">
             <Btn onClick={() => setCreateOpen(false)}>إلغاء</Btn>
             <Btn

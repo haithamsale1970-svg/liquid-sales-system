@@ -8,11 +8,11 @@ import {
   logActivity,
   ok,
   readBody,
+  requireAdmin,
   requireUser,
 } from "@/lib/api";
 import type { ClientDTO } from "@/lib/shared";
 import { CLIENT_TYPES } from "@/lib/shared";
-import { getAppSettings } from "@/lib/settings";
 import { ensureSchema } from "@/lib/migrate";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +42,8 @@ export async function GET(req: Request) {
         phone: clients.phone,
         phone2: clients.phone2,
         address: clients.address,
+        googleMapsUrl: clients.googleMapsUrl,
+        distributionMapUrl: clients.distributionMapUrl,
         notes: clients.notes,
         createdAt: clients.createdAt,
         ordersCount: sql<number>`count(*) filter (where ${sales.id} is not null and ${sales.status} = 'completed')::int`,
@@ -72,6 +74,8 @@ export async function GET(req: Request) {
       phone: r.phone,
       phone2: r.phone2 ?? "",
       address: r.address,
+      googleMapsUrl: r.googleMapsUrl,
+      distributionMapUrl: r.distributionMapUrl,
       notes: r.notes,
       createdAt: r.createdAt.toISOString(),
       ordersCount: r.ordersCount,
@@ -86,7 +90,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const auth = await requireUser();
+  const auth = await requireAdmin();
   if (isErr(auth)) return auth.res;
   const { user } = auth;
 
@@ -101,19 +105,18 @@ export async function POST(req: Request) {
     | "individual";
   const phone = cleanPhone(body.phone);
   const phone2 = cleanPhone(body.phone2);
+  const address = type === "individual"
+    ? ""
+    : String(body.address ?? "").trim().slice(0, 200);
+  const googleMapsUrl = type === "individual"
+    ? ""
+    : String(body.googleMapsUrl ?? "").trim().slice(0, 500);
+  const distributionMapUrl = type === "individual"
+    ? ""
+    : String(body.distributionMapUrl ?? "").trim().slice(0, 500);
+  const notes = String(body.notes ?? "").trim().slice(0, 300);
 
   await ensureSchema();
-  // الإعداد العام يعمل ك مفتاح master، والصلاحية النهائية لكل موظف
-  // تُمنح من صفحة المستخدمين (abood / hasan ...).
-  if (user.role !== "admin") {
-    const settings = await getAppSettings();
-    if (!settings.allowUsersEditClients || !user.canEditClients)
-      return bad(
-        "إضافة العملاء تتطلب صلاحية المدير — اطلب من الماستر تفعيل الإعداد العام ثم منح صلاحية هذا الموظف من صفحة المستخدمين",
-        403,
-      );
-  }
-
   try {
     const rows = await db
       .insert(clients)
@@ -122,8 +125,10 @@ export async function POST(req: Request) {
         type,
         phone,
         phone2,
-        address: String(body.address ?? "").trim().slice(0, 200),
-        notes: String(body.notes ?? "").trim().slice(0, 300),
+        address,
+        googleMapsUrl,
+        distributionMapUrl,
+        notes,
       })
       .returning({ id: clients.id });
 

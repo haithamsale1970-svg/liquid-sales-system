@@ -262,21 +262,11 @@ export default function SettingsPage() {
                   <Toggle value={draft.showClientsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showClientsForUsers: v }))} label="العملاء" hint="إخفاؤها يمنع المستخدم من فتح الصفحة" />
                   <Toggle value={draft.showReportsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showReportsForUsers: v }))} label="التقارير" hint="إخفاؤها يمنع المستخدم من فتح الصفحة" />
                   <p className="pt-1.5 text-[12px] font-extrabold text-[var(--muted)]">
-                    صلاحيات الموظفين في بيانات العملاء (abood / hasan)
+                    إدارة العملاء والأسعار والحذف محصورة بحساب المدير
                   </p>
-                  <Toggle
-                    value={draft.allowUsersEditClients}
-                    onChange={(v) => setDraft((d) => ({ ...d, allowUsersEditClients: v }))}
-                    label="تصحيح أرقام الهواتف وإضافة رقم هاتف ثانٍ"
-                    hint="تفعيلها يسمح للموظف بإضافة عميل جديد وتعديل أرقام الهواتف والعنوان والملاحظات — أما الاسم والنوع والحذف فتبقى للمدير"
-                    onLabel="مُفعّلة"
-                    offLabel="موقوفة"
-                  />
                   <p className="text-[11px] font-semibold leading-5 text-[var(--faint)]">
-                    كل تعديل يجري على بيانات عميل يُسجَّل في سجل النشاط باسم الموظف
-                    (القيمة القديمة ← الجديدة) لمراجعة الأدمن.
+                    كل عملية حساسة تُنفّذ من واجهة المدير فقط، وتُسجّل في سجل النشاط باسم المنفذ.
                   </p>
-                  <p className="text-[11px] font-semibold leading-5 text-[var(--faint)]">ملاحظة: الكلف والأرباح مخفية نهائيًا عن المستخدمين العاديين في كل الصفحات والـ API — وصلاحياتهم محصورة بإنشاء فواتير البيع فقط.</p>
                 </div>
                 <Btn variant="primary" onClick={saveSettings} loading={savingSettings}>حفظ إعدادات الأدمن</Btn>
               </>

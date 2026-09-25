@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Building2,
+  MapPinned,
   Pencil,
   Phone,
   Plus,
@@ -33,13 +34,16 @@ import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { useCurrency } from "@/components/useCurrency";
 import { formatMoneyJOD } from "@/lib/currency";
 import {
+  CLIENT_SECTIONS,
   CLIENT_TYPES,
   cls,
   fmtDate,
   fmtDateTime,
   fmtNum,
   invoiceNo,
+  isShopClient,
   type ClientDTO,
+  type ClientSection,
   type ClientType,
   type SessionUserDTO,
   type ShippingType,
@@ -64,6 +68,8 @@ type ClientDetail = {
     phone: string;
     phone2: string;
     address: string;
+    googleMapsUrl: string;
+    distributionMapUrl: string;
     notes: string;
     createdAt: string;
   };
@@ -100,6 +106,8 @@ const EMPTY_FORM = {
   phone: "",
   phone2: "",
   address: "",
+  googleMapsUrl: "",
+  distributionMapUrl: "",
   notes: "",
 };
 
@@ -109,6 +117,7 @@ export default function ClientsPage() {
   const [me, setMe] = useState<SessionUserDTO | null>(null);
   const [items, setItems] = useState<ClientDTO[] | null>(null);
   const [q, setQ] = useState("");
+  const [section, setSection] = useState<ClientSection>("individuals");
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ClientDTO | null>(null);
@@ -123,11 +132,9 @@ export default function ClientsPage() {
   const [deleting, setDeleting] = useState(false);
 
   const isAdmin = me?.role === "admin";
-  // صلاحية الموظفين (abood / hasan): يتحكم بها الأدمن من صفحة الإعدادات،
-  // وتسمح لهم بإضافة عملاء وتصحيح أرقام الهواتف (مع رقم هاتف ثانٍ).
-  const canEdit =
-    isAdmin || (settings?.allowUsersEditClients === true && me?.canEditClients === true);
+  const canEdit = isAdmin;
   const canDelete = isAdmin;
+  const formIsShop = isShopClient(form.type);
 
   async function load() {
     try {
@@ -146,10 +153,12 @@ export default function ClientsPage() {
 
   const filtered = useMemo(() => {
     const n = q.trim().toLowerCase();
-    return (items ?? []).filter(
-      (c) => !n || `${c.name} ${c.phone} ${c.phone2 ?? ""}`.toLowerCase().includes(n),
-    );
-  }, [items, q]);
+    return (items ?? []).filter((c) => {
+      const inSection = section === "shops" ? isShopClient(c.type) : c.type === "individual";
+      const matches = !n || `${c.name} ${c.phone} ${c.phone2 ?? ""}`.toLowerCase().includes(n);
+      return inSection && matches;
+    });
+  }, [items, q, section]);
 
   async function openDetail(id: number) {
     setDetailId(id);
@@ -165,17 +174,28 @@ export default function ClientsPage() {
     }
   }
 
-  function openCreate() {
+  function openCreate(nextSection: ClientSection = section) {
     if (!canEdit) return;
+    setSection(nextSection);
     setEditing(null);
-    setForm(EMPTY_FORM);
+    setForm({ ...EMPTY_FORM, type: nextSection === "shops" ? "store" : "individual" });
     setFormOpen(true);
   }
 
   function openEdit(c: ClientDTO) {
     if (!canEdit) return;
     setEditing(c);
-    setForm({ name: c.name, type: c.type, phone: c.phone, phone2: c.phone2 ?? "", address: c.address, notes: c.notes });
+    setSection(isShopClient(c.type) ? "shops" : "individuals");
+    setForm({
+      name: c.name,
+      type: c.type,
+      phone: c.phone,
+      phone2: c.phone2 ?? "",
+      address: c.address,
+      googleMapsUrl: c.googleMapsUrl ?? "",
+      distributionMapUrl: c.distributionMapUrl ?? "",
+      notes: c.notes,
+    });
     setFormOpen(true);
   }
 
@@ -217,6 +237,24 @@ export default function ClientsPage() {
   return (
     <div className="space-y-5">
       <div className="anim-in flex flex-wrap items-center gap-2.5">
+        <div className="flex w-full gap-2 rounded-2xl border border-[var(--line-soft)] bg-white/[.02] p-1 sm:w-auto">
+          {(["individuals", "shops"] as ClientSection[]).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setSection(key)}
+              className={cls(
+                "flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-extrabold transition-colors sm:flex-none",
+                section === key
+                  ? "bg-[var(--mint)] text-[#04211a]"
+                  : "text-[var(--muted)] hover:bg-white/[.05]",
+              )}
+            >
+              {key === "individuals" ? <User size={15} /> : <Store size={15} />}
+              {CLIENT_SECTIONS[key]}
+            </button>
+          ))}
+        </div>
         <div className="relative min-w-[220px] flex-1">
           <input
             className="inp ps-10"
@@ -226,11 +264,11 @@ export default function ClientsPage() {
           />
           <Search size={16} className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[var(--faint)]" />
         </div>
-      {canEdit && (
-        <Btn variant="primary" size="sm" onClick={openCreate}>
-          <Plus size={15} /> إضافة عميل
-        </Btn>
-      )}
+        {canEdit && (
+          <Btn variant="primary" size="sm" onClick={() => openCreate(section)}>
+            <Plus size={15} /> إضافة {section === "shops" ? "محل" : "فرد"}
+          </Btn>
+        )}
         <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
       </div>
 
@@ -245,11 +283,13 @@ export default function ClientsPage() {
           <Empty
             icon={<Users size={22} />}
             title="لا يوجد عملاء"
-            hint="أضف عملاءك (محلات / شركات / أفراد) لربطهم بالفواتير"
+            hint={canEdit ? "أضف عملاءك (محلات / متاجر / أفراد) لربطهم بالفواتير" : "لا يوجد عملاء مسجلون في هذا القسم"}
             action={
-              <Btn variant="primary" size="sm" onClick={openCreate}>
-                <Plus size={15} /> إضافة عميل
-              </Btn>
+              canEdit ? (
+                <Btn variant="primary" size="sm" onClick={() => openCreate(section)}>
+                  <Plus size={15} /> إضافة {section === "shops" ? "محل" : "فرد"}
+                </Btn>
+              ) : undefined
             }
           />
         ) : (
@@ -335,51 +375,76 @@ export default function ClientsPage() {
         icon={<Users size={17} />}
       >
         <div className="space-y-4">
-          {(isAdmin || !editing) && (
-            <Field label="اسم العميل *">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="الاسم *">
               <Input
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="محل النخبة / أحمد سامي…"
+                placeholder={formIsShop ? "اسم المحل أو المتجر" : "اسم العميل"}
               />
             </Field>
-          )}
-          <div className={cls("grid gap-4", isAdmin || !editing ? "grid-cols-2" : "grid-cols-1")}>
-            {(isAdmin || !editing) && (
-              <Field label="نوع العميل">
-                <Select
-                  value={form.type}
-                  onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as ClientType }))}
-                >
-                  <option value="store">محل</option>
-                  <option value="company">شركة</option>
-                  <option value="individual">فرد</option>
-                </Select>
-              </Field>
-            )}
+            <Field label="القسم">
+              <Select
+                value={formIsShop ? "shops" : "individuals"}
+                onChange={(e) => {
+                  const shop = e.target.value === "shops";
+                  setSection(shop ? "shops" : "individuals");
+                  setForm((f) => ({
+                    ...f,
+                    type: shop ? "store" : "individual",
+                    ...(shop ? {} : { googleMapsUrl: "", distributionMapUrl: "", address: "" }),
+                  }));
+                }}
+              >
+                <option value="individuals">العملاء الأفراد</option>
+                <option value="shops">المحلات والمتاجر</option>
+              </Select>
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
             <Field label="رقم الهاتف">
               <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="01xxxxxxxxx" dir="ltr" className="num" />
             </Field>
+            <Field label="رقم هاتف ثانٍ (اختياري)">
+              <Input
+                value={form.phone2}
+                onChange={(e) => setForm((f) => ({ ...f, phone2: e.target.value }))}
+                placeholder="07xxxxxxxx"
+                dir="ltr"
+                className="num"
+              />
+            </Field>
           </div>
-          <Field label="رقم هاتف ثانٍ (اختياري)" hint="يظهر في البحث السريع داخل الفاتورة للتواصل البديل">
-            <Input
-              value={form.phone2}
-              onChange={(e) => setForm((f) => ({ ...f, phone2: e.target.value }))}
-              placeholder="07xxxxxxxx"
-              dir="ltr"
-              className="num"
-            />
+          {formIsShop && (
+            <>
+              <Field label="العنوان" hint="العنوان التفصيلي للمحل">
+                <Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder="المحافظة — المنطقة — الشارع" />
+              </Field>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Google Maps Location" hint="رابط موقع المحل على الخريطة">
+                  <Input
+                    type="url"
+                    value={form.googleMapsUrl}
+                    onChange={(e) => setForm((f) => ({ ...f, googleMapsUrl: e.target.value }))}
+                    placeholder="https://maps.google.com/…"
+                    dir="ltr"
+                  />
+                </Field>
+                <Field label="Distribution Map" hint="رابط خريطة التوزيع الكبرى">
+                  <Input
+                    type="url"
+                    value={form.distributionMapUrl}
+                    onChange={(e) => setForm((f) => ({ ...f, distributionMapUrl: e.target.value }))}
+                    placeholder="https://maps.google.com/…"
+                    dir="ltr"
+                  />
+                </Field>
+              </div>
+            </>
+          )}
+          <Field label="ملاحظات">
+            <Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="شروط تعامل، أسعار خاصة…" />
           </Field>
-          {(isAdmin || !editing) && (
-            <Field label="العنوان">
-              <Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder="المحافظة — المنطقة — الشارع" />
-            </Field>
-          )}
-          {(isAdmin || !editing) && (
-            <Field label="ملاحظات">
-              <Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="شروط تعامل، أسعار خاصة…" />
-            </Field>
-          )}
           <div className="flex justify-end gap-2 border-t border-[var(--line-soft)] pt-4">
             <Btn onClick={() => setFormOpen(false)}>إلغاء</Btn>
             <Btn variant="primary" onClick={save} loading={saving} disabled={form.name.trim().length < 2}>
@@ -430,7 +495,30 @@ export default function ClientsPage() {
                   آخر طلب <span className="num">{fmtDate(detail.stats.lastOrderAt)}</span>
                 </Badge>
               )}
-              {detail.client.address && <Badge tone="slate">{detail.client.address}</Badge>}
+              {isShopClient(detail.client.type) && detail.client.address && (
+                 <Badge tone="slate">{detail.client.address}</Badge>
+               )}
+               {isShopClient(detail.client.type) && detail.client.googleMapsUrl && (
+                 <a
+                   href={detail.client.googleMapsUrl}
+                   target="_blank"
+                   rel="noreferrer"
+                   className="inline-flex items-center gap-1 text-[11.5px] font-extrabold text-[var(--mint)] hover:underline"
+                 >
+                   <MapPinned size={12} /> فتح موقع المحل
+                 </a>
+               )}
+               {isShopClient(detail.client.type) && detail.client.distributionMapUrl && (
+                 <a
+                   href={detail.client.distributionMapUrl}
+                   target="_blank"
+                   rel="noreferrer"
+                   className="inline-flex items-center gap-1 text-[11.5px] font-extrabold text-[var(--mint)] hover:underline"
+                 >
+                   <MapPinned size={12} /> خريطة التوزيع
+                 </a>
+               )}
+
               <span className="me-auto text-[11.5px] font-bold text-[var(--faint)]">
                 عميل منذ {fmtDate(detail.client.createdAt)}
               </span>

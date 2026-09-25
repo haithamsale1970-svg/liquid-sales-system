@@ -127,6 +127,10 @@ export const clients = pgTable(
     // رقم هاتف ثانٍ (اختياري) — لتسهيل التواصل وتصحيح أرقام العملاء.
     phone2: text("phone2").notNull().default(""),
     address: text("address").notNull().default(""),
+    /** رابط Google Maps لعميل من قسم المحلات. */
+    googleMapsUrl: text("google_maps_url").notNull().default(""),
+    /** رابط خريطة التوزيع الكبرى لقسم المحلات. */
+    distributionMapUrl: text("distribution_map_url").notNull().default(""),
     notes: text("notes").notNull().default(""),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

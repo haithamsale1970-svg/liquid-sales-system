@@ -36,8 +36,6 @@ export type AppSettings = {
   showReportsForUsers: boolean;
   showClientsForUsers: boolean;
   showProductsForUsers: boolean;
-  /** صلاحية الموظفين (abood / hasan) في إضافة العملاء وتصحيح أرقام هواتفهم. */
-  allowUsersEditClients: boolean;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -49,7 +47,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   showReportsForUsers: true,
   showClientsForUsers: true,
   showProductsForUsers: true,
-  allowUsersEditClients: false,
 };
 
 export function ratesFromSettings(s: AppSettings): Record<CurrencyCode, number> {

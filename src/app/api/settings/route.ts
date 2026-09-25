@@ -50,8 +50,6 @@ export async function PUT(req: Request) {
   const showReportsForUsers = body.showReportsForUsers !== false;
   const showClientsForUsers = body.showClientsForUsers !== false;
   const showProductsForUsers = body.showProductsForUsers !== false;
-  // صلاحية الموظفين في إضافة/تصحيح بيانات العملاء — تُفعَّل صراحةً (افتراضيًا مغلقة).
-  const allowUsersEditClients = body.allowUsersEditClients === true;
 
   await ensureSchema();
   try {
@@ -67,7 +65,6 @@ export async function PUT(req: Request) {
         showReportsForUsers,
         showClientsForUsers,
         showProductsForUsers,
-        allowUsersEditClients,
         updatedAt: new Date(),
       })
       .where(eq(appSettings.id, 1));
@@ -77,9 +74,7 @@ export async function PUT(req: Request) {
       action: "تعديل إعدادات",
       entity: "نظام",
       entityId: 1,
-      details: `تحديث العملات والأسعار (${defaultCurrency} — USD:${rateUsd} EGP:${rateEgp} — توصيل ${shipIn}/${shipEx}) • صلاحية الموظفين بتعديل العملاء: ${
-        allowUsersEditClients ? "مُفعَّلة" : "موقوفة"
-      }`,
+      details: `تحديث العملات والأسعار (${defaultCurrency} — USD:${rateUsd} EGP:${rateEgp} — توصيل ${shipIn}/${shipEx})`,
     });
     return ok(await getAppSettings());
   } catch (e) {
