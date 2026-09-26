@@ -1,16 +1,16 @@
 /**
- * تصفير قاعدة البيانات والانتقال من مرحلة التست إلى العمل الفعلي.
+ * تفريغ المعاملات التجريبية والانتقال من مرحلة التست إلى العمل الفعلي.
  *
- * ما يُحذف بالكامل:
- *   المرتجعات، سداد الديون، بنود الفواتير، الفواتير، المصاريف،
- *   حركات المخزون، سجل النشاط، خيارات وخصائص المنتجات، المنتجات، العملاء.
+ * ★ الوضع الافتراضي (آمن): يحذف **المعاملات فقط** —
+ *   المرتجعات، سداد الديون، دفعات التقسيط، بنود الفواتير، الفواتير،
+ *   المصاريف، حركات المخزون، سجل النشاط.
+ *   ★★ لا يُمَس أبدًا: المنتجات ومتغيراتها وخصائصها (الكتالوج)، العملاء،
+ *      المستخدمون + كلمات المرور + الأدوار، الجلسات، إعدادات النظام.
  *
- * ما لا يُمس مطلقًا:
- *   users + password_hash + role (كل الحسابات وكلمات المرور المشفّرة)،
- *   sessions (جلسات الدخول)، app_settings (إعدادات النظام).
- *
- * التشغيل:  npm run db:reset            (عرض ما سيُحذف)
- *           npm run db:reset -- --yes   (تنفيذ فعلي)
+ * التشغيل:
+ *   npm run db:reset            → معاينة (لا يحذف شيئًا)
+ *   npm run db:reset -- --yes   → تنفيذ تفريغ المعاملات (آمن)
+ *   npm run db:reset -- --all --yes → تصفير كامل يشمل الكتالوج (خطير)
  */
 import { config as loadEnv } from "dotenv";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -43,22 +43,43 @@ const url = resolved?.url ?? LOCAL_DATABASE_URL;
 const pool = new Pool(buildPoolConfig(url));
 const db = drizzle(pool);
 
-/** جداول تُحذف بالكامل، بترتيب يحترم المفاتيح الأجنبية (الأبناء قبل الآباء). */
-const TABLES: ReadonlyArray<{ name: string; label: string }> = [
-  { name: "return_items", label: "بنود المرتجعات" },
-  { name: "returns", label: "المرتجعات والاستبدال" },
-  { name: "client_payments", label: "سداد الديون" },
-  { name: "sale_installments", label: "دفعات التقسيط" },
-  { name: "sale_items", label: "بنود الفواتير" },
-  { name: "sales", label: "الفواتير" },
-  { name: "expenses", label: "المصاريف" },
-  { name: "inventory_movements", label: "حركات المخزون" },
-  { name: "activity_logs", label: "سجل النشاط" },
-  { name: "product_variants", label: "خيارات المنتجات (المتغيرات)" },
-  { name: "product_fields", label: "خصائص المنتجات" },
-  { name: "products", label: "المنتجات والأصناف" },
-  { name: "clients", label: "العملاء" },
+/**
+ * جداول تُحذف، مرتبة بحيث تُحذف الأبناء قبل الآباء.
+ *
+ * scope = "transactions" (الافتراضي الآمن):
+ *   معاملات البيع فقط — الفواتير ومرتجعاتها ودفعاتها ودفعات التقسيط
+ *   والمصاريف وحركات المخزون وسجل النشاط.
+ *   ★ الكتالوج (products / product_variants / product_fields) والعملاء
+ *     لا يُمَسّون إطلاقًا.
+ *
+ * scope = "all" (عند تمرير --all):
+ *   تصفير كامل يشمل الكتالوج والعملاء — للاستخدام قبل العمل الفعلي فقط.
+ */
+const ALL_TABLES: ReadonlyArray<{ name: string; label: string; scope: "tx" | "all" }> = [
+  { name: "return_items", label: "بنود المرتجعات", scope: "tx" },
+  { name: "returns", label: "المرتجعات والاستبدال", scope: "tx" },
+  { name: "client_payments", label: "سداد الديون", scope: "tx" },
+  { name: "sale_installments", label: "دفعات التقسيط", scope: "tx" },
+  { name: "sale_items", label: "بنود الفواتير", scope: "tx" },
+  { name: "sales", label: "الفواتير", scope: "tx" },
+  { name: "expenses", label: "المصاريف", scope: "tx" },
+  { name: "inventory_movements", label: "حركات المخزون", scope: "tx" },
+  { name: "activity_logs", label: "سجل النشاط", scope: "tx" },
+  { name: "product_variants", label: "خيارات المنتجات (المتغيرات)", scope: "all" },
+  { name: "product_fields", label: "خصائص المنتجات", scope: "all" },
+  { name: "products", label: "المنتجات والأصناف", scope: "all" },
+  { name: "clients", label: "العملاء", scope: "all" },
 ];
+
+/** جداول محفوظة في كل الأحوال (غير قابلة للحذف بهذه الأداة). */
+const PRESERVED: ReadonlyArray<{ name: string; label: string }> = [
+  { name: "users", label: "المستخدمون وكلمات المرور والأدوار" },
+  { name: "sessions", label: "جلسات الدخول" },
+  { name: "app_settings", label: "إعدادات النظام" },
+];
+
+const FULL_WIPE = process.argv.includes("--all");
+const TABLES = ALL_TABLES.filter((t) => (FULL_WIPE ? true : t.scope === "tx"));
 
 /** جداول المعرّفات التي يُعاد ضبط عدّاداتها لتبدأ من 1. */
 const SERIAL_TABLES = TABLES.map((t) => t.name);
@@ -72,7 +93,11 @@ async function sql<T = Record<string, unknown>>(query: string) {
 
 async function main() {
   console.log("=".repeat(66));
-  console.log("  تصفير قاعدة البيانات — الانتقال من التست إلى العمل الفعلي");
+  console.log(
+    FULL_WIPE
+      ? "  تصفير كامل لقاعدة البيانات (يشمل الكتالوج والعملاء)"
+      : "  تفريغ المعاملات التجريبية (الكتالوج والعملاء محفوظة)",
+  );
   console.log("=".repeat(66));
   console.log(
     resolved
@@ -109,6 +134,22 @@ async function main() {
     console.log(`   ${c === 0 ? "·" : "✗"} ${t.label} (${t.name}): ${c}`);
   }
   console.log(`\nإجمالي السجلات المحذوفة: ${total}`);
+
+  // تأكيد صريح: ما لن يُمَسّ
+  console.log("\n— لن يُمَسّ —");
+  for (const p of PRESERVED) {
+    const { rows } = await sql<{ c: number }>(
+      `select count(*)::int as c from ${p.name}`,
+    );
+    console.log(`   ✓ ${p.label} (${p.name}): ${Number(rows[0]?.c ?? 0)}`);
+  }
+  const kept = ALL_TABLES.filter((t) => !TABLES.includes(t));
+  for (const k of kept) {
+    const { rows } = await sql<{ c: number }>(
+      `select count(*)::int as c from ${k.name}`,
+    );
+    console.log(`   ✓ ${k.label} (${k.name}): ${Number(rows[0]?.c ?? 0)}`);
+  }
 
   if (total === 0) {
     console.log("\n✓ لا توجد بيانات تجريبية — القاعدة نظيفة بالفعل.");
