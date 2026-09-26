@@ -1,6 +1,6 @@
 "use client";
 
-import { t } from "@/lib/i18n";
+import { t, tf } from "@/lib/i18n";
 
 // إدارة المصاريف التشغيلية — تُخصم من إجمالي الربح لتظهر في «صافي الأرباح».
 // - إضافة مصروف (تصنيف + مبلغ + ملاحظة) باسم المستخدم الذي أضافه.
@@ -168,7 +168,7 @@ export default function ExpensesPage() {
         method: "POST",
         body: { category: finalCategory, amount: value, note },
       });
-      toast.push("ok", `${t("تم تسجيل مصروف")}${value} (${finalCategory})`);
+      toast.push("ok", tf("تم تسجيل مصروف {n} ({cat})", { n: value, cat: finalCategory }));
       setAmount("");
       setNote("");
       setCustomCategory("");

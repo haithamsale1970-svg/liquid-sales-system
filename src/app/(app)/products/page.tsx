@@ -1,6 +1,6 @@
 "use client";
 
-import { t } from "@/lib/i18n";
+import { t, tf } from "@/lib/i18n";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -255,7 +255,7 @@ export default function ProductsPage() {
           ...(stockVariantId ? { variantId: Number(stockVariantId) } : {}),
         },
       });
-      toast.push("ok", `${t("مخزون \"")}${updated.name}${t("\" أصبح")}${updated.stock}`);
+      toast.push("ok", tf("مخزون ”{name}” أصبح {n}", { name: updated.name, n: updated.stock }));
       setStockTarget(null);
       setDelta("");
       setStockNote("");

@@ -430,6 +430,14 @@ const EN: Record<string, string> = {
   "إجمالي المصاريف": "Total expenses",
   "إجمالي المصاريف (": "Total expenses (",
   "إجمالي مشترياته:": "Total purchases:",
+  // ===== قوالب بعدّاد (tf) — ترتيب الكلمات يختلف بين العربية والإنجليزية =====
+  "تأخّر {n} دفعة عن موعدها": "{n} installments overdue",
+  "{n} دفعة مستحقة اليوم": "{n} installment due today",
+  "{n} دفعة مستحقة غدًا": "{n} installment due tomorrow",
+  "متأخرة {n} يوم": "{n} days overdue",
+  "بعد {n} يوم": "in {n} days",
+  "فاتورة رقم {n}": "Invoice #{n}",
+  "دفعة {n}": "Installment {n}",
   "إخفاء": "Hide",
   "إخفاء التخصيص": "Hide allocation",
   "إخفاء التنبيه": "Hide alert",
@@ -911,6 +919,23 @@ const EN: Record<string, string> = {
   "قطعة إلى المخزون تلقائيًا. ستبقى الفاتورة في السجلات بحالة \"ملغاة\" مع تسجيل من قام بالإلغاء.": "pieces back to stock automatically. The invoice stays in the records as “cancelled” with a note of who cancelled it.",
   "مخزون \"": "Stock “",
   "المتاح من \"": "Available from \"",
+  // ===== قوالب tf: جمل بعدّاد/اسم (ترتيب الكلمات يختلف بين اللغات) =====
+  "مخزون ”{name}” أصبح {n}": "Stock ”{name}” is now {n}",
+  "صلاحيات {name}": "Permissions of {name}",
+  "متبقٍ {n}": "{n} left",
+  "كل صلاحيات {name}": "All permissions of {name}",
+  "متاح: {n}": "Available: {n}",
+  "مخزون منخفض: {n}": "Low stock: {n}",
+  "{n} صنف تحت حد التنبيه": "{n} items below threshold",
+  "{n} صنف نشط": "{n} active items",
+  "{n} فاتورة": "{n} invoices",
+  "العميل: {name}": "Client: {name}",
+  "تم تسجيل مصروف {n} ({cat})": "Expense recorded {n} ({cat})",
+  "تم تحديث ”{name}” إلى {n}": "Updated ”{name}” to {n}",
+  "{name}” — متاح {n} قطعة": "”{name}” — {n} in stock",
+  "{name}” — نافد {n} قطعة": "”{name}” — only {n} left",
+  "{name}” — غير متوفر (أضف من صفحة الأصناف)": "”{name}” — unavailable (add it from the items page)",
+  "تم حذف {name} — {n} قطعة تعود للمخزون تلقائيًا": "Deleted {name} — {n} pieces go back to stock automatically",
 };
 
 export type TKey = keyof typeof EN;
@@ -954,6 +979,23 @@ export function applyLang(lang: Lang) {
 export function t(text: string): string {
   if (!text || currentLang === DEFAULT_LANG) return text;
   return EN[text] ?? text;
+}
+
+/**
+ * ترجمة قالب يحتوي متغيّرات: tf("تأخّر {n} دفعة عن موعدها", { n: 3 }).
+ *
+ * لازمة لأن ترتيب الكلمات يختلف بين العربية والإنجليزية:
+ * دمج الترجمة يدويًا بالترتيب الثابت (prefix + number + suffix) ينتج
+ * جملًا مكسورة مثل "تأخّر3دفعة" أو "Delayed3Installments".
+ * القالب الواحد يحفظ الترتيب الصحيح للغة الحالية.
+ */
+export function tf(
+  template: string,
+  vars: Record<string, string | number>,
+): string {
+  return t(template).replace(/\{(\w+)\}/g, (m, k: string) =>
+    k in vars ? String(vars[k]) : m,
+  );
 }
 
 /** ترجمة آمنة: ترجع النص العربي الأصلي عند غياب المفتاح. */

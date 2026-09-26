@@ -1,6 +1,6 @@
 "use client";
 
-import { t } from "@/lib/i18n";
+import { t, tf } from "@/lib/i18n";
 
 // تنبيه انخفاض المخزون على الشاشة — شريط يظهر في كل الصفحات (AppShell)
 // مع إمكانية الفتح لعرض الأصناف، والانتقال لصفحة الأصناف لتعبئة الكميات.
@@ -131,7 +131,7 @@ export default function LowStockBanner() {
                     : "alert-chip-warning !py-0.5",
                 )}
               >
-                {p.stock <= 0 ? t("نفد") : `${t("متبقٍ")}${p.stock}`}
+                {p.stock <= 0 ? t("نفد") : tf("متبقٍ {n}", { n: p.stock })}
               </span>
             </li>
           ))}

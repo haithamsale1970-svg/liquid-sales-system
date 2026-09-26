@@ -1,6 +1,6 @@
 "use client";
 
-import { t } from "@/lib/i18n";
+import { t, tf } from "@/lib/i18n";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -49,12 +49,13 @@ export default function InstallmentsDueBanner() {
 
   const total = items.reduce((a, i) => a + i.amount, 0);
   const level = overdue.length > 0 ? "critical" : "warning";
+  // قوالب tf تحفظ ترتيب الكلمات الصحيح لكل لغة (وإلا ظهر "تأخّر3دفعة").
   const headline =
     overdue.length > 0
-      ? `${t("تأخّر")}${overdue.length}${t("دفعة عن موعدها")}`
+      ? tf("تأخّر {n} دفعة عن موعدها", { n: overdue.length })
       : dueToday.length > 0
-        ? `${dueToday.length}${t("دفعة مستحقة اليوم")}`
-        : `${soon.length}${t("دفعة مستحقة غدًا")}`;
+        ? tf("{n} دفعة مستحقة اليوم", { n: dueToday.length })
+        : tf("{n} دفعة مستحقة غدًا", { n: soon.length });
 
   return (
     <div
@@ -98,7 +99,13 @@ export default function InstallmentsDueBanner() {
           {items.map((i) => {
             const d = daysUntil(i.dueDate);
             const tag =
-              d < 0 ? `${t("متأخرة")}${Math.abs(d)}${t("يوم")}` : d === 0 ? t("مستحقة اليوم") : d === 1 ? t("غدًا") : `${t("بعد")}${d}${t("يوم")}`;
+              d < 0
+                ? tf("متأخرة {n} يوم", { n: Math.abs(d) })
+                : d === 0
+                  ? t("مستحقة اليوم")
+                  : d === 1
+                    ? t("غدًا")
+                    : tf("بعد {n} يوم", { n: d });
             return (
               <li key={i.id}>
                 <Link
@@ -107,10 +114,10 @@ export default function InstallmentsDueBanner() {
                 >
                   <div className="min-w-0">
                     <div className="truncate text-[12px] font-extrabold">
-                      {i.clientName || `${t("فاتورة #")}${i.saleId}`}
+                      {i.clientName || tf("فاتورة رقم {n}", { n: i.saleId })}
                     </div>
                     <div className="num text-[10.5px] font-bold text-[var(--faint)]">
-                      {t("دفعة")} {i.seq} · {tag}
+                      {tf("دفعة {n}", { n: i.seq })} · {tag}
                     </div>
                   </div>
                   <span className="num shrink-0 text-[11.5px] font-black text-[var(--text)]">

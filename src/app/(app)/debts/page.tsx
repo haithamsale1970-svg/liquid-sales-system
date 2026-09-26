@@ -164,8 +164,8 @@ export default function DebtsPage() {
       toast.push(
         "ok",
         r.fullyPaid
-          ? `${t("تم سداد الدين بالكامل (")}${r.applied.toFixed(2)}${t(") — تم تصفير رصيد العميل")}`
-          : `${t("تم تحصيل")}${r.applied.toFixed(2)}${t("— المتبقي")}${r.remainingAfter.toFixed(2)}`,
+          ? `${t("تم سداد الدين بالكامل (")}${formatMoneyJOD(r.applied, currency, rates)}${t(") — تم تصفير رصيد العميل")}`
+          : `${t("تم تحصيل")} ${formatMoneyJOD(r.applied, currency, rates)} ${t("— المتبقي")} ${formatMoneyJOD(r.remainingAfter, currency, rates)}`,
       );
       setAmount("");
       setNote("");

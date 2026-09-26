@@ -1,6 +1,6 @@
 "use client";
 
-import { t } from "@/lib/i18n";
+import { t, tf } from "@/lib/i18n";
 
 import { Check, Minus, ShieldCheck } from "lucide-react";
 import { cls } from "@/lib/shared";
@@ -183,7 +183,7 @@ export default function PermissionsMatrix({
                         checked={allOn}
                         disabled={locked}
                         onChange={(v) => setGroup(g.key, v)}
-                        label={`${t("كل صلاحيات")}${g.label}`}
+                        label={tf("كل صلاحيات {name}", { name: g.label })}
                       />
                     </div>
                   </td>

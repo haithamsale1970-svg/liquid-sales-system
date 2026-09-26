@@ -1,6 +1,6 @@
 "use client";
 
-import { t } from "@/lib/i18n";
+import { t, tf } from "@/lib/i18n";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -176,7 +176,7 @@ export default function SalesPage() {
       <Card
         className="anim-in anim-d1 overflow-hidden"
         bodyClass="p-0"
-        title={res ? `${fmtNum(res.totalCount)}${t("فاتورة")}` : t("الفواتير")}
+        title={res ? tf("{n} فاتورة", { n: res.totalCount }) : t("الفواتير")}
         icon={<ReceiptText size={16} />}
       >
         {!res ? (

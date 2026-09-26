@@ -1,6 +1,6 @@
 "use client";
 
-import { t } from "@/lib/i18n";
+import { t, tf } from "@/lib/i18n";
 
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -517,7 +517,7 @@ export default function UsersPage() {
         open={!!permTarget}
         onClose={() => setPermTarget(null)}
         wide
-        title={permTarget ? `${t("صلاحيات")}${permTarget.name} (@${permTarget.username})` : ""}
+        title={permTarget ? tf("صلاحيات {name}", { name: `${permTarget.name} (@${permTarget.username})` }) : ""}
         icon={<ShieldCheck size={17} />}
       >
         <div className="space-y-4">
