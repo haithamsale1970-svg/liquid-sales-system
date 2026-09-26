@@ -7,9 +7,9 @@
 import { t } from "./i18n";
 
 export const CURRENCIES = {
-  JOD: { code: "JOD", get label() { return t("دينار أردني"); }, get short() { return t("د.أ"); }, symbol: "JOD" },
-  USD: { code: "USD", get label() { return t("دولار أمريكي"); }, get short() { return t("$"); }, symbol: "USD" },
-  EGP: { code: "EGP", get label() { return t("جنيه مصري"); }, get short() { return t("ج.م"); }, symbol: "EGP" },
+  JOD: { code: "JOD", get label() { return t("دينار أردني"); }, get short() { return "JOD"; }, symbol: "JOD" },
+  USD: { code: "USD", get label() { return t("دولار أمريكي"); }, get short() { return "USD"; }, symbol: "USD" },
+  EGP: { code: "EGP", get label() { return t("جنيه مصري"); }, get short() { return "EGP"; }, symbol: "EGP" },
 } as const;
 
 export type CurrencyCode = keyof typeof CURRENCIES;
@@ -74,13 +74,16 @@ export function convertToJOD(amount: number, from: CurrencyCode, rates?: Record<
 
 const nf = new Intl.NumberFormat("ar-EG-u-nu-latn", { maximumFractionDigits: 2 });
 
+/**
+ * رمز العملة المعروض — **الرمز القياسي الإنجليزي (ISO 4217)** دائمًا:
+ * JOD / USD / EGP. لا تُستخدم الرموز العربية (د.أ / ج.م / $) في أي مكان.
+ * الحد الأدنى للخانات العشرية 0 والحد الأقصى 2 → "0 JOD" أو "12.5 JOD" أو "0.00 JOD".
+ */
 export function currencySuffix(code: CurrencyCode): string {
-  if (code === "JOD") return "د.أ";
-  if (code === "USD") return "$";
-  return "ج.م";
+  return code === "JOD" ? "JOD" : code === "USD" ? "USD" : "EGP";
 }
 
-/** تنسيق مبلغ (مخزّن JOD) بعملة العرض المختارة. */
+/** تنسيق مبلغ (مخزّن JOD) بعملة العرض المختارة — مثال: "12.5 JOD". */
 export function formatMoneyJOD(
   amountJOD: number,
   code: CurrencyCode = "JOD",

@@ -2,7 +2,9 @@
 
 import { t } from "./i18n";
 
-export const CURRENCY = "ج.م";
+// رمز العملة الافتراضي المعروض — الرمز القياسي الإنجليزي (ISO 4217).
+// كل المبالغ تُعرض بعملة JOD ما لم تُمرَّر عملة أخرى إلى formatMoneyJOD.
+export const CURRENCY = "JOD";
 
 // ملاحظة: كل خرائط العرض هنا تستخدم getters حتى تُترجم النصوص لحظة العرض
 // (قيم const العادية تُحسب مرة واحدة عند تحميل الملف وتبقى عربية).
@@ -141,6 +143,7 @@ export function fmtNum(n: number): string {
   return nf.format(n || 0);
 }
 
+/** تنسيق مبلغ بالدينار — مثال: "12.5 JOD". */
 export function fmtMoney(n: number): string {
   return `${nf.format(n || 0)} ${CURRENCY}`;
 }

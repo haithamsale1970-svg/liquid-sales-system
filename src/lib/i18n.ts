@@ -373,7 +373,6 @@ const EN: Record<string, string> = {
   "الذهاب إلى الصفحة المسموحة": "Go to my page",
   "إعادة تحميل الجلسة": "Reload session",
   // ================== مولّد آلي: نصوص الواجهة الكاملة ==================
-  "$": "$",
   "(الحالي": "(current",
   "(متاح": "(available",
   "(محذوف)": "(deleted)",
@@ -566,7 +565,6 @@ const EN: Record<string, string> = {
   "تُخصم المصاريف من الربح في التقارير، ويظهر «صافي الربح» في لوحة التحكم والتقارير مع تفصيل كل مصروف واسم من أضافه.": "Expenses are deducted from profit in reports, and “Net profit” appears on the dashboard and reports with a breakdown of each expense and who added it.",
   "تُستخدم عند إنشاء الفواتير الجديدة": "Used when creating new invoices",
   "تُسجَّل الحركات تلقائيًا مع كل بيع أو إلغاء فاتورة أو مرتجع أو تسوية مخزون": "Movements are recorded automatically with every sale, invoice cancellation, return or stock adjustment",
-  "ج.م": "EGP",
   "جارٍ الدخول…": "Signing in…",
   "جرّب اسمًا أو رقم هاتف آخر": "Try another name or phone number",
   "جرّب تعديل الفلاتر أو أنشئ فاتورة جديدة": "Try adjusting the filters or create a new invoice",
@@ -598,7 +596,6 @@ const EN: Record<string, string> = {
   "حول النظام": "About the system",
   "خريطة التوزيع": "Distribution map",
   "خيار": "Option",
-  "د.أ": "JOD",
   "دفعة عن موعدها": "Installment overdue",
   "دفعة مستحقة اليوم": "Installment due today",
   "دفعة مستحقة غدًا": "Installment due tomorrow",
