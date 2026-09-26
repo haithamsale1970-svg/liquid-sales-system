@@ -313,6 +313,40 @@ export function groupForPath(pathname: string): PermissionGroupKey | null {
   return null;
 }
 
+// ---------- التوجيه الذكي بعد تسجيل الدخول ----------
+
+/**
+ * ترتيب أولويات الصفحات عند الدخول. أول صفحة يملكها المستخدم هي التي
+ * يفتحها النظام، فلا يصل أحد إلى داشبورد أو صفحة لا يملك صلاحيتها.
+ */
+export const LANDING_ORDER: readonly { path: string; key: PermissionKey }[] = [
+  { path: "/", key: "dashboard.view" },
+  { path: "/sales", key: "sales.view" },
+  { path: "/sales/new", key: "sales.create" },
+  { path: "/products", key: "products.view" },
+  { path: "/clients", key: "clients.view" },
+  { path: "/debts", key: "debts.view" },
+  { path: "/inventory", key: "inventory.view" },
+  { path: "/returns", key: "returns.view" },
+  { path: "/expenses", key: "expenses.view" },
+  { path: "/reports", key: "reports.view" },
+  { path: "/activity", key: "activity.view" },
+  { path: "/users", key: "users.view" },
+  { path: "/settings", key: "settings.view" },
+];
+
+/**
+ * أول صفحة مسموحة للمستخدم حسب صلاحياته، أو null إن لم يملك أي صلاحية.
+ * المدير دائمًا "/".
+ */
+export function firstAllowedPath(
+  user: PermissionSubject | null | undefined,
+): string | null {
+  if (!user) return null;
+  if (user.role === "admin") return "/";
+  return LANDING_ORDER.find((x) => can(user, x.key))?.path ?? null;
+}
+
 
 export function canAny(
   subject: PermissionSubject | null | undefined,

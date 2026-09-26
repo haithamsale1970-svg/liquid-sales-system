@@ -476,6 +476,125 @@ input[type="date"].inp {
   color: var(--critical-text);
 }
 
+/* ---------- welcome splash (شاشة ترحيب فاخرة) ---------- */
+/* بساطة مقصودة: هالة نابضة + شعار + اسم + زر واحد بتوهج نابض. */
+.welcome-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  padding: 8px 0 4px;
+}
+
+/* هالة دائرية نابضة خلف الشعار */
+.welcome-aura {
+  position: absolute;
+  top: 46px;
+  left: 50%;
+  width: 150px;
+  height: 150px;
+  margin-left: -75px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    var(--accent-glow) 0%,
+    transparent 68%
+  );
+  filter: blur(10px);
+  opacity: 0.55;
+  animation: welcomePulse 3.2s ease-in-out infinite;
+}
+
+@keyframes welcomePulse {
+  0%,
+  100% {
+    transform: scale(0.9);
+    opacity: 0.32;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.62;
+  }
+}
+
+/* اسم النظام: تدرّج لوني فاخر */
+.welcome-wordmark {
+  margin: 0;
+  font-size: 27px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  background: linear-gradient(
+    100deg,
+    var(--text) 0%,
+    var(--accent) 52%,
+    var(--text) 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: welcomeShimmer 5.5s ease-in-out infinite;
+}
+
+@keyframes welcomeShimmer {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* زر "ابدأ الآن": توهج نبض + رفع خفيف */
+.welcome-cta {
+  position: relative;
+  min-width: 220px;
+  padding: 15px 34px;
+  font-size: 15px;
+  font-weight: 900;
+  border-radius: 999px;
+  box-shadow: 0 12px 34px -10px var(--accent-glow);
+  animation: welcomeGlow 2.6s ease-in-out infinite;
+}
+.welcome-cta-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.welcome-cta:hover:not(:disabled) {
+  animation-play-state: paused;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 16px 42px -10px var(--accent-glow);
+}
+.welcome-cta:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+
+@keyframes welcomeGlow {
+  0%,
+  100% {
+    box-shadow: 0 12px 34px -12px var(--accent-glow);
+    filter: brightness(1);
+  }
+  50% {
+    box-shadow: 0 14px 44px -8px var(--accent-glow);
+    filter: brightness(1.07);
+  }
+}
+
+/* احترام تفضيل تقليل الحركة */
+@media (prefers-reduced-motion: reduce) {
+  .welcome-aura,
+  .welcome-wordmark,
+  .welcome-cta {
+    animation: none;
+  }
+}
+
 /* ---------- auth form (واجهة تسجيل الدخول) ---------- */
 /*
   الحقول هنا تستخدم إحداثيات فيزيائية (left/right) عمدًا وليس end/start،

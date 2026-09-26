@@ -32,7 +32,8 @@ import ThemeToggle from "./ThemeToggle";
 import { useLang } from "./LanguageProvider";
 import { cls, initials, type SessionUserDTO } from "@/lib/shared";
 import { api } from "@/lib/client";
-import { can, hasAnyPermission, type PermissionKey } from "@/lib/permissions";
+import { can, firstAllowedPath, hasAnyPermission, type PermissionKey } from "@/lib/permissions";
+import { Spinner } from "@/components/ui";
 import type { AppSettings } from "@/lib/currency";
 
 /** صلاحية الدخول لكل عنصر في القائمة الجانبية. */
@@ -128,19 +129,20 @@ export default function AppShell({
     return true;
   });
 
-  // الصفحة الحالية ممنوعة إن لم يملك المستخدم صلاحية قسمها.
-  // ملاحظة: "/" صفحة هبوط آمنة — لا تُعامل كصفحة محجوبة أبدًا لتفادي
-  // حلقة إعادة توجيه لا نهائية عندما لا يملك المستخدم أي صلاحية.
-  const currentPerm = NAV.find(
-    (n) => n.href !== "/" && (pathname === n.href || pathname.startsWith(`${n.href}/`)),
+  // صلاحية الصفحة الحالية. المسار "/" يخضع لقاعدة dashboard.view مثل أي
+  // صفحة أخرى، حتى لا يصل المستخدم إلى داشبورد لا يملك صلاحيته.
+  const currentPerm = NAV.find((n) =>
+    n.href === "/"
+      ? pathname === "/"
+      : pathname === n.href || pathname.startsWith(`${n.href}/`),
   )?.perm;
   const isForbiddenPath = !!currentPerm && !can(user, currentPerm);
 
-  // لا يملك أي صلاحية إطلاقًا (حالة شائعة: مستخدم جديد قبل ضبط صلاحياته).
+  // لا يملك أي صلاحية إطلاقًا (مستخدم جديد قبل ضبط صلاحياته).
   const hasNothing = !hasAnyPermission(user);
 
-  // أول صفحة يملكها المستخدم — تُستخدم كوجهة بديلة بدل الشاشة السوداء.
-  const fallbackHref = visibleNav[0]?.href ?? null;
+  // أول صفحة يملكها المستخدم — تُستخدم كوجهة بديلة فورية.
+  const fallbackHref = firstAllowedPath(user);
 
   useEffect(() => {
     if (!isForbiddenPath || hasNothing || !fallbackHref) return;
@@ -152,18 +154,23 @@ export default function AppShell({
     window.location.href = "/login";
   }
 
-  // حاجز أمان مطلق: لا نعيد null أبدًا (كان مصدر الشاشة السوداء).
-  // نعرض بدلًا منه رسالة واضحة، أو المحتوى إن كان مسموحًا.
-  const guard =
-    hasNothing || isForbiddenPath ? (
-      <NoAccess
-        kind={hasNothing ? "no-permissions" : "forbidden"}
-        section={NAV.find((n) => n.perm === currentPerm)?.label}
-        retryHref={hasNothing ? undefined : (fallbackHref ?? undefined)}
-      />
-    ) : (
-      children
-    );
+  /*
+   * حاجز الأمان:
+   *  - لا يملك شيئًا  → شاشة "لا تملك صلاحية" (مفيدة، لا يوجد بديل).
+   *  - صفحة ممنوعة  → مؤشّر تحميل هادئ أثناء التوجيه: بلا رسالة "ليست لديك
+   *                    صلاحية"، وبلا وميض لمحتوى محجوب أو خطأ 403 من الـ API.
+   *  - مسموحة      → المحتوى.
+   * ملاحظة: لا نعيد null أبدًا (كان مصدر الشاشة السوداء).
+   */
+  const guard = hasNothing ? (
+    <NoAccess kind="no-permissions" />
+  ) : isForbiddenPath ? (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <Spinner size={26} />
+    </div>
+  ) : (
+    children
+  );
 
   return (
     <ToastProvider>

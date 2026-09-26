@@ -6,6 +6,7 @@ import { BrandMark } from "@/components/BrandMark";
 import ThemeToggle from "@/components/ThemeToggle";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLang } from "@/components/LanguageProvider";
+import { firstAllowedPath } from "@/lib/permissions";
 import { Spinner } from "@/components/ui";
 
 /** سجل يثبت أن المستخدم شاهد شاشة الترحيب، فلا تُعرض مرة أخرى في هذه الجلسة. */
@@ -67,9 +68,18 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: username.trim(), password }),
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        role?: "admin" | "user";
+        permissions?: Record<string, boolean>;
+      };
       if (!res.ok) throw new Error(data.error || "تعذر تسجيل الدخول");
-      window.location.href = "/";
+      // توجيه ذكي: أول صفحة يملكها المستخدم (لا داشبورد بلا صلاحية)
+      const landing = firstAllowedPath({
+        role: data.role ?? "user",
+        permissions: data.permissions,
+      });
+      window.location.href = landing ?? "/";
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذر تسجيل الدخول");
       setLoading(false);
@@ -144,45 +154,24 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* ===== شاشة الترحيب (تظهر أول مرة فقط) ===== */}
+        {/* ===== شاشة الترحيب (بساطة فاخرة: اللوجو + الاسم + زر واحد) ===== */}
         {mounted && stage === "welcome" && (
-          <div className="w-full text-center">
-            <p className="mb-6 text-[14px] font-semibold leading-8 text-[var(--muted)]">
-              نظام متكامل لإدارة المبيعات والمخزون
-              <br />
-              بأصناف وعملاء وفواتير وتقارير وصلاحيات دقيقة.
-            </p>
+          <div className="welcome-stage flex w-full flex-col items-center text-center">
+            {/* هالة نابضة خلف اللوجو */}
+            <span className="welcome-aura" aria-hidden />
 
-            {/* مزايا النظام — بطاقات مرنة */}
-            <ul className="mb-7 grid grid-cols-1 gap-2 text-start sm:grid-cols-3">
-              {[
-                { t: "إدارة كاملة", d: "أصناف ومخزون" },
-                { t: "مبيعات دقيقة", d: "فواتير وتقارير" },
-                { t: "صلاحيات صارمة", d: "تحكّم بكل حساب" },
-              ].map((f) => (
-                <li
-                  key={f.t}
-                  className="rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3.5 py-3"
-                >
-                  <div className="text-[12.5px] font-extrabold">{f.t}</div>
-                  <div className="mt-0.5 text-[11.5px] font-semibold text-[var(--faint)]">
-                    {f.d}
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <h2 className="welcome-wordmark">Cloud Culture</h2>
 
             <button
               type="button"
               onClick={goToForm}
-              className="btn btn-primary w-full !py-3.5 !text-[14.5px] !rounded-[14px]"
+              className="btn btn-primary welcome-cta"
             >
-              <Sparkles size={16} />
-              ابدأ الآن
+              <span className="welcome-cta-label">
+                <Sparkles size={17} />
+                ابدأ الآن
+              </span>
             </button>
-            <p className="mt-3.5 text-[11.5px] font-semibold text-[var(--faint)]">
-              اضغط للمتابعة إلى تسجيل الدخول
-            </p>
           </div>
         )}
 

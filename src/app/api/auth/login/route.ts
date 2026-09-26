@@ -11,6 +11,7 @@ import {
 import { verifyPassword } from "@/lib/password";
 import { bad, logActivity, ok, readBody } from "@/lib/api";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
+import { resolvePermissions } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
@@ -48,8 +49,17 @@ export async function POST(req: Request) {
       entityId: user.id,
       details: `قام ${user.name} بتسجيل الدخول`,
     });
+    // نرسل الصلاحيات مع الاستجابة ليوجّه العميل أول مرة فورًا
+    // إلى أول صفحة يملكها بدل إرسالِه إلى داشبورد لا يملك صلاحيتها.
+    const permissions = await resolvePermissions(user.id, user.role);
     const res = ok(
-      { id: user.id, username: user.username, name: user.name, role: user.role },
+      {
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        role: user.role,
+        permissions,
+      },
       { status: 200 },
     );
     res.cookies.set(SESSION_COOKIE, token, {
