@@ -170,7 +170,26 @@ export function can(
 ): boolean {
   if (!subject) return false;
   if (subject.role === "admin") return true;
-  return subject.permissions?.[key] === true;
+  return permMap(subject)[key] === true;
+}
+
+/**
+ * يقرأ خريطة الصلاحيات بأمان تام: أي قيمة غير كائن (null / undefined /
+ * نص / رقم) تُعامَل كخريطة فارغة بدل رمي TypeError أثناء العرض.
+ */
+function permMap(subject: PermissionSubject): Record<string, unknown> {
+  const p = subject?.permissions;
+  if (!p || typeof p !== "object" || Array.isArray(p)) return {};
+  return p as Record<string, unknown>;
+}
+
+/** هل يملك المستخدم أي صلاحية على الإطلاق؟ (المدير نعم دائمًا) */
+export function hasAnyPermission(
+  subject: PermissionSubject | null | undefined,
+): boolean {
+  if (!subject) return false;
+  if (subject.role === "admin") return true;
+  return Object.values(permMap(subject)).some((v) => v === true);
 }
 
 // ---------- القوالب الجاهزة للصلاحيات ----------

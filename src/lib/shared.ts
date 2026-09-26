@@ -187,8 +187,12 @@ export type SessionUserDTO = {
   username: string;
   name: string;
   role: "admin" | "user";
-  /** الصلاحيات الفعّالة المطبَّقة على هذا الحساب. */
-  permissions: import("@/lib/permissions").Permissions;
+  /**
+   * الصلاحيات الفعّالة. اختيارية عمدًا: قد تكون غائبة في استجابات
+   * قديمة/نصف مكتملة، وكل قارئ يجب أن يتعامل مع `undefined` بأمان
+   * (يرجع `can()` إلى false بدل رمي TypeError).
+   */
+  permissions?: import("@/lib/permissions").Permissions;
 };
 
 export type ProductField = { id?: number; label: string; value: string };

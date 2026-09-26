@@ -22,7 +22,13 @@ export async function loadUserPermissions(userId: number): Promise<Permissions> 
   return permissionsFromList(rows.map((r) => r.permKey));
 }
 
-/** الصلاحيات الفعلية: المدير يملك كل شيء، وغير المدير خريطة المخزّنة. */
+/**
+ * الصلاحيات الفعلية للمستخدم.
+ *
+ * نمط "آمن افتراضيًا" (fail-closed): المدير يملك كل شيء، وغير المدير
+ * يحصل على خريطة فارغة عند أي مشكلة بدل رمي استثناء.Empty map = لا
+ * صلاحيات = الواجهة تعرض شاشة "لا تملك صلاحية" بدل الشاشة السوداء.
+ */
 export async function resolvePermissions(
   userId: number,
   role: "admin" | "user",
@@ -30,9 +36,10 @@ export async function resolvePermissions(
   if (role === "admin") return allPermissions();
   try {
     return await loadUserPermissions(userId);
-  } catch {
-    // جدول الصلاحيات غير متاح (قاعدة قديمة لم تُرقَّ بعد): نمنع كل شيء
-    // بدل منح صلاحيات بالخطأ.
+  } catch (e) {
+    // لا نُسقط الجلسة: جدول الصلاحيات غير متاح (قاعدة لم تُرقَّ بعد)
+    // أو فشل استعلام مؤقت. نمنع كل شيء بدل منح صلاحيات بالخطأ.
+    console.error("[rbac] failed to load permissions for user", userId, e);
     return {};
   }
 }

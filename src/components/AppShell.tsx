@@ -25,9 +25,10 @@ import { useEffect, useState, type ReactNode } from "react";
 import { ToastProvider } from "./toast";
 import CurrencySwitcher from "./CurrencySwitcher";
 import LowStockBanner from "./LowStockBanner";
+import NoAccess from "./NoAccess";
 import { cls, initials, type SessionUserDTO } from "@/lib/shared";
 import { api } from "@/lib/client";
-import { can, type PermissionKey } from "@/lib/permissions";
+import { can, hasAnyPermission, type PermissionKey } from "@/lib/permissions";
 import type { AppSettings } from "@/lib/currency";
 
 /** صلاحية الدخول لكل عنصر في القائمة الجانبية. */
@@ -122,22 +123,42 @@ export default function AppShell({
     return true;
   });
 
-  // الصفحة الحالية مسموحة فقط إن كان للمستخدم صلاحية قسمها.
+  // الصفحة الحالية ممنوعة إن لم يملك المستخدم صلاحية قسمها.
+  // ملاحظة: "/" صفحة هبوط آمنة — لا تُعامل كصفحة محجوبة أبدًا لتفادي
+  // حلقة إعادة توجيه لا نهائية عندما لا يملك المستخدم أي صلاحية.
   const currentPerm = NAV.find(
-    (n) => pathname === n.href || (n.href !== "/" && pathname.startsWith(`${n.href}/`)),
+    (n) => n.href !== "/" && (pathname === n.href || pathname.startsWith(`${n.href}/`)),
   )?.perm;
   const isForbiddenPath = !!currentPerm && !can(user, currentPerm);
 
-  useEffect(() => {
-    if (isForbiddenPath) router.replace("/");
-  }, [isForbiddenPath, router]);
+  // لا يملك أي صلاحية إطلاقًا (حالة شائعة: مستخدم جديد قبل ضبط صلاحياته).
+  const hasNothing = !hasAnyPermission(user);
 
-  if (isForbiddenPath) return null;
+  // أول صفحة يملكها المستخدم — تُستخدم كوجهة بديلة بدل الشاشة السوداء.
+  const fallbackHref = visibleNav[0]?.href ?? null;
+
+  useEffect(() => {
+    if (!isForbiddenPath || hasNothing || !fallbackHref) return;
+    if (fallbackHref !== pathname) router.replace(fallbackHref);
+  }, [isForbiddenPath, hasNothing, fallbackHref, pathname, router]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     window.location.href = "/login";
   }
+
+  // حاجز أمان مطلق: لا نعيد null أبدًا (كان مصدر الشاشة السوداء).
+  // نعرض بدلًا منه رسالة واضحة، أو المحتوى إن كان مسموحًا.
+  const guard =
+    hasNothing || isForbiddenPath ? (
+      <NoAccess
+        kind={hasNothing ? "no-permissions" : "forbidden"}
+        section={NAV.find((n) => n.perm === currentPerm)?.label}
+        retryHref={hasNothing ? undefined : (fallbackHref ?? undefined)}
+      />
+    ) : (
+      children
+    );
 
   return (
     <ToastProvider>
@@ -270,10 +291,8 @@ export default function AppShell({
             data-main
             className="mx-auto w-full max-w-[1240px] flex-1 px-3 py-4 sm:px-6 sm:py-6"
           >
-            {can(user, "products.view") && (
-              <LowStockBanner />
-            )}
-            {children}
+            {can(user, "products.view") && <LowStockBanner />}
+            {guard}
           </main>
         </div>
       </div>
