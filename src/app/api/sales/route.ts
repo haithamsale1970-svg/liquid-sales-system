@@ -207,7 +207,7 @@ export async function POST(req: Request) {
   )
     ? (body.shippingType as "none" | "internal" | "external")
     : "none";
-  // طريقة الدفع + خصم الفاتورة (الخصم للأدمن فقط — يُتجاهل من المستخدم العادي).
+  // طريقة الدفع + خصم الفاتورة: كلٌّ منها مرتبط بصلاحية مستقلة يحددها الأدمن.
   const requestedPaymentMethod: PaymentMethod = isPaymentMethod(body.paymentMethod)
     ? body.paymentMethod
     : "cash";
@@ -217,8 +217,8 @@ export async function POST(req: Request) {
     : requestedPaymentMethod === "delivery"
       ? "cash"
       : requestedPaymentMethod;
-  if (paymentMethod === "credit" && user.role !== "admin") {
-    return bad("خيار آجل (ذمة العميل) متاح للمدير فقط", 403);
+  if (paymentMethod === "credit" && !can(user, "sales.credit")) {
+    return bad("خيار آجل (ذمة العميل) يتطلب صلاحية البيع الآجل", 403);
   }
   const isDeliverySale = shippingType !== "none" && paymentMethod === "delivery";
   const discountType = ["none", "percent", "amount"].includes(
@@ -361,9 +361,9 @@ export async function POST(req: Request) {
         }
       }
 
-      // الخصم (للأدمن فقط): نسبة من الفرعي أو مبلغ ثابت — يُخصم من الإجمالي ويقلل الربح.
+      // الخصم: يحتاج صلاحية "تطبيق الخصم" — يُخصم من الإجمالي ويقلل الربح.
       let discount = 0;
-      if (user.role === "admin") {
+      if (can(user, "sales.discount")) {
         if (discountType === "percent")
           discount = Math.min(subtotal, (subtotal * discountValue) / 100);
         else if (discountType === "amount")
