@@ -107,10 +107,10 @@ function Kpi({
 }) {
   const v = useCountUp(value);
   const bg: Record<string, string> = {
-    mint: "rgba(255,34,34,.12)",
-    violet: "rgba(255,255,255,.1)",
-    amber: "rgba(255,122,122,.12)",
-    sky: "rgba(255,255,255,.08)",
+    mint: "var(--accent-soft)",
+    violet: "var(--overlay-2)",
+    amber: "var(--alert-soft)",
+    sky: "var(--overlay-1)",
   };
   const fg: Record<string, string> = {
     mint: "#ff4d4d",

@@ -372,7 +372,7 @@ export default function ReportsPage() {
             className={cls(
               "rounded-xl border px-4 py-2.5 text-[12.5px] font-extrabold transition-all",
               preset === p.key
-                ? "border-[rgba(255,34,34,.55)] bg-[rgba(255,34,34,.12)] text-[var(--mint)]"
+                ? "border-[var(--accent-line)] bg-[var(--accent-soft)] text-[var(--mint)]"
                 : "border-[var(--line-soft)] bg-[var(--overlay-1)] text-[var(--muted)] hover:bg-[var(--overlay-2)]",
             )}
           >
@@ -405,18 +405,18 @@ export default function ReportsPage() {
         </div>
       ) : (
         <div className={cls("grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6", loading && "opacity-60 transition-opacity")}>
-          <Stat icon={<Coins size={18} className="text-[var(--mint)]" />} tone="rgba(255,34,34,.12)" label={`إجمالي المبيعات (${currency})`} value={formatMoneyJOD(data.totals.total, currency, rates)} />
+          <Stat icon={<Coins size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label={`إجمالي المبيعات (${currency})`} value={formatMoneyJOD(data.totals.total, currency, rates)} />
           {can(me, "finances.view_profit") && (
-            <Stat icon={<TrendingUp size={18} className="text-[var(--amber)]" />} tone="rgba(255,122,122,.12)" label={`صافي الربح (هامش ${margin.toFixed(0)}%)`} value={formatMoneyJOD(data.totals.profit, currency, rates)} />
+            <Stat icon={<TrendingUp size={18} className="text-[var(--amber)]" />} tone="var(--alert-soft)" label={`صافي الربح (هامش ${margin.toFixed(0)}%)`} value={formatMoneyJOD(data.totals.profit, currency, rates)} />
           )}
-          <Stat icon={<ReceiptText size={18} className="text-[var(--violet)]" />} tone="rgba(255,255,255,.1)" label="عدد الفواتير" value={fmtNum(data.totals.count)} />
-          <Stat icon={<Scale size={18} className="text-[var(--sky)]" />} tone="rgba(255,255,255,.07)" label={`متوسط الفاتورة (${currency})`} value={formatMoneyJOD(data.totals.avg, currency, rates)} />
-          <Stat icon={<Truck size={18} className="text-[var(--rose)]" />} tone="rgba(255,43,43,.12)" label={`إجمالي التوصيل (${currency})`} value={formatMoneyJOD(data.totals.shipping, currency, rates)} />
-          <Stat icon={<BarChart3 size={18} className="text-[var(--mint)]" />} tone="rgba(255,34,34,.12)" label="وحدات مباعة" value={fmtNum(data.totals.units)} />
+          <Stat icon={<ReceiptText size={18} className="text-[var(--violet)]" />} tone="var(--overlay-2)" label="عدد الفواتير" value={fmtNum(data.totals.count)} />
+          <Stat icon={<Scale size={18} className="text-[var(--sky)]" />} tone="var(--overlay-2)" label={`متوسط الفاتورة (${currency})`} value={formatMoneyJOD(data.totals.avg, currency, rates)} />
+          <Stat icon={<Truck size={18} className="text-[var(--rose)]" />} tone="var(--critical-soft)" label={`إجمالي التوصيل (${currency})`} value={formatMoneyJOD(data.totals.shipping, currency, rates)} />
+          <Stat icon={<BarChart3 size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label="وحدات مباعة" value={fmtNum(data.totals.units)} />
           {can(me, "finances.view_profit") && (
             <>
-              <Stat icon={<Banknote size={18} className="text-[var(--rose)]" />} tone="rgba(255,43,43,.12)" label={`المصاريف (${currency})`} value={formatMoneyJOD(data.totals.expenses, currency, rates)} />
-              <Stat icon={<TrendingUp size={18} className="text-[var(--mint)]" />} tone="rgba(255,34,34,.12)" label={`الربح الصافي (${currency})`} value={formatMoneyJOD(data.totals.netProfit, currency, rates)} />
+              <Stat icon={<Banknote size={18} className="text-[var(--rose)]" />} tone="var(--critical-soft)" label={`المصاريف (${currency})`} value={formatMoneyJOD(data.totals.expenses, currency, rates)} />
+              <Stat icon={<TrendingUp size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label={`الربح الصافي (${currency})`} value={formatMoneyJOD(data.totals.netProfit, currency, rates)} />
             </>
           )}
         </div>
@@ -483,7 +483,7 @@ export default function ReportsPage() {
                 {data.topProducts.map((p, i) => (
                   <tr key={p.productId}>
                     <td className="w-8">
-                      <span className={cls("inline-flex h-6 w-6 items-center justify-center rounded-lg text-[11px] font-black", i < 3 ? "bg-[rgba(255,34,34,.14)] text-[var(--mint)]" : "bg-white/5 text-[var(--faint)]")}>
+                      <span className={cls("inline-flex h-6 w-6 items-center justify-center rounded-lg text-[11px] font-black", i < 3 ? "bg-[var(--accent-soft)] text-[var(--mint)]" : "bg-white/5 text-[var(--faint)]")}>
                         {i + 1}
                       </span>
                     </td>
@@ -533,7 +533,7 @@ export default function ReportsPage() {
                 {data.topClients.map((c, i) => (
                   <tr key={c.clientId}>
                     <td className="w-8">
-                      <span className={cls("inline-flex h-6 w-6 items-center justify-center rounded-lg text-[11px] font-black", i < 3 ? "bg-[rgba(255,255,255,.15)] text-[var(--violet)]" : "bg-white/5 text-[var(--faint)]")}>
+                      <span className={cls("inline-flex h-6 w-6 items-center justify-center rounded-lg text-[11px] font-black", i < 3 ? "bg-[var(--overlay-2)] text-[var(--violet)]" : "bg-white/5 text-[var(--faint)]")}>
                         {i + 1}
                       </span>
                     </td>
@@ -624,7 +624,7 @@ export default function ReportsPage() {
                   {data.byEmployee.map((e, i) => (
                     <tr key={e.userId}>
                       <td className="w-8">
-                        <span className={cls("inline-flex h-6 w-6 items-center justify-center rounded-lg text-[11px] font-black", i < 3 ? "bg-[rgba(255,34,34,.14)] text-[var(--mint)]" : "bg-white/5 text-[var(--faint)]")}>
+                        <span className={cls("inline-flex h-6 w-6 items-center justify-center rounded-lg text-[11px] font-black", i < 3 ? "bg-[var(--accent-soft)] text-[var(--mint)]" : "bg-white/5 text-[var(--faint)]")}>
                           {i + 1}
                         </span>
                       </td>

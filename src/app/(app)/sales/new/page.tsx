@@ -421,7 +421,7 @@ export default function NewSalePage() {
                   className={cls(
                     "flex flex-col",
                     expanded &&
-                      "col-span-2 rounded-2xl border border-[rgba(255,34,34,.35)] bg-[var(--overlay-2)] p-2 md:col-span-3",
+                      "col-span-2 rounded-2xl border border-[var(--accent-line)] bg-[var(--overlay-2)] p-2 md:col-span-3",
                   )}
                 >
                   <button
@@ -433,10 +433,10 @@ export default function NewSalePage() {
                       out
                         ? "cursor-not-allowed border-[var(--line-soft)] opacity-45"
                         : inCart > 0
-                          ? "border-[rgba(255,34,34,.5)] bg-[rgba(255,34,34,.06)]"
+                          ? "border-[var(--accent-line)] bg-[var(--accent-soft)]"
                           : low
-                            ? "border-[rgba(255,170,0,.45)] bg-[rgba(255,170,0,.06)] hover:bg-[rgba(255,170,0,.1)]"
-                            : "border-[var(--line-soft)] bg-[var(--overlay-1)] hover:border-[rgba(255,34,34,.35)] hover:bg-[var(--overlay-2)]",
+                            ? "border-[var(--alert-line)] bg-[var(--alert-soft)] hover:bg-[var(--alert-soft)]"
+                            : "border-[var(--line-soft)] bg-[var(--overlay-1)] hover:border-[var(--accent-line)] hover:bg-[var(--overlay-2)]",
                     )}
                   >
                     <div className="flex items-start gap-2.5 p-3">
@@ -484,7 +484,7 @@ export default function NewSalePage() {
                             className={cls(
                               "rounded-lg border px-2 py-1 text-[10.5px] font-extrabold transition-colors",
                               variantPicker.priceType === "retail"
-                                ? "border-[var(--mint)] bg-[rgba(255,34,34,.14)] text-[var(--mint)]"
+                                ? "border-[var(--mint)] bg-[var(--accent-soft)] text-[var(--mint)]"
                                 : "border-[var(--line-soft)] text-[var(--faint)]",
                             )}
                           >
@@ -500,7 +500,7 @@ export default function NewSalePage() {
                             className={cls(
                               "rounded-lg border px-2 py-1 text-[10.5px] font-extrabold transition-colors",
                               variantPicker.priceType === "wholesale"
-                                ? "border-[var(--mint)] bg-[rgba(255,34,34,.14)] text-[var(--mint)]"
+                                ? "border-[var(--mint)] bg-[var(--accent-soft)] text-[var(--mint)]"
                                 : "border-[var(--line-soft)] text-[var(--faint)]",
                             )}
                           >
@@ -522,7 +522,7 @@ export default function NewSalePage() {
                                 addToCart(p, v, variantPicker.priceType);
                                 setVariantPicker(null);
                               }}
-                              className="flex items-center justify-between gap-2 rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2 text-start transition-colors hover:border-[rgba(255,34,34,.4)] hover:bg-[var(--overlay-2)]"
+                              className="flex items-center justify-between gap-2 rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2 text-start transition-colors hover:border-[var(--accent-line)] hover:bg-[var(--overlay-2)]"
                             >
                               <span className="num text-[12px] font-extrabold">
                                 {v.size} — {v.nicotine}
@@ -693,7 +693,7 @@ export default function NewSalePage() {
                                   "flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors",
                                   !p || p.stock <= 0
                                     ? "cursor-not-allowed border-[var(--line-soft)] opacity-50"
-                                    : "border-[var(--line-soft)] bg-[var(--overlay-1)] hover:border-[rgba(255,34,34,.4)] hover:bg-[var(--overlay-2)]",
+                                    : "border-[var(--line-soft)] bg-[var(--overlay-1)] hover:border-[var(--accent-line)] hover:bg-[var(--overlay-2)]",
                                 )}
                               >
                                 <ProductImage src={f.imageUrl} name={f.name} size={18} radius={5} />
@@ -812,7 +812,7 @@ export default function NewSalePage() {
                   className={cls(
                     "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border px-2 py-2.5 text-[12px] font-extrabold transition-all",
                     shippingType === t
-                      ? "border-[rgba(255,34,34,.55)] bg-[var(--accent-soft)] text-[var(--mint)]"
+                      ? "border-[var(--accent-line)] bg-[var(--accent-soft)] text-[var(--mint)]"
                       : "border-[var(--line-soft)] bg-[var(--overlay-1)] text-[var(--muted)] hover:bg-[var(--overlay-2)]",
                   )}
                 >
@@ -840,7 +840,7 @@ export default function NewSalePage() {
                   className={cls(
                     "rounded-xl border px-2 py-2 text-[11.5px] font-extrabold transition-all",
                     paymentMethod === m
-                      ? "border-[rgba(255,34,34,.55)] bg-[var(--accent-soft)] text-[var(--mint)]"
+                      ? "border-[var(--accent-line)] bg-[var(--accent-soft)] text-[var(--mint)]"
                       : "border-[var(--line-soft)] bg-[var(--overlay-1)] text-[var(--muted)] hover:bg-[var(--overlay-2)]",
                   )}
                 >

@@ -253,7 +253,7 @@ export default function ExpensesPage() {
             className={cls(
               "rounded-xl border px-3.5 py-2 text-[12.5px] font-extrabold transition-all",
               preset === p.key
-                ? "border-[rgba(255,34,34,.55)] bg-[rgba(255,34,34,.12)] text-[var(--mint)]"
+                ? "border-[var(--accent-line)] bg-[var(--accent-soft)] text-[var(--mint)]"
                 : "border-[var(--line-soft)] bg-[var(--overlay-1)] text-[var(--muted)] hover:bg-[var(--overlay-2)]",
             )}
           >
@@ -512,10 +512,10 @@ function Stat({
   tone: "rose" | "mint" | "amber" | "violet";
 }) {
   const bg: Record<string, string> = {
-    rose: "rgba(255,43,43,.12)",
-    mint: "rgba(255,34,34,.12)",
-    amber: "rgba(255,122,122,.12)",
-    violet: "rgba(255,255,255,.1)",
+    rose: "var(--critical-soft)",
+    mint: "var(--accent-soft)",
+    amber: "var(--alert-soft)",
+    violet: "var(--overlay-2)",
   };
   return (
     <div className="panel anim-in flex items-center gap-3 p-3.5">

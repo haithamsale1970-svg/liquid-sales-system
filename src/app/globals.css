@@ -39,6 +39,13 @@
   --alert-soft: rgba(255, 214, 10, 0.14);
   --alert-line: rgba(255, 214, 10, 0.4);
 
+  /* تنبيه حرج (نفاد المخزون / خطر) — يبقى أحمر في الثيمين ليبقى معبّرًا */
+  --critical: #ff2b2b;
+  --critical-text: #ff7a7a;
+  --critical-soft: rgba(255, 43, 43, 0.1);
+  --critical-line: rgba(255, 43, 43, 0.45);
+  --critical-strong: rgba(255, 43, 43, 0.2);
+
   /* أسطح شبه شفافة (بدل rgba(255,255,255,x) المثبّت) */
   --overlay-1: rgba(255, 255, 255, 0.045);
   --overlay-2: rgba(255, 255, 255, 0.09);
@@ -112,6 +119,13 @@
   --alert-text: #8a6100;
   --alert-soft: rgba(255, 204, 0, 0.22);
   --alert-line: rgba(255, 190, 0, 0.6);
+
+  /* تنبيه حرج — أحمر داكن مقروء على الأبيض */
+  --critical: #d92b2b;
+  --critical-text: #b42318;
+  --critical-soft: rgba(217, 43, 43, 0.1);
+  --critical-line: rgba(217, 43, 43, 0.42);
+  --critical-strong: rgba(217, 43, 43, 0.2);
 
   /* أسطح */
   --overlay-1: rgba(8, 45, 30, 0.045);
@@ -394,6 +408,46 @@ input[type="date"].inp {
 .badge-slate { color: var(--muted); background: var(--overlay-1); border-color: var(--line); }
 /* بادج تنبيه صريح */
 .badge-alert { color: var(--alert-text); background: var(--alert-soft); border-color: var(--alert-line); }
+
+/* ---------- alert banners (تنبيهات) ---------- */
+/* تتلوّن تلقائيًا عبر رموز الثيم: أصفر في الفسفوري، أصفر ذهبي في الداكن */
+.alert-banner {
+  border: 1px solid transparent;
+  border-radius: 16px;
+  transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease;
+}
+/* مستوى تحذير: نقص مخزون / ملاحظة */
+.alert-warning {
+  border-color: var(--alert-line);
+  background: var(--alert-soft);
+  color: var(--alert-text);
+}
+/* مستوى حرج: نفاد المخزون / خطر حقيقي */
+.alert-critical {
+  border-color: var(--critical-line);
+  background: var(--critical-soft);
+  color: var(--critical-text);
+}
+/* شارة صغيرة داخل التنبيه */
+.alert-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+.alert-chip-warning {
+  background: var(--alert-soft);
+  border: 1px solid var(--alert-line);
+  color: var(--alert-text);
+}
+.alert-chip-critical {
+  background: var(--critical-strong);
+  border: 1px solid var(--critical-line);
+  color: var(--critical-text);
+}
 
 /* ---------- tables ---------- */
 .tbl {

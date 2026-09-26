@@ -348,10 +348,10 @@ function Stat({
   tone: "mint" | "rose" | "amber" | "violet";
 }) {
   const bg: Record<string, string> = {
-    mint: "rgba(255,34,34,.12)",
-    rose: "rgba(255,43,43,.12)",
-    amber: "rgba(255,122,122,.12)",
-    violet: "rgba(255,255,255,.1)",
+    mint: "var(--accent-soft)",
+    rose: "var(--critical-soft)",
+    amber: "var(--alert-soft)",
+    violet: "var(--overlay-2)",
   };
   return (
     <div className="panel anim-in flex items-center gap-3 p-3.5">

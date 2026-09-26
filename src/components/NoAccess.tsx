@@ -39,7 +39,7 @@ export default function NoAccess({
       <div
         className="kpi-icon"
         style={{
-          background: "rgba(255,34,34,.10)",
+          background: "var(--accent-soft)",
           border: "1px solid var(--line-soft)",
         }}
       >

@@ -604,10 +604,10 @@ function Stat({
   tone: "danger" | "mint" | "violet" | "amber";
 }) {
   const bg: Record<string, string> = {
-    danger: "rgba(255,43,43,.12)",
-    mint: "rgba(255,34,34,.12)",
-    violet: "rgba(255,255,255,.1)",
-    amber: "rgba(255,122,122,.12)",
+    danger: "var(--critical-soft)",
+    mint: "var(--accent-soft)",
+    violet: "var(--overlay-2)",
+    amber: "var(--alert-soft)",
   };
   return (
     <div className="panel anim-in flex items-center gap-3 p-3.5">

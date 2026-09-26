@@ -47,28 +47,25 @@ export default function LowStockBanner() {
   return (
     <div
       className={cls(
-        "no-print anim-in mb-4 overflow-hidden rounded-2xl border",
-        outCount > 0
-          ? "border-[rgba(255,43,43,.45)] bg-[rgba(255,43,43,.08)]"
-          : "border-[rgba(255,170,0,.35)] bg-[rgba(255,170,0,.07)]",
+        "no-print anim-in alert-banner mb-4 overflow-hidden",
+        // يتلوّن تلقائيًا حسب الثيم: أصفر جذّاب، أو أحمر حرج عند النفاد التام
+        outCount > 0 ? "alert-critical" : "alert-warning",
       )}
     >
       <div className="flex flex-wrap items-center gap-2.5 px-3.5 py-2.5">
         <span
           className={cls(
             "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl",
-            outCount > 0
-              ? "bg-[var(--accent-soft-2)] text-[var(--danger)]"
-              : "bg-[var(--alert-soft)] text-[var(--alert-text)]",
+            outCount > 0 ? "alert-chip-critical" : "alert-chip-warning",
           )}
         >
           <BellRing size={16} />
         </span>
-        <div className="min-w-0 flex-1 text-[12.5px] font-extrabold leading-6">
+        <div className="min-w-0 flex-1 text-[12.5px] font-extrabold leading-6 text-[var(--text)]">
           تنبيه نقص المخزون:{" "}
           <span className="num">{fmtNum(count)}</span> صنف وصل إلى حد التنبيه أو أقل
           {outCount > 0 && (
-            <span className="text-[var(--danger)]">
+            <span className="text-[var(--critical-text)]">
               {" "}
               — منها <span className="num">{fmtNum(outCount)}</span> نفدت بالكامل
             </span>
@@ -128,8 +125,8 @@ export default function LowStockBanner() {
                 className={cls(
                   "num shrink-0 rounded-lg px-2 py-1 text-[11.5px] font-black",
                   p.stock <= 0
-                    ? "bg-[var(--accent-soft)] text-[var(--danger)]"
-                    : "bg-[var(--alert-soft)] text-[var(--alert-text)]",
+                    ? "alert-chip-critical !py-0.5"
+                    : "alert-chip-warning !py-0.5",
                 )}
               >
                 {p.stock <= 0 ? "نفد" : `متبقٍ ${p.stock}`}

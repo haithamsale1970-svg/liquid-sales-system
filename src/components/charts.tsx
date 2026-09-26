@@ -39,7 +39,7 @@ export function BarsChart({
                 height: `${Math.max(1.6, (d.value / max) * 100)}%`,
                 background:
                   hue === "violet"
-                    ? "linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.25))"
+                    ? "linear-gradient(180deg, var(--violet), var(--overlay-2))"
                     : undefined,
               }}
             />
@@ -57,7 +57,7 @@ export function BarsChart({
 
 export function Sparkline({
   points,
-  color = "#ff2222",
+  color = "var(--accent)",
   w = 100,
   h = 32,
 }: {

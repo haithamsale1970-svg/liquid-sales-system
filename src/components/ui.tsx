@@ -269,7 +269,7 @@ export function Empty({
       <div
         className="kpi-icon text-[var(--muted)]"
         style={{
-          background: "rgba(255,255,255,.05)",
+          background: "var(--overlay-1)",
           border: "1px solid var(--line-soft)",
         }}
       >

@@ -202,7 +202,7 @@ export default function SalesPage() {
                 <button
                   key={s.id}
                   onClick={() => (window.location.href = `/sales/${s.id}`)}
-                  className="w-full rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3.5 text-start transition-colors active:border-[rgba(255,34,34,.4)]"
+                  className="w-full rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3.5 text-start transition-colors active:border-[var(--accent-line)]"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <span className="num font-black text-[var(--mint)]">{invoiceNo(s.id)}</span>

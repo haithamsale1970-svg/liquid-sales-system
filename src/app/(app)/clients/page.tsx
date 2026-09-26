@@ -316,7 +316,7 @@ export default function ClientsPage() {
                       <div className="flex items-center gap-3">
                         <div
                           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-                          style={{ background: "rgba(255,255,255,.05)", border: "1px solid var(--line-soft)", color: "var(--muted)" }}
+                          style={{ background: "var(--overlay-1)", border: "1px solid var(--line-soft)", color: "var(--muted)" }}
                         >
                           <Icon size={16} />
                         </div>
