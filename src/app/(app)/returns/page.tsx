@@ -155,7 +155,7 @@ export default function ReturnsPage() {
         <Stat
           icon={<Undo2 size={17} className="text-[var(--amber)]" />}
           tone="amber"
-          label={`${t("صافي الفرق المالي (")}${currency})`}
+          label={t("صافي الفرق المالي (")}
           value={formatMoneyJOD(stats.refundNet, currency, rates)}
         />
       </div>

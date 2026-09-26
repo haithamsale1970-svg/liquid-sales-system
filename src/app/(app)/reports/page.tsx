@@ -407,18 +407,18 @@ export default function ReportsPage() {
         </div>
       ) : (
         <div className={cls("grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6", loading && "opacity-60 transition-opacity")}>
-          <Stat icon={<Coins size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label={`${t("إجمالي المبيعات (")}${currency})`} value={formatMoneyJOD(data.totals.total, currency, rates)} />
+          <Stat icon={<Coins size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label={t("إجمالي المبيعات (")} value={formatMoneyJOD(data.totals.total, currency, rates)} />
           {can(me, "finances.view_profit") && (
             <Stat icon={<TrendingUp size={18} className="text-[var(--amber)]" />} tone="var(--alert-soft)" label={`${t("صافي الربح (هامش")}${margin.toFixed(0)}%)`} value={formatMoneyJOD(data.totals.profit, currency, rates)} />
           )}
           <Stat icon={<ReceiptText size={18} className="text-[var(--violet)]" />} tone="var(--overlay-2)" label={t("عدد الفواتير")} value={fmtNum(data.totals.count)} />
-          <Stat icon={<Scale size={18} className="text-[var(--sky)]" />} tone="var(--overlay-2)" label={`${t("متوسط الفاتورة (")}${currency})`} value={formatMoneyJOD(data.totals.avg, currency, rates)} />
-          <Stat icon={<Truck size={18} className="text-[var(--rose)]" />} tone="var(--critical-soft)" label={`${t("إجمالي التوصيل (")}${currency})`} value={formatMoneyJOD(data.totals.shipping, currency, rates)} />
+          <Stat icon={<Scale size={18} className="text-[var(--sky)]" />} tone="var(--overlay-2)" label={t("متوسط الفاتورة (")} value={formatMoneyJOD(data.totals.avg, currency, rates)} />
+          <Stat icon={<Truck size={18} className="text-[var(--rose)]" />} tone="var(--critical-soft)" label={t("إجمالي التوصيل (")} value={formatMoneyJOD(data.totals.shipping, currency, rates)} />
           <Stat icon={<BarChart3 size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label={t("وحدات مباعة")} value={fmtNum(data.totals.units)} />
           {can(me, "finances.view_profit") && (
             <>
-              <Stat icon={<Banknote size={18} className="text-[var(--rose)]" />} tone="var(--critical-soft)" label={`${t("المصاريف (")}${currency})`} value={formatMoneyJOD(data.totals.expenses, currency, rates)} />
-              <Stat icon={<TrendingUp size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label={`${t("الربح الصافي (")}${currency})`} value={formatMoneyJOD(data.totals.netProfit, currency, rates)} />
+              <Stat icon={<Banknote size={18} className="text-[var(--rose)]" />} tone="var(--critical-soft)" label={t("المصاريف (")} value={formatMoneyJOD(data.totals.expenses, currency, rates)} />
+              <Stat icon={<TrendingUp size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label={t("الربح الصافي (")} value={formatMoneyJOD(data.totals.netProfit, currency, rates)} />
             </>
           )}
         </div>
@@ -457,7 +457,7 @@ export default function ReportsPage() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Card
           className="anim-in anim-d2 overflow-hidden"
-          title={`${t("الأصناف الأكثر مبيعًا (")}${currency})`}
+          title={t("الأصناف الأكثر مبيعًا (")}
           icon={<Flame size={16} />}
           actions={
             <Btn size="xs" onClick={exportProducts} disabled={!data || data.topProducts.length === 0}>
@@ -574,7 +574,7 @@ export default function ReportsPage() {
                 <tr>
                   <th>{t("الطريقة")}</th>
                   <th>{t("الفواتير")}</th>
-                  <th>{t("الإجمالي (")}{currency})</th>
+                  <th>{t("الإجمالي (")}</th>
                   <th>{t("المتبقي")}</th>
                 </tr>
               </thead>
@@ -618,7 +618,7 @@ export default function ReportsPage() {
                     <th>#</th>
                     <th>{t("الموظف")}</th>
                     <th>{t("الفواتير")}</th>
-                    <th>{t("المبيعات (")}{currency})</th>
+                    <th>{t("المبيعات (")}</th>
                     <th>{t("الربح")}</th>
                   </tr>
                 </thead>

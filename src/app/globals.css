@@ -980,11 +980,24 @@ input[type="date"].inp {
     transform: translateX(100%);
     transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.3, 1);
     padding-bottom: env(safe-area-inset-bottom, 0px);
+    /* إغلاق حقيقي: لا يُможно النقر ولا الوصول بالكيبورد/Tab وهو خارج الشاشة */
+    visibility: hidden;
+    pointer-events: none;
   }
   [data-sidebar].open {
     transform: translateX(0);
     box-shadow: -30px 0 80px rgba(0, 0, 0, 0.6);
     overscroll-behavior: contain;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+/* على الشاشات الكبيرة القائمة دائمة — تُلغى حالة الإخفاء دائمًا */
+@media (min-width: 1024px) {
+  [data-sidebar] {
+    visibility: visible;
+    pointer-events: auto;
   }
 }
 

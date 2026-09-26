@@ -1010,7 +1010,7 @@ export default function ProductsPage() {
 
         <div className="mt-6 flex items-center justify-between border-t border-[var(--line-soft)] pt-4">
           <span className="num text-[12.5px] font-bold text-[var(--muted)]">
-            {t("هامش الربح (")}{currency}): <span className={profit >= 0 ? "text-[var(--mint)]" : "text-[var(--danger)]"}>{formatMoneyJOD(profit, currency, rates)}</span>
+            {t("هامش الربح (")}: <span className={profit >= 0 ? "text-[var(--mint)]" : "text-[var(--danger)]"}>{formatMoneyJOD(profit, currency, rates)}</span>
           </span>
           <div className="flex gap-2">
             <Btn onClick={() => setFormOpen(false)}>{t("إلغاء")}</Btn>

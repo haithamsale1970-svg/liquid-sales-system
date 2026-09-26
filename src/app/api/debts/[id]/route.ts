@@ -64,12 +64,16 @@ export async function GET(_req: Request, ctx: Ctx) {
         total: sales.total,
         paid: sales.paid,
         paymentMethod: sales.paymentMethod,
+        deliveryReceivable: sales.deliveryReceivable,
       })
       .from(sales)
       .where(and(eq(sales.clientId, id), eq(sales.status, "completed")))
       .orderBy(asc(sales.createdAt));
 
-    const saleIds = unpaidRows.map((s) => s.id);
+    // فصل حساب شركة الشحن: فواتير التوصيل لا تدخل ذمم العميل إطلاقًا.
+    const saleIds = unpaidRows
+      .filter((s) => num(s.deliveryReceivable) <= 0.001)
+      .map((s) => s.id);
     const refundBySaleRows: Array<{ saleId: number; refund: string }> =
       saleIds.length
         ? await db
@@ -91,11 +95,12 @@ export async function GET(_req: Request, ctx: Ctx) {
         paid: s.paid === null ? num(s.total) : num(s.paid),
         remaining: remainingAfterReturns(s, refundBySale),
         refund: refundBySale.get(s.id) ?? 0,
+        deliveryReceivable: num(s.deliveryReceivable),
         paymentMethod: isPaymentMethod(s.paymentMethod)
           ? s.paymentMethod
           : "cash",
       }))
-      .filter((s) => s.remaining > 0.001);
+      .filter((s) => s.remaining > 0.001 && num(s.deliveryReceivable) <= 0.001);
 
     const payments = (
       await db
@@ -165,14 +170,20 @@ export async function POST(req: Request, ctx: Ctx) {
         .from(sales)
         .where(and(eq(sales.clientId, id), eq(sales.status, "completed")))
         .for("update");
-      const refundRows: Array<{ saleId: number; refund: string }> = openRows.length
+      // ===== فصل حساب شركة الشحن عن دين العميل =====
+      // فواتير التوصيل ذمتها على شركة الشحن لا على العميل، لذلك تُستثنى من
+      // سجل سداد العميل (تُسدَّد نقدًا مع الشركة آخر اليوم بشكل مستقل).
+      const clientOpenRows = openRows.filter(
+        (s) => num(s.deliveryReceivable) <= 0.001,
+      );
+      const refundRows: Array<{ saleId: number; refund: string }> = clientOpenRows.length
         ? await tx
             .select({ saleId: returns.saleId, refund: sql<string>`coalesce(sum(${returns.refund}), 0)` })
             .from(returns)
             .where(
               and(
                 eq(returns.clientId, id),
-                inArray(returns.saleId, openRows.map((s) => s.id)),
+                inArray(returns.saleId, clientOpenRows.map((s) => s.id)),
               ),
             )
             .groupBy(returns.saleId)
@@ -182,7 +193,7 @@ export async function POST(req: Request, ctx: Ctx) {
           (r): [number, number] => [r.saleId, num(r.refund)],
         ),
       );
-      const open = openRows
+      const open = clientOpenRows
         .filter((s) => remainingAfterReturns(s, refundBySale) > 0.001)
         .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 

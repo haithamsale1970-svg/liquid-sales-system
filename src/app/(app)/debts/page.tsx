@@ -17,6 +17,7 @@ import {
   ReceiptText,
   RefreshCw,
   Search,
+  Truck,
   Users,
   Wallet,
 } from "lucide-react";
@@ -66,6 +67,23 @@ const METHOD_TONES: Record<string, string> = {
   credit: "rose",
 };
 
+/** حساب شركة الشحن — منفصل تمامًا عن ذمم العملاء. */
+type CourierAccount = {
+  rows: Array<{
+    id: number;
+    clientId: number;
+    createdAt: string;
+    total: number;
+    shippingCost: number;
+    deliveryReceivable: number;
+    paid: number;
+    clientName: string;
+  }>;
+  count: number;
+  total: number;
+  shipping: number;
+};
+
 export default function DebtsPage() {
   const toast = useToast();
   const { currency, settings, rates } = useCurrency();
@@ -82,17 +100,28 @@ export default function DebtsPage() {
   const [note, setNote] = useState("");
   const [paying, setPaying] = useState(false);
 
+  // ===== حساب شركة الشحن: محاسبة مستقلة عن الذمم (تُسدَّد نقدًا آخر اليوم) =====
+  const [courier, setCourier] = useState<CourierAccount | null>(null);
+  const loadCourier = useCallback(async () => {
+    try {
+      setCourier(await api<CourierAccount>("/api/debts/courier"));
+    } catch {
+      setCourier(null);
+    }
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
       setRows(await api<DebtClientDTO[]>("/api/debts"));
+      await loadCourier();
     } catch (e) {
       toast.push("err", e instanceof Error ? e.message : t("تعذر تحميل الديون"));
       setRows([]);
     } finally {
       setLoading(false);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadCourier]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     load();
@@ -252,7 +281,7 @@ export default function DebtsPage() {
         <Stat
           icon={<Coins size={17} className="text-[var(--danger)]" />}
           tone="danger"
-          label={`${t("إجمالي الديون (")}${currency})`}
+          label={t("إجمالي الديون (")}
           value={formatMoneyJOD(totals.total, currency, rates)}
         />
         <Stat
@@ -264,7 +293,7 @@ export default function DebtsPage() {
         <Stat
           icon={<Banknote size={17} className="text-[var(--mint)]" />}
           tone="mint"
-          label={`${t("أعلى دين (")}${currency})`}
+          label={t("أعلى دين (")}
           value={formatMoneyJOD(totals.max, currency, rates)}
         />
         <Stat
@@ -297,6 +326,91 @@ export default function DebtsPage() {
           <RefreshCw size={14} /> {t("تحديث")}
         </Btn>
       </div>
+
+      {/* ===== حساب شركة الشحن — محاسبة مستقلة عن نظام الذمم والآجل ===== */}
+      <Card
+        className="anim-in anim-d1 overflow-hidden"
+        title={t("حساب شركة الشحن")}
+        icon={<Truck size={16} />}
+        bodyClass="p-0"
+      >
+        <div className="border-b border-[var(--line-soft)] bg-[var(--overlay-2)] px-4 py-2.5 text-[11.5px] font-semibold text-[var(--muted)]">
+          {t("مستحقات شركة الشحن اليوم")} — {t("حساب شركة الشحن منفصل — يُسدَّد نقدًا آخر اليوم ولا يدخل الذمم ولا التقسيط.")}
+        </div>
+        {!courier ? (
+          <div className="space-y-3 p-5">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <Skeleton key={i} className="h-10" />
+            ))}
+          </div>
+        ) : courier.rows.length === 0 ? (
+          <Empty
+            icon={<Truck size={22} />}
+            title={t("لا توجد مستحقات لشركة الشحن")}
+            hint={t("تُسجَّل المستحقات تلقائيًا عند إنشاء فاتورة بتوصيل")}
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-2 p-4 sm:grid-cols-3">
+              <div className="rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3">
+                <div className="text-[11px] font-bold text-[var(--faint)]">
+                  {t("مستحقات شركة الشحن")}
+                </div>
+                <div className="num mt-0.5 text-[15px] font-black text-[var(--amber)]">
+                  {formatMoneyJOD(courier.total, currency, rates)}
+                </div>
+              </div>
+              <div className="rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3">
+                <div className="text-[11px] font-bold text-[var(--faint)]">
+                  {t("عدد الفواتير")}
+                </div>
+                <div className="num mt-0.5 text-[15px] font-black">{fmtNum(courier.count)}</div>
+              </div>
+              <div className="col-span-2 rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3 sm:col-span-1">
+                <div className="text-[11px] font-bold text-[var(--faint)]">
+                  {t("إجمالي التوصيل")}
+                </div>
+                <div className="num mt-0.5 text-[15px] font-black text-[var(--mint)]">
+                  {formatMoneyJOD(courier.shipping, currency, rates)}
+                </div>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="tbl min-w-[620px]">
+                <thead>
+                  <tr>
+                    <th>{t("الفاتورة")}</th>
+                    <th>{t("العميل")}</th>
+                    <th>{t("التاريخ")}</th>
+                    <th>{t("إجمالي التوصيل")}</th>
+                    <th>{t("مستحقات شركة الشحن")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {courier.rows.map((r) => (
+                    <tr key={r.id}>
+                      <td>
+                        <button
+                          className="num font-black text-[var(--mint)] hover:underline"
+                          onClick={() => (window.location.href = `/sales/${r.id}`)}
+                        >
+                          {invoiceNo(r.id)}
+                        </button>
+                      </td>
+                      <td className="font-bold">{r.clientName}</td>
+                      <td className="num">{fmtDate(r.createdAt)}</td>
+                      <td className="num">{formatMoneyJOD(r.shippingCost, currency, rates)}</td>
+                      <td className="num font-black text-[var(--amber)]">
+                        {formatMoneyJOD(r.deliveryReceivable, currency, rates)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </Card>
 
       {/* ===== جدول الديون ===== */}
       <Card
@@ -435,7 +549,7 @@ export default function DebtsPage() {
                 <HandCoins size={15} className="text-[var(--mint)]" /> {t("تسجيل تحصيل دفعة")}
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Field label={`${t("المبلغ (")}${currency})`}>
+                <Field label={t("المبلغ (")}>
                   <Input
                     type="number"
                     min="0"

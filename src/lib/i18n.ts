@@ -472,7 +472,16 @@ const EN: Record<string, string> = {
   "ابحث بالاسم أو الهاتف…": "Search by name or phone…",
   "ابحث عن صنف أو نكهة…": "Search for an item or flavor…",
   "ابحث في التفاصيل أو باسم المستخدم…": "Search in details or by username…",
-  "يمكنك تقسيم المبلغ المتبقي على دفعات وتواريخ استحقاق بالأسفل.":
+  "حساب شركة الشحن منفصل — يُسدَّد نقدًا آخر اليوم ولا يدخل الذمم ولا التقسيط.":
+    "Courier account is separate — settled in cash at end of day, not part of debts or installments.",
+  "مستحقات شركة الشحن": "Courier dues",
+  "تُسجَّل المستحقات تلقائيًا عند إنشاء فاتورة بتوصيل":
+    "Dues are recorded automatically when a delivery invoice is created",
+  "حساب شركة الشحن": "Courier account",
+  "مستحقات شركة الشحن اليوم": "Courier dues today",
+  "تسوية حساب شركة الشحن": "Settle courier account",
+  "لا توجد مستحقات لشركة الشحن": "No courier dues",
+  "يمكن تقسيم المبلغ المتبقي على دفعات وتواريخ استحقاق بالأسفل.":
     "You can split the remaining amount into installments with due dates below.",
   "احفظ الفاتورة لحفظ الخطة وتفعيل تنبيهات الاستحقاق تلقائيًا.": "Save the invoice to store the plan and enable due alerts automatically.",
   "اختر العميل أولاً": "Select a client first",

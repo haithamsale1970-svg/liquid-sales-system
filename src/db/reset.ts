@@ -48,6 +48,7 @@ const TABLES: ReadonlyArray<{ name: string; label: string }> = [
   { name: "return_items", label: "بنود المرتجعات" },
   { name: "returns", label: "المرتجعات والاستبدال" },
   { name: "client_payments", label: "سداد الديون" },
+  { name: "sale_installments", label: "دفعات التقسيط" },
   { name: "sale_items", label: "بنود الفواتير" },
   { name: "sales", label: "الفواتير" },
   { name: "expenses", label: "المصاريف" },

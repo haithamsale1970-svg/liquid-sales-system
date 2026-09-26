@@ -46,6 +46,7 @@ export async function GET(req: Request) {
         clientId: sales.clientId,
         total: sales.total,
         paid: sales.paid,
+        deliveryReceivable: sales.deliveryReceivable,
         createdAt: sales.createdAt,
       })
       .from(sales)
@@ -85,6 +86,13 @@ export async function GET(req: Request) {
       if (!item) continue;
       const total = num(sale.total);
       const paid = sale.paid === null ? total : num(sale.paid);
+      // ===== فصل حسابات شركة الشحن عن ذمم العملاء =====
+      // في فاتورة التوصيل يدفع العميل سعر التوصيل فقط، والباقي ذمة **شركة
+      // الشحن** لا ذمة العميل. لذلك يُستثنى بالكامل من دين العميل هنا
+      // ويُحاسب ضمن حساب شركة الشحن المستقل (يُسدَّد نقدًا آخر اليوم).
+      const courierReceivable = num(sale.deliveryReceivable);
+      if (courierReceivable > 0.001) continue;
+
       const remaining = Math.max(
         0,
         total - paid - (refundBySale.get(sale.id) ?? 0),

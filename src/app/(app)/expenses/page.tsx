@@ -289,19 +289,19 @@ export default function ExpensesPage() {
         <Stat
           icon={<Coins size={17} />}
           tone="rose"
-          label={`${t("إجمالي المصاريف (")}${currency})`}
+          label={t("إجمالي المصاريف (")}
           value={formatMoneyJOD(total, currency, rates)}
         />
         <Stat
           icon={<TrendingUp size={17} />}
           tone="mint"
-          label={`${t("إجمالي الربح (")}${currency})`}
+          label={t("إجمالي الربح (")}
           value={formatMoneyJOD(report?.profit ?? 0, currency, rates)}
         />
         <Stat
           icon={<TrendingDown size={17} />}
           tone="amber"
-          label={`${t("صافي الربح (")}${currency})`}
+          label={t("صافي الربح (")}
           value={formatMoneyJOD(report?.netProfit ?? 0, currency, rates)}
         />
         <Stat
@@ -339,7 +339,7 @@ export default function ExpensesPage() {
               />
             </Field>
           )}
-          <Field label={`${t("المبلغ (")}${currency})`}>
+          <Field label={t("المبلغ (")}>
             <Input
               type="number"
               min="0"

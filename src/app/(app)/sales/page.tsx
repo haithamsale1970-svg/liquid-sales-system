@@ -246,7 +246,7 @@ export default function SalesPage() {
                 <th>{t("العميل")}</th>
                 <th>{t("الأصناف")}</th>
                 <th>{t("التوصيل")}</th>
-                <th>{t("الإجمالي (")}{currency})</th>
+                <th>{t("الإجمالي (")}</th>
                 {can(me, "finances.view_profit") && <th>{t("الربح")}</th>}
                 <th>{t("البائع")}</th>
                 <th>{t("الحالة")}</th>

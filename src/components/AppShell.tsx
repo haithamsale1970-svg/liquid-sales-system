@@ -23,7 +23,7 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ToastProvider } from "./toast";
 import CurrencySwitcher from "./CurrencySwitcher";
 import LowStockBanner from "./LowStockBanner";
@@ -89,9 +89,20 @@ export default function AppShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState<AppSettings | null>(null);
+
+  // تاريخ اليوم بلغة الواجهة: en-US → "Saturday, Sep 26" / ar-EG → "السبت، 26 سبتمبر".
+  const todayLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat(lang === "en" ? "en-US" : "ar-EG-u-nu-latn", {
+        weekday: "long",
+        day: "numeric",
+        month: lang === "en" ? "short" : "long",
+      }).format(new Date()),
+    [lang],
+  );
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
@@ -285,23 +296,23 @@ export default function AppShell({
               </h1>
               <div className="glow-dot hidden sm:block" />
             </div>
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
+            <div className="flex min-w-0 shrink items-center gap-1.5 sm:gap-2.5">
               {can(user, "settings.currency") && (
                 <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
               )}
-              <span className="badge badge-slate hidden md:inline-flex">
-                {new Date().toLocaleDateString("ar-EG-u-nu-latn", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                })}
+              {/* التاريخ يتغيّر حسب اللغة المختارة — ولا يُخفى على الجوال */}
+              <span
+                className="badge badge-slate inline-flex min-w-0 truncate whitespace-nowrap"
+                title={todayLabel}
+              >
+                {todayLabel}
               </span>
               <ThemeToggle compact />
               <LanguageToggle />
               {can(user, "sales.create") && (
-                <Link href="/sales/new" className="btn btn-primary btn-sm">
+                <Link href="/sales/new" className="btn btn-primary btn-sm shrink-0">
                   <PlusCircle size={15} />
-                  <span className="hidden sm:inline">{t("فاتورة جديدة")}</span>
+                  <span>{t("فاتورة جديدة")}</span>
                 </Link>
               )}
             </div>

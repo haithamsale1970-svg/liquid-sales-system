@@ -202,7 +202,7 @@ export default function DashboardPage() {
             delay=""
             tone="mint"
             icon={<Banknote size={21} />}
-            label={`${t("مبيعات اليوم (")}${currency})`}
+            label={t("مبيعات اليوم (")}
             value={data.kpis.todayTotal}
             money
             currency={currency}
@@ -218,7 +218,7 @@ export default function DashboardPage() {
             delay="anim-d1"
             tone="violet"
             icon={<CalendarDays size={21} />}
-            label={`${t("مبيعات الشهر (")}${currency})`}
+            label={t("مبيعات الشهر (")}
             value={data.kpis.monthTotal}
             money
             currency={currency}
@@ -230,7 +230,7 @@ export default function DashboardPage() {
               delay="anim-d2"
               tone="amber"
               icon={<Coins size={21} />}
-              label={`${t("صافي ربح الشهر (")}${currency})`}
+              label={t("صافي ربح الشهر (")}
               value={data.kpis.monthProfit}
               money
               currency={currency}
@@ -280,7 +280,7 @@ export default function DashboardPage() {
           icon={<TrendingUp size={16} />}
           actions={
             <Badge tone="mint">
-              {t("إجمالي (")}{currency}): <span className="num">{formatMoneyJOD(data?.series.reduce((a, s) => a + s.total, 0) ?? 0, currency, rates)}</span>
+              {t("إجمالي (")}: <span className="num">{formatMoneyJOD(data?.series.reduce((a, s) => a + s.total, 0) ?? 0, currency, rates)}</span>
             </Badge>
           }
           bodyClass="p-5"

@@ -243,16 +243,19 @@ export default function InvoicePage({
         </div>
       </div>
 
-      {/* ===== خطة التقسيط والذمم (قابلة للتحرير بعد حفظ الفاتورة) ===== */}
-      {can(me, "sales.installments") && !cancelled && sale.remaining > 0 && (
-        <div className="anim-in anim-d2 panel mt-4 p-4 sm:p-5">
-          <InstallmentPlanner
-            saleId={sale.id}
-            owed={sale.remaining}
-            editable={!cancelled}
-          />
-        </div>
-      )}
+      {/* ===== خطة التقسيط (ذمم العميل فقط — لا تشمل حساب شركة الشحن) ===== */}
+      {can(me, "sales.installments") &&
+        !cancelled &&
+        sale.remaining > 0 &&
+        sale.deliveryReceivable <= 0.001 && (
+          <div className="anim-in anim-d2 panel mt-4 p-4 sm:p-5">
+            <InstallmentPlanner
+              saleId={sale.id}
+              owed={sale.remaining}
+              editable={!cancelled}
+            />
+          </div>
+        )}
 
       {/* paper */}
       <div className="anim-in anim-d1 overflow-x-auto">
@@ -392,7 +395,7 @@ export default function InvoicePage({
             </div>
             <div className="w-full max-w-[300px] space-y-1.5 text-[13px] font-bold text-[#33424e]">
               <div className="flex justify-between">
-                <span>{t("الإجمالي الفرعي (")}{currency})</span>
+                <span>{t("الإجمالي الفرعي (")}</span>
                 <span className="num">{formatMoneyJOD(sale.subtotal, currency, rates)}</span>
               </div>
               <div className="flex justify-between">
@@ -425,7 +428,7 @@ export default function InvoicePage({
                 className="flex items-center justify-between rounded-2xl px-4 py-3 text-[15px] font-black text-[var(--text)]"
                 style={{ background: "linear-gradient(135deg,#c40000,#5c0000)" }}
               >
-                <span>{t("الإجمالي المستحق (")}{currency})</span>
+                <span>{t("الإجمالي المستحق (")}</span>
                 <span className="num text-[19px]">{formatMoneyJOD(sale.total, currency, rates)}</span>
               </div>
             </div>

@@ -179,9 +179,11 @@ export default function NewSalePage() {
       : paymentMethod;
   const isDeliverySale = isDeliveryShipping && effectivePaymentMethod === "delivery";
 
-  // فاتورة تخلق ذمة على العميل: إما "آجل" مباشرة، أو "مستحقات شركة التوصيل"
-  // (فيها يبقى صافي الطلب بذمة شركة التوصيل). الاثنتان تُقسَّمان على دفعات.
-  const createsDebt = isDeliverySale || effectivePaymentMethod === "credit";
+  // ===== فصل حساب شركة الشحن عن نظام الذمم والآجل =====
+  // "آجل" = ذمة صريحة على العميل → فقط هذه تدخل مخطط التقسيط.
+  // "مستحقات شركة الشحن" = ذمة على شركة التوصيل تُسدَّد نقدًا آخر اليوم،
+  // فهي محاسبة مستقلة ولا علاقة لها بالذمم ولا بالتقسيط.
+  const createsDebt = effectivePaymentMethod === "credit";
   // الصافي بذمة شركة التوصيل = الإجمالي النهائي للطلب − قيمة التوصيل فقط (مثال: 89 − 1.5 = 87.5).
   const deliveryReceivable = isDeliverySale
     ? Math.max(0, Number((total - ship).toFixed(2)))
@@ -931,12 +933,18 @@ export default function NewSalePage() {
                 {t("يمكنك تقسيم المبلغ المتبقي على دفعات وتواريخ استحقاق بالأسفل.")}
               </p>
             )}
+            {isDeliverySale && (
+              <p className="mt-2 flex items-center gap-1.5 rounded-lg border border-[var(--line-soft)] bg-[var(--overlay-2)] px-2.5 py-1.5 text-[11.5px] font-extrabold text-[var(--muted)]">
+                <Truck size={13} />
+                {t("حساب شركة الشحن منفصل — يُسدَّد نقدًا آخر اليوم ولا يدخل الذمم ولا التقسيط.")}
+              </p>
+            )}
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Field
                 label={
                   isDeliverySale
-                    ? `${t("مبلغ شركة التوصيل (")}${currency})`
-                    : `${t("المدفوع (")}${currency})`
+                    ? t("مبلغ شركة التوصيل (")
+                    : t("المدفوع (")
                 }
               >
                 <Input
@@ -999,7 +1007,7 @@ export default function NewSalePage() {
           {/* totals */}
           <div className="space-y-2 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-4">
             <div className="flex justify-between text-[13px] font-bold text-[var(--muted)]">
-              <span>{t("الإجمالي الفرعي (")}{currency})</span>
+              <span>{t("الإجمالي الفرعي (")}</span>
               <span className="num">{formatMoneyJOD(subtotal, currency, rates)}</span>
             </div>
             <div className="flex justify-between text-[13px] font-bold text-[var(--muted)]">
@@ -1034,7 +1042,7 @@ export default function NewSalePage() {
             )}
             <div className="hr" />
             <div className="flex items-center justify-between">
-              <span className="text-[14px] font-black">{t("الإجمالي النهائي (")}{currency})</span>
+              <span className="text-[14px] font-black">{t("الإجمالي النهائي (")}</span>
               <span className="num text-[22px] font-black text-[var(--mint)]">{formatMoneyJOD(total, currency, rates)}</span>
             </div>
             {showProfit && (
