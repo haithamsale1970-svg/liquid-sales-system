@@ -43,7 +43,7 @@ export default function ReturnsPage() {
     try {
       setRows(await api<ReturnDTO[]>("/api/returns"));
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر تحميل المرتجعات");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر تحميل المرتجعات"));
       setRows([]);
     } finally {
       setLoading(false);
@@ -82,17 +82,17 @@ export default function ReturnsPage() {
   function exportExcel() {
     const list = filtered;
     downloadXlsx(
-      `المرتجعات-${from || "البداية"}_${to || new Date().toISOString().slice(0, 10)}`,
+      `${t("المرتجعات-")}${from || t("البداية")}_${to || new Date().toISOString().slice(0, 10)}`,
       [
         {
-          name: "المرتجعات",
+          name: t("المرتجعات"),
           rows: [
-            ["عدد المرتجعات", list.length],
-            ["كميات مرتجعة للمخزون", stats.returnedQty],
-            ["كميات بديلة (استبدال)", stats.exchangeQty],
-            ["إجمالي الفرق المالي", stats.refundNet.toFixed(2)],
+            [t("عدد المرتجعات"), list.length],
+            [t("كميات مرتجعة للمخزون"), stats.returnedQty],
+            [t("كميات بديلة (استبدال)"), stats.exchangeQty],
+            [t("إجمالي الفرق المالي"), stats.refundNet.toFixed(2)],
             [],
-            ["المرجع", "الفاتورة", "العميل", "التاريخ", "الفرق المالي", "طريقة الدفع", "السبب", "المنفّذ", "ملاحظة"],
+            [t("المرجع"), t("الفاتورة"), t("العميل"), t("التاريخ"), t("الفرق المالي"), t("طريقة الدفع"), t("السبب"), t("المنفّذ"), t("ملاحظة")],
             ...list.map((r) => [
               `RET-${r.id}`,
               invoiceNo(r.saleId),
@@ -107,9 +107,9 @@ export default function ReturnsPage() {
           ],
         },
         {
-          name: "أصناف المرتجعات",
+          name: t("أصناف المرتجعات"),
           rows: [
-            ["المرجع", "الفاتورة", "الصنف", "الحجم", "النيكوتين", "السعر", "النوع", "الكمية", "سعر الوحدة", "القيمة"],
+            [t("المرجع"), t("الفاتورة"), t("الصنف"), t("الحجم"), t("النيكوتين"), t("السعر"), t("النوع"), t("الكمية"), t("سعر الوحدة"), t("القيمة")],
             ...list.flatMap((r) =>
               r.items.map((it) => [
                 `RET-${r.id}`,
@@ -117,8 +117,8 @@ export default function ReturnsPage() {
                 it.productName,
                 it.size,
                 it.nicotine,
-                it.priceType === "wholesale" ? "جملة" : "أفراد",
-                it.direction === "in" ? "مرتجع (دخول)" : "بديل (خروج)",
+                it.priceType === "wholesale" ? t("جملة") : t("أفراد"),
+                it.direction === "in" ? t("مرتجع (دخول)") : t("بديل (خروج)"),
                 it.quantity,
                 it.price.toFixed(2),
                 (it.price * it.quantity).toFixed(2),
@@ -128,7 +128,7 @@ export default function ReturnsPage() {
         },
       ],
     );
-    toast.push("ok", "تم تنزيل تقرير المرتجعات والاستبدال");
+    toast.push("ok", t("تم تنزيل تقرير المرتجعات والاستبدال"));
   }
 
   return (
@@ -155,7 +155,7 @@ export default function ReturnsPage() {
         <Stat
           icon={<Undo2 size={17} className="text-[var(--amber)]" />}
           tone="amber"
-          label={`صافي الفرق المالي (${currency})`}
+          label={`${t("صافي الفرق المالي (")}${currency})`}
           value={formatMoneyJOD(stats.refundNet, currency, rates)}
         />
       </div>
@@ -178,20 +178,20 @@ export default function ReturnsPage() {
           />
         </Field>
         <Btn size="sm" variant="primary" onClick={load} loading={loading}>
-          <RefreshCw size={14} /> تحديث
+          <RefreshCw size={14} /> {t("تحديث")}
         </Btn>
         <Btn size="sm" onClick={exportExcel} disabled={!filtered.length}>
           <Download size={14} /> Excel
         </Btn>
         <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
         <Badge tone="slate" className="ms-auto">
-          إنشاء المرتجع يكون من داخل صفحة الفاتورة (زر «مرتجع / استبدال»)
+          {t("إنشاء المرتجع يكون من داخل صفحة الفاتورة (زر «مرتجع / استبدال»)")}
         </Badge>
       </div>
 
       <Card
         className="anim-in anim-d1 overflow-hidden"
-        title="سجل المرتجعات والاستبدال"
+        title={t("سجل المرتجعات والاستبدال")}
         icon={<Undo2 size={16} />}
         bodyClass="space-y-3 p-3"
       >
@@ -204,8 +204,8 @@ export default function ReturnsPage() {
         ) : filtered.length === 0 ? (
           <Empty
             icon={<Undo2 size={22} />}
-            title="لا مرتجعات في هذه الفترة"
-            hint="عند إرجاع صنف من فاتورة، يعود للمخزون تلقائيًا ويظهر هنا مع تفاصيله"
+            title={t("لا مرتجعات في هذه الفترة")}
+            hint={t("عند إرجاع صنف من فاتورة، يعود للمخزون تلقائيًا ويظهر هنا مع تفاصيله")}
           />
         ) : (
           filtered.map((r) => (
@@ -243,7 +243,7 @@ export default function ReturnsPage() {
               </div>
 
               <div className="mt-1.5 rounded-lg border border-[var(--line-soft)] bg-[var(--overlay-1)] px-2.5 py-1.5 text-[11.5px] font-extrabold text-[var(--muted)]">
-                السبب: {r.reason}
+                {t("السبب:")} {r.reason}
               </div>
 
               {r.note && (
@@ -271,7 +271,7 @@ export default function ReturnsPage() {
                     {it.productName}
                     {it.size && (
                       <span className="opacity-70">
-                        {" "}• {it.size}/{it.nicotine} • {it.priceType === "wholesale" ? "جملة" : "أفراد"}
+                        {" "}• {it.size}/{it.nicotine} • {it.priceType === "wholesale" ? t("جملة") : t("أفراد")}
                       </span>
                     )}
                     <span className="num">×{it.quantity}</span>

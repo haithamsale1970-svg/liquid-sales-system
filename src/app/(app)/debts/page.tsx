@@ -87,7 +87,7 @@ export default function DebtsPage() {
     try {
       setRows(await api<DebtClientDTO[]>("/api/debts"));
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر تحميل الديون");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر تحميل الديون"));
       setRows([]);
     } finally {
       setLoading(false);
@@ -133,7 +133,7 @@ export default function DebtsPage() {
     try {
       setDetail(await api<Detail>(`/api/debts/${id}`));
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر تحميل التفاصيل");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر تحميل التفاصيل"));
       setDetailId(null);
     } finally {
       setDetailLoading(false);
@@ -152,7 +152,7 @@ export default function DebtsPage() {
     if (!detailId || paying) return;
     const value = Math.round((Number(amount) || 0) * 1000) / 1000;
     if (!(value > 0)) {
-      toast.push("info", "أدخل مبلغ التسديد أولاً");
+      toast.push("info", t("أدخل مبلغ التسديد أولاً"));
       return;
     }
     setPaying(true);
@@ -164,14 +164,14 @@ export default function DebtsPage() {
       toast.push(
         "ok",
         r.fullyPaid
-          ? `تم سداد الدين بالكامل (${r.applied.toFixed(2)}) — تم تصفير رصيد العميل`
-          : `تم تحصيل ${r.applied.toFixed(2)} — المتبقي ${r.remainingAfter.toFixed(2)}`,
+          ? `${t("تم سداد الدين بالكامل (")}${r.applied.toFixed(2)}${t(") — تم تصفير رصيد العميل")}`
+          : `${t("تم تحصيل")}${r.applied.toFixed(2)}${t("— المتبقي")}${r.remainingAfter.toFixed(2)}`,
       );
       setAmount("");
       setNote("");
       await Promise.all([load(), refreshDetail(detailId)]);
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر تسجيل التسديد");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر تسجيل التسديد"));
     } finally {
       setPaying(false);
     }
@@ -181,19 +181,19 @@ export default function DebtsPage() {
     const list = filtered;
     const sheets = [
       {
-        name: "الديون",
+        name: t("الديون"),
         rows: [
-          ["الفترة", new Date().toISOString().slice(0, 10)],
-          ["إجمالي الديون", totals.total.toFixed(2)],
-          ["عدد العملاء المدينين", totals.clients],
+          [t("الفترة"), new Date().toISOString().slice(0, 10)],
+          [t("إجمالي الديون"), totals.total.toFixed(2)],
+          [t("عدد العملاء المدينين"), totals.clients],
           [],
           [
-            "العميل",
-            "النوع",
-            "الهاتف",
-            "فواتير مفتوحة",
-            "المتبقي (دين)",
-            "آخر فاتورة",
+            t("العميل"),
+            t("النوع"),
+            t("الهاتف"),
+            t("فواتير مفتوحة"),
+            t("المتبقي (دين)"),
+            t("آخر فاتورة"),
           ],
           ...list.map((r) => [
             r.name,
@@ -204,13 +204,13 @@ export default function DebtsPage() {
             r.lastSaleAt ? r.lastSaleAt.slice(0, 10) : "",
           ]),
           [],
-          ["الإجمالي", "", "", "", totals.total.toFixed(2), ""],
+          [t("الإجمالي"), "", "", "", totals.total.toFixed(2), ""],
         ],
       },
       {
-        name: "تفصيل الفواتير المفتوحة",
+        name: t("تفصيل الفواتير المفتوحة"),
         rows: [
-          ["العميل", "رقم الفاتورة", "التاريخ", "الإجمالي", "المدفوع", "المتبقي", "طريقة الدفع"],
+          [t("العميل"), t("رقم الفاتورة"), t("التاريخ"), t("الإجمالي"), t("المدفوع"), t("المتبقي"), t("طريقة الدفع")],
           ...(detail
             ? detail.unpaidSales.map((s) => [
                 detail.client.name,
@@ -225,9 +225,9 @@ export default function DebtsPage() {
         ],
       },
       {
-        name: "سجل التحصيل",
+        name: t("سجل التحصيل"),
         rows: [
-          ["العميل", "المبلغ", "طريقة الدفع", "المنفّذ", "التاريخ", "ملاحظة"],
+          [t("العميل"), t("المبلغ"), t("طريقة الدفع"), t("المنفّذ"), t("التاريخ"), t("ملاحظة")],
           ...(detail
             ? detail.payments.map((p) => [
                 detail.client.name,
@@ -241,8 +241,8 @@ export default function DebtsPage() {
         ],
       },
     ];
-    downloadXlsx(`الديون-${new Date().toISOString().slice(0, 10)}`, sheets);
-    toast.push("ok", "تم تنزيل ملف Excel لإدارة الديون");
+    downloadXlsx(`${t("الديون-")}${new Date().toISOString().slice(0, 10)}`, sheets);
+    toast.push("ok", t("تم تنزيل ملف Excel لإدارة الديون"));
   }
 
   return (
@@ -252,7 +252,7 @@ export default function DebtsPage() {
         <Stat
           icon={<Coins size={17} className="text-[var(--danger)]" />}
           tone="danger"
-          label={`إجمالي الديون (${currency})`}
+          label={`${t("إجمالي الديون (")}${currency})`}
           value={formatMoneyJOD(totals.total, currency, rates)}
         />
         <Stat
@@ -264,7 +264,7 @@ export default function DebtsPage() {
         <Stat
           icon={<Banknote size={17} className="text-[var(--mint)]" />}
           tone="mint"
-          label={`أعلى دين (${currency})`}
+          label={`${t("أعلى دين (")}${currency})`}
           value={formatMoneyJOD(totals.max, currency, rates)}
         />
         <Stat
@@ -280,7 +280,7 @@ export default function DebtsPage() {
         <div className="relative min-w-[220px] flex-1">
           <input
             className="inp ps-10"
-            placeholder="ابحث باسم العميل أو هاتفه…"
+            placeholder={t("ابحث باسم العميل أو هاتفه…")}
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -291,17 +291,17 @@ export default function DebtsPage() {
         </div>
         <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
         <Btn variant="primary" size="sm" onClick={exportExcel} disabled={!filtered.length}>
-          <Download size={14} /> تصدير Excel
+          <Download size={14} /> {t("تصدير Excel")}
         </Btn>
         <Btn size="sm" onClick={load} loading={loading}>
-          <RefreshCw size={14} /> تحديث
+          <RefreshCw size={14} /> {t("تحديث")}
         </Btn>
       </div>
 
       {/* ===== جدول الديون ===== */}
       <Card
         className="anim-in anim-d1 overflow-hidden"
-        title="العملاء المدينون (الذمم)"
+        title={t("العملاء المدينون (الذمم)")}
         icon={<Wallet size={16} />}
         bodyClass="overflow-x-auto"
       >
@@ -314,11 +314,11 @@ export default function DebtsPage() {
         ) : filtered.length === 0 ? (
           <Empty
             icon={<HandCoins size={22} />}
-            title={q ? "لا نتائج مطابقة" : "لا توجد ديون حالياً"}
+            title={q ? t("لا نتائج مطابقة") : t("لا توجد ديون حالياً")}
             hint={
               q
-                ? "جرّب اسمًا أو رقم هاتف آخر"
-                : "كل فواتير العملاء مسددة بالكامل — عمل ممتاز"
+                ? t("جرّب اسمًا أو رقم هاتف آخر")
+                : t("كل فواتير العملاء مسددة بالكامل — عمل ممتاز")
             }
           />
         ) : (
@@ -371,7 +371,7 @@ export default function DebtsPage() {
                   <td>
                     <div className="flex justify-end">
                       <Btn size="xs" variant="primary" onClick={() => openDetail(r.clientId)}>
-                        <HandCoins size={13} /> تحصيل
+                        <HandCoins size={13} /> {t("تحصيل")}
                       </Btn>
                     </div>
                   </td>
@@ -381,7 +381,7 @@ export default function DebtsPage() {
             <tfoot>
               <tr>
                 <td colSpan={4} className="font-extrabold">
-                  الإجمالي
+                  {t("الإجمالي")}
                 </td>
                 <td className="num font-black text-[var(--danger)]">
                   {formatMoneyJOD(filtered.reduce((a, r) => a + r.debt, 0), currency, rates)}
@@ -397,7 +397,7 @@ export default function DebtsPage() {
       <Modal
         open={!!detailId}
         onClose={() => setDetailId(null)}
-        title={detail ? `ذمة العميل — ${detail.client.name}` : "تفاصيل الذمة"}
+        title={detail ? `${t("ذمة العميل —")}${detail.client.name}` : t("تفاصيل الذمة")}
         icon={<HandCoins size={17} />}
         wide
       >
@@ -416,12 +416,12 @@ export default function DebtsPage() {
                   <Badge tone="sky">{CLIENT_TYPES[detail.client.type]}</Badge>
                 </div>
                 <div className="num mt-0.5 text-[12px] font-bold text-[var(--faint)]" dir="ltr">
-                  {detail.client.phone || "بدون هاتف"}
+                  {detail.client.phone || t("بدون هاتف")}
                 </div>
               </div>
               <div className="text-end">
                 <div className="text-[11px] font-bold text-[var(--faint)]">
-                  إجمالي المتبقي
+                  {t("إجمالي المتبقي")}
                 </div>
                 <div className="num text-[20px] font-black text-[var(--danger)]">
                   {formatMoneyJOD(detail.balance, currency, rates)}
@@ -432,10 +432,10 @@ export default function DebtsPage() {
             {/* نموذج التحصيل */}
             <div className="space-y-3 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3.5">
               <div className="flex items-center gap-2 text-[13px] font-extrabold">
-                <HandCoins size={15} className="text-[var(--mint)]" /> تسجيل تحصيل دفعة
+                <HandCoins size={15} className="text-[var(--mint)]" /> {t("تسجيل تحصيل دفعة")}
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Field label={`المبلغ (${currency})`}>
+                <Field label={`${t("المبلغ (")}${currency})`}>
                   <Input
                     type="number"
                     min="0"
@@ -462,8 +462,8 @@ export default function DebtsPage() {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {[
-                  { label: "كامل الدين", value: detail.balance },
-                  { label: "النصف", value: Math.round((detail.balance / 2) * 100) / 100 },
+                  { label: t("كامل الدين"), value: detail.balance },
+                  { label: t("النصف"), value: Math.round((detail.balance / 2) * 100) / 100 },
                   { label: "25", value: 25 },
                   { label: "50", value: 50 },
                 ].map((b) => (
@@ -481,7 +481,7 @@ export default function DebtsPage() {
                 <Input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="رقم الحوالة / ملاحظة التحصيل…"
+                  placeholder={t("رقم الحوالة / ملاحظة التحصيل…")}
                 />
               </Field>
               <Btn
@@ -491,11 +491,10 @@ export default function DebtsPage() {
                 loading={paying}
                 disabled={!(Number(amount) > 0)}
               >
-                <HandCoins size={15} /> تسجيل التسديد وتحديث الذمة
+                <HandCoins size={15} /> {t("تسجيل التسديد وتحديث الذمة")}
               </Btn>
               <p className="text-[11px] font-semibold leading-5 text-[var(--faint)]">
-                يُوزَّع المبلغ تلقائيًا على أقدم الفواتير غير المسدَّدة (FIFO)، ويُسجَّل
-                التحصيل باسمك في سجل النشاط مع طريقة الدفع للمطابقة المالية.
+                {t("يُوزَّع المبلغ تلقائيًا على أقدم الفواتير غير المسدَّدة (FIFO)، ويُسجَّل التحصيل باسمك في سجل النشاط مع طريقة الدفع للمطابقة المالية.")}
               </p>
             </div>
 
@@ -503,14 +502,14 @@ export default function DebtsPage() {
             <div>
               <div className="mb-2 flex items-center gap-2 text-[13px] font-extrabold">
                 <ReceiptText size={15} className="text-[var(--amber)]" />
-                الفواتير غير المسدّدة
+                {t("الفواتير غير المسدّدة")}
                 <span className="num text-[11.5px] font-bold text-[var(--faint)]">
                   ({fmtNum(detail.unpaidSales.length)})
                 </span>
               </div>
               {detail.unpaidSales.length === 0 ? (
                 <p className="rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2 text-[12px] font-bold text-[var(--faint)]">
-                  لا فواتير مفتوحة — الذمة مصفّرة
+                  {t("لا فواتير مفتوحة — الذمة مصفّرة")}
                 </p>
               ) : (
                 <div className="max-h-[230px] overflow-y-auto rounded-2xl border border-[var(--line-soft)]">
@@ -554,14 +553,14 @@ export default function DebtsPage() {
             <div>
               <div className="mb-2 flex items-center gap-2 text-[13px] font-extrabold">
                 <Banknote size={15} className="text-[var(--mint)]" />
-                سجل حركات التحصيل
+                {t("سجل حركات التحصيل")}
                 <span className="num text-[11.5px] font-bold text-[var(--faint)]">
                   ({fmtNum(detail.payments.length)})
                 </span>
               </div>
               {detail.payments.length === 0 ? (
                 <p className="rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2 text-[12px] font-bold text-[var(--faint)]">
-                  لا دفعات مسجّلة بعد
+                  {t("لا دفعات مسجّلة بعد")}
                 </p>
               ) : (
                 <ul className="max-h-[230px] space-y-1.5 overflow-y-auto pe-1">

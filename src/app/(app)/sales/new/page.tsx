@@ -212,12 +212,12 @@ export default function NewSalePage() {
     if (!code || !products) return;
     const hit = resolveScan(code);
     if (!hit) {
-      toast.push("info", `لا يوجد صنف بهذا الباركود (${code}) — تحقق من الصنف أو أضفه`);
+      toast.push("info", `${t("لا يوجد صنف بهذا الباركود (")}${code}${t(") — تحقق من الصنف أو أضفه")}`);
       setScan("");
       return;
     }
     if (hit.stock <= 0) {
-      toast.push("err", `"${hit.name}" نفد من المخزون — لا يمكن إضافته`);
+      toast.push("err", `"${hit.name}${t("\" نفد من المخزون — لا يمكن إضافته")}`);
       setScan("");
       return;
     }
@@ -225,7 +225,7 @@ export default function NewSalePage() {
       .filter((x) => x.product.id === hit.id)
       .reduce((sum, x) => sum + x.qty, 0);
     if (already >= hit.stock) {
-      toast.push("info", `"${hit.name}" — وصلت للكمية المتاحة (${hit.stock})`);
+      toast.push("info", `"${hit.name}${t("\" — وصلت للكمية المتاحة (")}${hit.stock})`);
       setScan("");
       return;
     }
@@ -233,7 +233,7 @@ export default function NewSalePage() {
       toggleVariantPicker(hit);
     } else {
       addToCart(hit);
-      toast.push("ok", `تمت إضافة "${hit.name}" عبر الباركود`);
+      toast.push("ok", `${t("تمت إضافة \"")}${hit.name}${t("\" عبر الباركود")}`);
     }
     setScan("");
     scanRef.current?.focus();
@@ -250,7 +250,7 @@ export default function NewSalePage() {
       const current = c[key];
       const next = (current?.qty ?? 0) + 1;
       if (next > available) {
-        toast.push("info", `"${p.name}" — المتاح ${available} فقط`);
+        toast.push("info", `"${p.name}${t("\" — المتاح")}${available}${t("فقط")}`);
         return c;
       }
       return { ...c, [key]: { product: p, variant, priceType, qty: next } };
@@ -265,7 +265,7 @@ export default function NewSalePage() {
     }
     const available = p.variants.filter((v) => v.stock > 0);
     if (available.length === 0) {
-      toast.push("err", `"${p.name}" لا يحتوي على خيارات متاحة حالياً`);
+      toast.push("err", `"${p.name}${t("\" لا يحتوي على خيارات متاحة حالياً")}`);
       return;
     }
     setVariantPicker((cur) =>
@@ -300,7 +300,7 @@ export default function NewSalePage() {
     setAddingClient(true);
     try {
       const r = await api<{ id: number }>("/api/clients", { method: "POST", body: newClient });
-      toast.push("ok", `تمت إضافة العميل "${newClient.name}"`);
+      toast.push("ok", `${t("تمت إضافة العميل \"")}${newClient.name}"`);
       const all = await api<ClientDTO[]>("/api/clients");
       setClients(all);
       setClientId(String(r.id));
@@ -315,7 +315,7 @@ export default function NewSalePage() {
         distributionMapUrl: "",
       });
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر الإضافة");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر الإضافة"));
     } finally {
       setAddingClient(false);
     }
@@ -333,11 +333,11 @@ export default function NewSalePage() {
   async function submit() {
     if (submitting) return;
     if (!clientId) {
-      toast.push("info", "اختر العميل أولاً");
+      toast.push("info", t("اختر العميل أولاً"));
       return;
     }
     if (!cartEntries.length) {
-      toast.push("info", "أضف صنفًا واحدًا على الأقل");
+      toast.push("info", t("أضف صنفًا واحدًا على الأقل"));
       return;
     }
     setSubmitting(true);
@@ -399,7 +399,7 @@ export default function NewSalePage() {
       );
       router.push(`/sales/${r.id}`);
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر إنشاء الفاتورة");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر إنشاء الفاتورة"));
       setSubmitting(false);
     }
   }
@@ -409,13 +409,13 @@ export default function NewSalePage() {
       {/* products picker */}
       <Card
         className="anim-in xl:col-span-3"
-        title="اختيار الأصناف"
+        title={t("اختيار الأصناف")}
         icon={<ShoppingCart size={16} />}
         actions={
           <div className="relative w-52">
             <input
               className="inp !py-2 ps-9 !text-[13px]"
-              placeholder="بحث…"
+              placeholder={t("بحث…")}
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
@@ -429,7 +429,7 @@ export default function NewSalePage() {
           <input
             ref={scanRef}
             className="inp ps-9 !text-[13px]"
-            placeholder="امسح الباركود ثم Enter…"
+            placeholder={t("امسح الباركود ثم Enter…")}
             value={scan}
             onChange={(e) => setScan(e.target.value)}
             onKeyDown={handleScanKey}
@@ -440,8 +440,7 @@ export default function NewSalePage() {
           <ScanLine size={15} className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-[var(--faint)]" />
         </div>
         <p className="mb-3 text-[11px] font-bold text-[var(--faint)]">
-          الماسح جاهز تلقائيًا: كل مسح يضيف القطعة فورًا للفاتورة — وإن لم يُوجد الباركود
-          سيظهر تنبيه بالرقم المقروء.
+          {t("الماسح جاهز تلقائيًا: كل مسح يضيف القطعة فورًا للفاتورة — وإن لم يُوجد الباركود سيظهر تنبيه بالرقم المقروء.")}
         </p>
         {!products ? (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
@@ -451,7 +450,7 @@ export default function NewSalePage() {
           </div>
         ) : filtered.length === 0 ? (
           <p className="py-10 text-center text-[13px] font-bold text-[var(--faint)]">
-            لا توجد أصناف — أضف منتجات من صفحة الأصناف أولاً
+            {t("لا توجد أصناف — أضف منتجات من صفحة الأصناف أولاً")}
           </p>
         ) : (
           <div className="grid max-h-[62vh] grid-cols-2 gap-3 overflow-y-auto pe-1 md:grid-cols-3">
@@ -498,13 +497,13 @@ export default function NewSalePage() {
                         <div className="truncate text-[12.5px] font-extrabold leading-5">{p.name}</div>
                         <div className="num mt-0.5 text-[13px] font-black text-[var(--mint)]">{formatMoneyJOD(p.price, currency, rates)}</div>
                         <div className={cls("num mt-0.5 text-[10.5px] font-bold", out ? "text-[var(--danger)]" : low ? "text-[var(--alert-text)]" : "text-[var(--faint)]")}>
-                          {out ? "نفد المخزون" : low ? `مخزون منخفض: ${p.stock}` : `متاح: ${p.stock}`}
+                          {out ? t("نفد المخزون") : low ? `${t("مخزون منخفض:")}${p.stock}` : `${t("متاح:")}${p.stock}`}
                         </div>
                       </div>
                     </div>
                     {low && (
                       <span className="absolute end-2.5 top-2.5 rounded-md bg-[var(--alert-soft)] px-1.5 py-0.5 text-[9.5px] font-black text-[var(--alert-text)]">
-                        حد التنبيه
+                        {t("حد التنبيه")}
                       </span>
                     )}
                     {inCart > 0 && (
@@ -519,7 +518,7 @@ export default function NewSalePage() {
                     <div className="anim-in mt-2 border-t border-[var(--line-soft)] pt-2">
                       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                         <span className="text-[11px] font-extrabold text-[var(--muted)]">
-                          الخيارات المتاحة — {p.name}
+                          {t("الخيارات المتاحة —")} {p.name}
                         </span>
                         <div className="flex items-center gap-1.5">
                           <button
@@ -536,7 +535,7 @@ export default function NewSalePage() {
                                 : "border-[var(--line-soft)] text-[var(--faint)]",
                             )}
                           >
-                            سعر الأفراد
+                            {t("سعر الأفراد")}
                           </button>
                           <button
                             type="button"
@@ -552,7 +551,7 @@ export default function NewSalePage() {
                                 : "border-[var(--line-soft)] text-[var(--faint)]",
                             )}
                           >
-                            سعر الجملة
+                            {t("سعر الجملة")}
                           </button>
                         </div>
                       </div>
@@ -577,7 +576,7 @@ export default function NewSalePage() {
                               </span>
                               <span className="flex shrink-0 items-center gap-2">
                                 <span className="num text-[10.5px] font-bold text-[var(--faint)]">
-                                  متاح {v.stock}
+                                  {t("متاح")} {v.stock}
                                 </span>
                                 <span className="num text-[12px] font-black text-[var(--mint)]">
                                   {formatMoneyJOD(unit, currency, rates)}
@@ -598,14 +597,14 @@ export default function NewSalePage() {
 
       {/* cart / invoice builder */}
       <div className="anim-in anim-d1 xl:col-span-2">
-        <Card title="تفاصيل الفاتورة" icon={<ReceiptText size={16} />} bodyClass="flex flex-col gap-4 p-4">
+        <Card title={t("تفاصيل الفاتورة")} icon={<ReceiptText size={16} />} bodyClass="flex flex-col gap-4 p-4">
           {/* client */}
           <div>
             <div className="mb-1.5 flex items-center justify-between">
-              <label className="lbl !mb-0">العميل *</label>
+              <label className="lbl !mb-0">{t("العميل *")}</label>
               {canManageClients && (
                 <button className="link flex items-center gap-1 text-[11.5px]" onClick={() => setAddClientOpen((s) => !s)}>
-                  <UserPlus size={13} /> عميل جديد
+                  <UserPlus size={13} /> {t("عميل جديد")}
                 </button>
               )}
             </div>
@@ -621,7 +620,7 @@ export default function NewSalePage() {
             />
             {addClientOpen && canManageClients && (
               <div className="mt-2 space-y-2 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3">
-                <Input placeholder="اسم العميل" value={newClient.name} onChange={(e) => setNewClient((n) => ({ ...n, name: e.target.value }))} />
+                <Input placeholder={t("اسم العميل")} value={newClient.name} onChange={(e) => setNewClient((n) => ({ ...n, name: e.target.value }))} />
 
                 <div className="flex gap-2">
                   <Select
@@ -634,18 +633,18 @@ export default function NewSalePage() {
                          ...(shop ? {} : { address: "", googleMapsUrl: "", distributionMapUrl: "" }),
                        }));
                      }}
-                     aria-label="قسم العميل"
+                     aria-label={t("قسم العميل")}
                    >
-                     <option value="individuals">العملاء الأفراد</option>
-                     <option value="shops">المحلات والمتاجر</option>
+                     <option value="individuals">{t("العملاء الأفراد")}</option>
+                     <option value="shops">{t("المحلات والمتاجر")}</option>
                    </Select>
                     
                     
                     
-                  <Input placeholder="الهاتف" dir="ltr" className="num" value={newClient.phone} onChange={(e) => setNewClient((n) => ({ ...n, phone: e.target.value }))} />
+                  <Input placeholder={t("الهاتف")} dir="ltr" className="num" value={newClient.phone} onChange={(e) => setNewClient((n) => ({ ...n, phone: e.target.value }))} />
                 </div>
                 <Input
-                  placeholder="رقم هاتف ثانٍ (اختياري)"
+                  placeholder={t("رقم هاتف ثانٍ (اختياري)")}
                   dir="ltr"
                   className="num"
                   value={newClient.phone2}
@@ -654,7 +653,7 @@ export default function NewSalePage() {
                  {isShopClient(newClient.type) && (
                    <>
                      <Input
-                       placeholder="عنوان المحل"
+                       placeholder={t("عنوان المحل")}
                        value={newClient.address}
                        onChange={(e) => setNewClient((n) => ({ ...n, address: e.target.value }))}
                      />
@@ -676,7 +675,7 @@ export default function NewSalePage() {
                  )}
 
                 <Btn size="sm" variant="primary" onClick={quickAddClient} loading={addingClient} disabled={newClient.name.trim().length < 2} className="w-full">
-                  حفظ العميل واختياره
+                  {t("حفظ العميل واختياره")}
                 </Btn>
               </div>
             )}
@@ -688,29 +687,29 @@ export default function NewSalePage() {
                   <Skeleton className="h-10" />
                 ) : !history ? (
                   <p className="text-[11.5px] font-bold text-[var(--faint)]">
-                    تعذر تحميل تاريخ العميل — يمكنك متابعة الفاتورة عاديًا
+                    {t("تعذر تحميل تاريخ العميل — يمكنك متابعة الفاتورة عاديًا")}
                   </p>
                 ) : (
                   <>
                     <div className="flex flex-wrap items-center gap-2 text-[11.5px] font-bold text-[var(--muted)]">
                       <Badge tone="mint">
-                        <History size={11} /> طلب <span className="num">{fmtNum(history.stats.orders)}</span> مرة
+                        <History size={11} /> {t("طلب")} <span className="num">{fmtNum(history.stats.orders)}</span> {t("مرة")}
                       </Badge>
                       <span>
-                        إجمالي مشترياته:{" "}
+                        {t("إجمالي مشترياته:")}{" "}
                         <span className="num text-[var(--mint)]">
                           {formatMoneyJOD(history.stats.total, currency, rates)}
                         </span>
                       </span>
                       <span>
-                        متوسط الفاتورة:{" "}
+                        {t("متوسط الفاتورة:")}{" "}
                         <span className="num">
                           {formatMoneyJOD(history.stats.avg, currency, rates)}
                         </span>
                       </span>
                       {history.stats.debt > 0 && (
                         <Badge tone="rose">
-                          دين قائم{" "}
+                          {t("دين قائم")}{" "}
                           <span className="num">
                             {formatMoneyJOD(history.stats.debt, currency, rates)}
                           </span>
@@ -718,15 +717,15 @@ export default function NewSalePage() {
                       )}
                       <span className="ms-auto text-[10.5px] font-bold text-[var(--faint)]">
                         {history.stats.lastOrderAt
-                          ? `آخر طلب: ${relTime(history.stats.lastOrderAt)}`
-                          : "لا فواتير سابقة لهذا العميل"}
+                          ? `${t("آخر طلب:")}${relTime(history.stats.lastOrderAt)}`
+                          : t("لا فواتير سابقة لهذا العميل")}
                       </span>
                     </div>
 
                     {history.favorites.length > 0 && (
                       <div className="mt-2.5">
                         <div className="mb-1.5 text-[11px] font-extrabold text-[var(--faint)]">
-                          أصنافه المفضّلة — اضغط صنفًا لإضافته فورًا:
+                          {t("أصنافه المفضّلة — اضغط صنفًا لإضافته فورًا:")}
                         </div>
                         <div className="flex flex-wrap gap-1.5">
                           {history.favorites.map((f) => {
@@ -747,7 +746,7 @@ export default function NewSalePage() {
                                 <ProductImage src={f.imageUrl} name={f.name} size={18} radius={5} />
                                 {f.name}
                                 <span className="num text-[var(--mint)]">×{fmtNum(f.qty)}</span>
-                                {!p && <span className="text-[var(--danger)]">(محذوف)</span>}
+                                {!p && <span className="text-[var(--danger)]">{t("(محذوف)")}</span>}
                               </button>
                             );
                           })}
@@ -758,7 +757,7 @@ export default function NewSalePage() {
                     {history.purchases.length > 0 && (
                       <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
                         <span className="text-[11px] font-extrabold text-[var(--faint)]">
-                          آخر فواتيره:
+                          {t("آخر فواتيره:")}
                         </span>
                         {history.purchases.slice(0, 4).map((s) => (
                           <Link
@@ -782,7 +781,7 @@ export default function NewSalePage() {
             {cartEntries.length === 0 ? (
               <div className="flex h-[120px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--line)] text-[var(--faint)]">
                 <ShoppingCart size={22} />
-                <span className="text-[12px] font-bold">الفاتورة فارغة — اختر الأصناف من القائمة</span>
+                <span className="text-[12px] font-bold">{t("الفاتورة فارغة — اختر الأصناف من القائمة")}</span>
               </div>
             ) : (
               <ul className="max-h-[260px] space-y-2 overflow-y-auto pe-1">
@@ -807,7 +806,7 @@ export default function NewSalePage() {
                        <div className="truncate text-[12.5px] font-extrabold">{p.name}</div>
                        {variant && (
                          <div className="text-[10.5px] font-bold text-[var(--faint)]">
-                           {variant.size} • {variant.nicotine} • {priceType === "wholesale" ? "سعر الجملة" : "سعر الأفراد"}
+                           {variant.size} • {variant.nicotine} • {priceType === "wholesale" ? t("سعر الجملة") : t("سعر الأفراد")}
                          </div>
                        )}
                        <div className="num text-[11px] font-bold text-[var(--muted)]">
@@ -836,7 +835,7 @@ export default function NewSalePage() {
           {/* shipping */}
           <div>
             <div className="mb-1.5 flex items-center justify-between">
-              <label className="lbl !mb-0">التوصيل</label>
+              <label className="lbl !mb-0">{t("التوصيل")}</label>
               <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
             </div>
             <div className="flex gap-2">
@@ -878,7 +877,7 @@ export default function NewSalePage() {
 
           {/* طريقة الدفع — "مستحقات شركة التوصيل" تظهر فقط مع توصيل فعلي */}
           <div>
-            <label className="lbl">طريقة الدفع *</label>
+            <label className="lbl">{t("طريقة الدفع *")}</label>
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
               {availablePaymentMethods(shippingType, canCredit).map((m) => (
                 <button
@@ -907,8 +906,8 @@ export default function NewSalePage() {
               <Field
                 label={
                   isDeliverySale
-                    ? `مبلغ شركة التوصيل (${currency})`
-                    : `المدفوع (${currency})`
+                    ? `${t("مبلغ شركة التوصيل (")}${currency})`
+                    : `${t("المدفوع (")}${currency})`
                 }
               >
                 <Input
@@ -921,13 +920,13 @@ export default function NewSalePage() {
                   onChange={(e) => {
                     if (!isDeliverySale) setPaidInput(e.target.value);
                   }}
-                  placeholder={effectivePaymentMethod === "credit" ? "0 — آجل" : total.toFixed(2)}
+                  placeholder={effectivePaymentMethod === "credit" ? t("0 — آجل") : total.toFixed(2)}
                   disabled={isDeliverySale}
                 />
               </Field>
               {remaining > 0 && (
                 <div className="flex flex-col justify-end pb-1">
-                  <span className="text-[11px] font-bold text-[var(--faint)]">المتبقي على العميل</span>
+                  <span className="text-[11px] font-bold text-[var(--faint)]">{t("المتبقي على العميل")}</span>
                   <span className="num text-[15px] font-black text-[var(--danger)]">
                     {formatMoneyJOD(remaining, currency, rates)}
                   </span>
@@ -939,15 +938,15 @@ export default function NewSalePage() {
           {/* خصم الفاتورة (بصلاحية مستقلة) */}
           {canDiscount && (
             <div>
-              <label className="lbl">الخصم على الفاتورة</label>
+              <label className="lbl">{t("الخصم على الفاتورة")}</label>
               <div className="flex gap-2">
                 <Select
                   value={discountType}
                   onChange={(e) => setDiscountType(e.target.value as typeof discountType)}
                 >
-                  <option value="none">بدون خصم</option>
-                  <option value="percent">نسبة %</option>
-                  <option value="amount">مبلغ ثابت</option>
+                  <option value="none">{t("بدون خصم")}</option>
+                  <option value="percent">{t("نسبة %")}</option>
+                  <option value="amount">{t("مبلغ ثابت")}</option>
                 </Select>
                 <Input
                   type="number"
@@ -965,32 +964,32 @@ export default function NewSalePage() {
           )}
 
           <Field label={t("ملاحظات الفاتورة")}>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="اختياري — تظهر أسفل الفاتورة" />
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("اختياري — تظهر أسفل الفاتورة")} />
           </Field>
 
           {/* totals */}
           <div className="space-y-2 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-4">
             <div className="flex justify-between text-[13px] font-bold text-[var(--muted)]">
-              <span>الإجمالي الفرعي ({currency})</span>
+              <span>{t("الإجمالي الفرعي (")}{currency})</span>
               <span className="num">{formatMoneyJOD(subtotal, currency, rates)}</span>
             </div>
             <div className="flex justify-between text-[13px] font-bold text-[var(--muted)]">
-              <span>التوصيل ({SHIPPING_TYPES[shippingType]})</span>
+              <span>{t("التوصيل (")}{SHIPPING_TYPES[shippingType]})</span>
               <span className="num">{formatMoneyJOD(ship, currency, rates)}</span>
             </div>
             {discount > 0 && (
               <div className="flex justify-between text-[13px] font-bold text-[var(--danger)]">
-                <span>الخصم {discountType === "percent" ? `(${dv}%)` : ""}</span>
+                <span>{t("الخصم")} {discountType === "percent" ? `(${dv}%)` : ""}</span>
                 <span className="num">− {formatMoneyJOD(discount, currency, rates)}</span>
               </div>
             )}
             <div className="flex justify-between text-[13px] font-bold text-[var(--muted)]">
-              <span>المدفوع ({PAYMENT_METHODS[effectivePaymentMethod]})</span>
+              <span>{t("المدفوع (")}{PAYMENT_METHODS[effectivePaymentMethod]})</span>
               <span className="num">{formatMoneyJOD(paid, currency, rates)}</span>
             </div>
             {isDeliverySale && (
               <div className="flex justify-between text-[12px] font-bold text-[var(--muted)]">
-                <span>بذمة شركة التوصيل (صافي)</span>
+                <span>{t("بذمة شركة التوصيل (صافي)")}</span>
                 <span className="num">{formatMoneyJOD(deliveryReceivable, currency, rates)}</span>
               </div>
             )}
@@ -998,20 +997,20 @@ export default function NewSalePage() {
               <div className="flex justify-between text-[13px] font-black text-[var(--danger)]">
                 <span>
                   {isDeliverySale
-                    ? "المتبقي (بذمة شركة التوصيل)"
-                    : "المتبقي (دين على العميل)"}
+                    ? t("المتبقي (بذمة شركة التوصيل)")
+                    : t("المتبقي (دين على العميل)")}
                 </span>
                 <span className="num">{formatMoneyJOD(remaining, currency, rates)}</span>
               </div>
             )}
             <div className="hr" />
             <div className="flex items-center justify-between">
-              <span className="text-[14px] font-black">الإجمالي النهائي ({currency})</span>
+              <span className="text-[14px] font-black">{t("الإجمالي النهائي (")}{currency})</span>
               <span className="num text-[22px] font-black text-[var(--mint)]">{formatMoneyJOD(total, currency, rates)}</span>
             </div>
             {showProfit && (
               <div className="flex justify-between text-[11.5px] font-bold text-[var(--faint)]">
-                <span>الربح المتوقع</span>
+                <span>{t("الربح المتوقع")}</span>
                 <span className="num text-[var(--amber)]">{formatMoneyJOD(Math.max(0, profit - discount), currency, rates)}</span>
               </div>
             )}
@@ -1033,11 +1032,11 @@ export default function NewSalePage() {
           )}
 
           <Btn variant="primary" onClick={submit} loading={submitting} disabled={!clientId || !cartEntries.length} className="w-full !py-3.5 !text-[14.5px]">
-            <CheckCircle2 size={17} /> حفظ الفاتورة وخصم المخزون
+            <CheckCircle2 size={17} /> {t("حفظ الفاتورة وخصم المخزون")}
           </Btn>
           {!clientId && cartEntries.length > 0 && (
             <p className="-mt-2 text-center text-[11.5px] font-bold text-[var(--amber)]">
-              بقيت خطوة: اختيار العميل لإتمام الحفظ
+              {t("بقيت خطوة: اختيار العميل لإتمام الحفظ")}
             </p>
           )}
 

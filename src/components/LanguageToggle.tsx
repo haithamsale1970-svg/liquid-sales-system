@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import { Languages } from "lucide-react";
 import { useLang } from "./LanguageProvider";
 import { LANGS } from "@/lib/i18n";
@@ -15,8 +17,8 @@ export default function LanguageToggle() {
       onClick={toggle}
       className="icon-btn"
       data-lang-toggle=""
-      aria-label={next === "en" ? "Switch to English" : "التبديل إلى العربية"}
-      title={next === "en" ? "Switch to English" : "التبديل إلى العربية"}
+      aria-label={next === "en" ? "Switch to English" : t("التبديل إلى العربية")}
+      title={next === "en" ? "Switch to English" : t("التبديل إلى العربية")}
     >
       <Languages size={15} aria-hidden />
       <span className="hidden text-[12px] font-extrabold lg:inline">

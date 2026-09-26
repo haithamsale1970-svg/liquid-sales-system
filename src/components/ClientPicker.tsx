@@ -117,7 +117,7 @@ export default function ClientPicker({
         <input
           ref={inputRef}
           className="inp ps-9"
-          placeholder="اكتب اسم العميل أو رقم هاتفه…"
+          placeholder={t("اكتب اسم العميل أو رقم هاتفه…")}
           value={inputValue}
           onFocus={() => {
             setOpen(true);
@@ -141,7 +141,7 @@ export default function ClientPicker({
         {(selected || q) && (
           <button
             type="button"
-            aria-label="مسح العميل"
+            aria-label={t("مسح العميل")}
             className="icon-btn !absolute end-2 top-1/2 !h-7 !w-7 -translate-y-1/2"
             onClick={() => {
               if (q) {
@@ -165,7 +165,7 @@ export default function ClientPicker({
           <div className="max-h-[260px] overflow-y-auto p-1.5">
             {results.length === 0 ? (
               <div className="px-3 py-4 text-center text-[12px] font-bold text-[var(--faint)]">
-                لا يوجد عميل مطابق «{q}»
+                {t("لا يوجد عميل مطابق «")}{q}»
               </div>
             ) : (
               results.map((c, i) => (
@@ -196,16 +196,16 @@ export default function ClientPicker({
                       className="num mt-0.5 truncate text-[11px] font-bold text-[var(--faint)]"
                       dir="ltr"
                     >
-                      {[c.phone, c.phone2].filter(Boolean).join(" • ") || "بدون هاتف"}
+                      {[c.phone, c.phone2].filter(Boolean).join(" • ") || t("بدون هاتف")}
                     </div>
                   </div>
                   <div className="shrink-0 text-end">
                     <div className="num text-[11.5px] font-black text-[var(--muted)]">
-                      {fmtNum(c.ordersCount)} فاتورة
+                      {fmtNum(c.ordersCount)} {t("فاتورة")}
                     </div>
                     {c.debt > 0 ? (
                       <div className="num text-[11px] font-black text-[var(--danger)]">
-                        دين {formatMoneyJOD(c.debt, currency, rates)}
+                        {t("دين")} {formatMoneyJOD(c.debt, currency, rates)}
                       </div>
                     ) : (
                       <div className="num text-[11px] font-bold text-[var(--faint)]">
@@ -228,7 +228,7 @@ export default function ClientPicker({
               className="flex w-full items-center gap-2 border-t border-[var(--line-soft)] bg-[var(--overlay-1)] px-3.5 py-3 text-[12.5px] font-extrabold text-[var(--mint)] hover:bg-[var(--overlay-2)]"
             >
               <UserPlus size={14} />
-              {q.trim() ? `إضافة عميل جديد: «${q.trim()}»` : "إضافة عميل جديد"}
+              {q.trim() ? `${t("إضافة عميل جديد: «")}${q.trim()}»` : t("إضافة عميل جديد")}
               <Plus size={13} className="ms-auto" />
             </button>
           )}
@@ -247,7 +247,7 @@ export default function ClientPicker({
             value={
               selected.debt > 0
                 ? formatMoneyJOD(selected.debt, currency, rates)
-                : "لا يوجد"
+                : t("لا يوجد")
             }
             danger={selected.debt > 0}
           />

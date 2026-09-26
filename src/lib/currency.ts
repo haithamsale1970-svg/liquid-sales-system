@@ -4,10 +4,12 @@
 // التخزين دائمًا بالدينار الأردني JOD، والعرض يتحوّل فوريًا.
 // ============================================================
 
+import { t } from "./i18n";
+
 export const CURRENCIES = {
-  JOD: { code: "JOD", label: "دينار أردني", short: "د.أ", symbol: "JOD" },
-  USD: { code: "USD", label: "دولار أمريكي", short: "$", symbol: "USD" },
-  EGP: { code: "EGP", label: "جنيه مصري", short: "ج.م", symbol: "EGP" },
+  JOD: { code: "JOD", get label() { return t("دينار أردني"); }, get short() { return t("د.أ"); }, symbol: "JOD" },
+  USD: { code: "USD", get label() { return t("دولار أمريكي"); }, get short() { return t("$"); }, symbol: "USD" },
+  EGP: { code: "EGP", get label() { return t("جنيه مصري"); }, get short() { return t("ج.م"); }, symbol: "EGP" },
 } as const;
 
 export type CurrencyCode = keyof typeof CURRENCIES;

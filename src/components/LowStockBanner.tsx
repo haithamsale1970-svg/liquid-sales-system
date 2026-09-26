@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 // تنبيه انخفاض المخزون على الشاشة — شريط يظهر في كل الصفحات (AppShell)
 // مع إمكانية الفتح لعرض الأصناف، والانتقال لصفحة الأصناف لتعبئة الكميات.
 import Link from "next/link";
@@ -62,12 +64,12 @@ export default function LowStockBanner() {
           <BellRing size={16} />
         </span>
         <div className="min-w-0 flex-1 text-[12.5px] font-extrabold leading-6 text-[var(--text)]">
-          تنبيه نقص المخزون:{" "}
-          <span className="num">{fmtNum(count)}</span> صنف وصل إلى حد التنبيه أو أقل
+          {t("تنبيه نقص المخزون:")}{" "}
+          <span className="num">{fmtNum(count)}</span> {t("صنف وصل إلى حد التنبيه أو أقل")}
           {outCount > 0 && (
             <span className="text-[var(--critical-text)]">
               {" "}
-              — منها <span className="num">{fmtNum(outCount)}</span> نفدت بالكامل
+              {t("— منها")} <span className="num">{fmtNum(outCount)}</span> {t("نفدت بالكامل")}
             </span>
           )}
         </div>
@@ -80,14 +82,14 @@ export default function LowStockBanner() {
             size={13}
             className={cls("transition-transform", open && "rotate-180")}
           />
-          {open ? "إخفاء القائمة" : "عرض الأصناف"}
+          {open ? t("إخفاء القائمة") : t("عرض الأصناف")}
         </button>
         <Link href="/products" className="btn btn-primary btn-xs">
-          إدارة المخزون
+          {t("إدارة المخزون")}
         </Link>
         <button
           className="icon-btn !h-7 !w-7"
-          title="تحديث التنبيه"
+          title={t("تحديث التنبيه")}
           onClick={load}
           disabled={loading}
         >
@@ -95,7 +97,7 @@ export default function LowStockBanner() {
         </button>
         <button
           className="icon-btn !h-7 !w-7"
-          title="إخفاء حتى تسجيل الدخول القادم"
+          title={t("إخفاء حتى تسجيل الدخول القادم")}
           onClick={() => {
             setHidden(true);
             try {
@@ -118,7 +120,7 @@ export default function LowStockBanner() {
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[12px] font-extrabold">{p.name}</div>
                 <div className="text-[10.5px] font-bold text-[var(--faint)]">
-                  حد التنبيه: <span className="num">{p.lowStockAt}</span>
+                  {t("حد التنبيه:")} <span className="num">{p.lowStockAt}</span>
                 </div>
               </div>
               <span
@@ -129,15 +131,15 @@ export default function LowStockBanner() {
                     : "alert-chip-warning !py-0.5",
                 )}
               >
-                {p.stock <= 0 ? "نفد" : `متبقٍ ${p.stock}`}
+                {p.stock <= 0 ? t("نفد") : `${t("متبقٍ")}${p.stock}`}
               </span>
             </li>
           ))}
           {count > (data?.items.length ?? 0) && (
             <li className="col-span-full text-center text-[11.5px] font-bold text-[var(--faint)]">
-              و{fmtNum(count - (data?.items.length ?? 0))} صنف آخر —{" "}
+              {t("و")}{fmtNum(count - (data?.items.length ?? 0))} {t("صنف آخر —")}{" "}
               <Link href="/products" className="link">
-                عرض الكل
+                {t("عرض الكل")}
               </Link>
             </li>
           )}

@@ -9,12 +9,16 @@
  * الملف آمن للاستيراد من الخادم والواجهة معًا لأنه لا يعتمد على قاعدة البيانات.
  */
 
+import { t } from "./i18n";
+
 // ---------- الإجراءات ----------
+// ملاحظة: نستخدم getters بدل قيم ثابتة حتى تُترجم النصوص **لحظة العرض**
+// (قيمة الكائن الثابتة تُحسب مرة واحدة عند تحميل الملف وتبقى عربية دائمًا).
 export const PERMISSION_ACTIONS = {
-  view: "عرض",
-  create: "إضافة",
-  update: "تعديل",
-  delete: "حذف",
+  get view() { return t("عرض"); },
+  get create() { return t("إضافة"); },
+  get update() { return t("تعديل"); },
+  get delete() { return t("حذف"); },
 } as const;
 export type PermissionAction = keyof typeof PERMISSION_ACTIONS;
 
@@ -45,18 +49,18 @@ export type PermissionGroup = {
 };
 
 export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
-  { key: "dashboard", label: "لوحة التحكم", hint: "الملخص العام وحركة اليوم", actions: ["view"] },
-  { key: "products", label: "الأصناف والمخزون", hint: "المنتجات والمتغيرات والكميات", actions: ["view", "create", "update", "delete"] },
-  { key: "sales", label: "الفواتير", hint: "إنشاء الفواتير وعرضها وإلغاؤها", actions: ["view", "create", "update", "delete"] },
-  { key: "clients", label: "العملاء", hint: "بيانات العملاء والإضافات السريعة", actions: ["view", "create", "update", "delete"] },
-  { key: "debts", label: "الديون والتحصيل", hint: "متابعة الديون وتسجيل السداد", actions: ["view", "create", "delete"] },
-  { key: "expenses", label: "المصاريف", hint: "مصروفات التشغيل", actions: ["view", "create", "delete"] },
-  { key: "inventory", label: "حركة المخزون", hint: "سجل دخول وخروج الكميات", actions: ["view", "create", "delete"] },
-  { key: "returns", label: "المرتجعات والاستبدال", hint: "إرجاع أو استبدال أصناف مباعة", actions: ["view", "create", "delete"] },
-  { key: "reports", label: "التقارير", hint: "تقارير المبيعات والأرباح", actions: ["view"] },
-  { key: "users", label: "المستخدمون", hint: "إنشاء الحسابات وضبط صلاحياتها", actions: ["view", "create", "update", "delete"] },
-  { key: "activity", label: "سجل النشاط", hint: "سجل عمليات المستخدمين", actions: ["view"] },
-  { key: "settings", label: "الإعدادات والنسخ", hint: "إعدادات النظام والنسخ الاحتياطي", actions: ["view", "update"] },
+  { key: "dashboard", get label() { return t("لوحة التحكم"); }, get hint() { return t("الملخص العام وحركة اليوم"); }, actions: ["view"] },
+  { key: "products", get label() { return t("الأصناف والمخزون"); }, get hint() { return t("المنتجات والمتغيرات والكميات"); }, actions: ["view", "create", "update", "delete"] },
+  { key: "sales", get label() { return t("الفواتير"); }, get hint() { return t("إنشاء الفواتير وعرضها وإلغاؤها"); }, actions: ["view", "create", "update", "delete"] },
+  { key: "clients", get label() { return t("العملاء"); }, get hint() { return t("بيانات العملاء والإضافات السريعة"); }, actions: ["view", "create", "update", "delete"] },
+  { key: "debts", get label() { return t("الديون والتحصيل"); }, get hint() { return t("متابعة الديون وتسجيل السداد"); }, actions: ["view", "create", "delete"] },
+  { key: "expenses", get label() { return t("المصاريف"); }, get hint() { return t("مصروفات التشغيل"); }, actions: ["view", "create", "delete"] },
+  { key: "inventory", get label() { return t("حركة المخزون"); }, get hint() { return t("سجل دخول وخروج الكميات"); }, actions: ["view", "create", "delete"] },
+  { key: "returns", get label() { return t("المرتجعات والاستبدال"); }, get hint() { return t("إرجاع أو استبدال أصناف مباعة"); }, actions: ["view", "create", "delete"] },
+  { key: "reports", get label() { return t("التقارير"); }, get hint() { return t("تقارير المبيعات والأرباح"); }, actions: ["view"] },
+  { key: "users", get label() { return t("المستخدمون"); }, get hint() { return t("إنشاء الحسابات وضبط صلاحياتها"); }, actions: ["view", "create", "update", "delete"] },
+  { key: "activity", get label() { return t("سجل النشاط"); }, get hint() { return t("سجل عمليات المستخدمين"); }, actions: ["view"] },
+  { key: "settings", get label() { return t("الإعدادات والنسخ"); }, get hint() { return t("إعدادات النظام والنسخ الاحتياطي"); }, actions: ["view", "update"] },
 ];
 
 // ---------- صلاحيات دقيقة إضافية ----------
@@ -78,13 +82,13 @@ export type ExtraPermission = {
 };
 
 export const EXTRA_PERMISSIONS: readonly ExtraPermission[] = [
-  { key: "sales.discount", label: "تطبيق الخصم على الفاتورة", hint: "السماح بمنح خصم للأصناف أو على إجمالي الفاتورة" },
-  { key: "sales.credit", label: "البيع الآجل (ذمة العميل)", hint: "إظهار خيار الدفع الآجل في الفاتورة الجديدة" },
-  { key: "finances.view_profit", label: "الاطلاع على الأرباح", hint: "إظهار هامش الربح في الفواتير والتقارير" },
-  { key: "finances.view_cost", label: "الاطلاع على التكاليف", hint: "إظهار سعر التكلفة وبيانات الكلفة" },
-  { key: "backup.manage", label: "النسخ الاحتياطي والاستعادة", hint: "تنزيل نسخة احتياطية أو استعادتها" },
-  { key: "settings.currency", label: "زر اختيار العملة", hint: "إظهار مبدّل العملات (EGP / USD / JOD) في الهيدر" },
-  { key: "sales.installments", label: "نظام التقسيط والذمم", hint: "تقسيم المبلغ الآجل على دفعات وتواريخ مستحقة" },
+  { key: "sales.discount", get label() { return t("تطبيق الخصم على الفاتورة"); }, get hint() { return t("السماح بمنح خصم للأصناف أو على إجمالي الفاتورة"); } },
+  { key: "sales.credit", get label() { return t("البيع الآجل (ذمة العميل)"); }, get hint() { return t("إظهار خيار الدفع الآجل في الفاتورة الجديدة"); } },
+  { key: "finances.view_profit", get label() { return t("الاطلاع على الأرباح"); }, get hint() { return t("إظهار هامش الربح في الفواتير والتقارير"); } },
+  { key: "finances.view_cost", get label() { return t("الاطلاع على التكاليف"); }, get hint() { return t("إظهار سعر التكلفة وبيانات الكلفة"); } },
+  { key: "backup.manage", get label() { return t("النسخ الاحتياطي والاستعادة"); }, get hint() { return t("تنزيل نسخة احتياطية أو استعادتها"); } },
+  { key: "settings.currency", get label() { return t("زر اختيار العملة"); }, get hint() { return t("إظهار مبدّل العملات (EGP / USD / JOD) في الهيدر"); } },
+  { key: "sales.installments", get label() { return t("نظام التقسيط والذمم"); }, get hint() { return t("تقسيم المبلغ الآجل على دفعات وتواريخ مستحقة"); } },
 ];
 
 // ---------- القائمة الكاملة للمفاتيح ----------

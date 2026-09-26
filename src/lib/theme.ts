@@ -1,4 +1,6 @@
-// نظام الثيمات — مصدر واحد لتعريف الثيمات وتطبيقها وحفظها.
+// نظام الثيمات — مصدر واحد لتعريف الثيمات وتطبيقها وحفظتها.
+
+import { t } from "./i18n";
 
 export const THEME_STORAGE_KEY = "cc-theme";
 
@@ -6,16 +8,16 @@ export const THEMES = {
   /** الثيم الداكن الافتراضي (الأحمر الحالي) */
   dark: {
     id: "dark",
-    label: "الوضع الداكن",
-    short: "داكن",
+    get label() { return t("الوضع الداكن"); },
+    get short() { return t("داكن"); },
     /** لون المعاينة في زر التبديل */
     swatch: ["#050505", "#ff2222", "#8a8a8a"],
   },
   /** الثيم الفسفوري الفاتح */
   phosphor: {
     id: "phosphor",
-    label: "الثيم الفسفوري الفاتح",
-    short: "فسفوري",
+    get label() { return t("الثيم الفسفوري الفاتح"); },
+    get short() { return t("فسفوري"); },
     swatch: ["#eef3f0", "#00c94b", "#ffcc00"],
   },
 } as const;

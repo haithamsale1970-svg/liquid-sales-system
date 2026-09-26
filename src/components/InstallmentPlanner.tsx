@@ -133,9 +133,9 @@ export default function InstallmentPlanner({
         { method: "PUT", body: { installments: plan } },
       );
       setExisting(res.plan);
-      toast.push("ok", "تم حفظ خطة التقسيط");
+      toast.push("ok", t("تم حفظ خطة التقسيط"));
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر حفظ الخطة");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر حفظ الخطة"));
     } finally {
       setSaving(false);
     }
@@ -150,7 +150,7 @@ export default function InstallmentPlanner({
       });
       setExisting(await api<InstallmentDTO[]>(`/api/sales/${saleId}/installments`));
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر التحديث");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر التحديث"));
     }
   }
 
@@ -243,7 +243,7 @@ export default function InstallmentPlanner({
             <button
               type="button"
               className="icon-btn danger"
-              title="حذف الدفعة"
+              title={t("حذف الدفعة")}
               onClick={() => setRows((rs) => rs.filter((_, idx) => idx !== i))}
             >
               <Trash2 size={14} />
@@ -279,7 +279,7 @@ export default function InstallmentPlanner({
               className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2"
             >
               <div className="min-w-0 text-[12px] font-bold">
-                <span className="num">دفعة {ins.seq}</span> ·{" "}
+                <span className="num">{t("دفعة")} {ins.seq}</span> ·{" "}
                 <span className="num">
                   {formatMoneyJOD(ins.amount, currency, rates)}
                 </span>{" "}
@@ -302,7 +302,7 @@ export default function InstallmentPlanner({
 
       {owed <= 0 && existing.length === 0 && (
         <p className="text-[12px] font-semibold text-[var(--faint)]">
-          لا يوجد مبلغ متبقي لتقسيطه على هذه الفاتورة.
+          {t("لا يوجد مبلغ متبقي لتقسيطه على هذه الفاتورة.")}
         </p>
       )}
     </div>

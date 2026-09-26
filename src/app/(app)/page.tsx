@@ -202,7 +202,7 @@ export default function DashboardPage() {
             delay=""
             tone="mint"
             icon={<Banknote size={21} />}
-            label={`مبيعات اليوم (${currency})`}
+            label={`${t("مبيعات اليوم (")}${currency})`}
             value={data.kpis.todayTotal}
             money
             currency={currency}
@@ -210,7 +210,7 @@ export default function DashboardPage() {
             spark={series7}
             sub={
               <Badge tone={data.kpis.todayTotal >= data.kpis.yesterdayTotal ? "mint" : "rose"}>
-                {data.kpis.todayCount} فاتورة
+                {data.kpis.todayCount} {t("فاتورة")}
               </Badge>
             }
           />
@@ -218,26 +218,26 @@ export default function DashboardPage() {
             delay="anim-d1"
             tone="violet"
             icon={<CalendarDays size={21} />}
-            label={`مبيعات الشهر (${currency})`}
+            label={`${t("مبيعات الشهر (")}${currency})`}
             value={data.kpis.monthTotal}
             money
             currency={currency}
             rates={rates}
-            sub={<Badge tone="violet">{data.kpis.monthCount} فاتورة</Badge>}
+            sub={<Badge tone="violet">{data.kpis.monthCount} {t("فاتورة")}</Badge>}
           />
           {can(me, "finances.view_profit") ? (
             <Kpi
               delay="anim-d2"
               tone="amber"
               icon={<Coins size={21} />}
-              label={`صافي ربح الشهر (${currency})`}
+              label={`${t("صافي ربح الشهر (")}${currency})`}
               value={data.kpis.monthProfit}
               money
               currency={currency}
               rates={rates}
               sub={
                 <Badge tone="amber">
-                  <TrendingUp size={12} /> بعد التكاليف
+                  <TrendingUp size={12} /> {t("بعد التكاليف")}
                 </Badge>
               }
             />
@@ -250,7 +250,7 @@ export default function DashboardPage() {
               value={data.kpis.monthCount}
               sub={
                 <Badge tone="amber">
-                  إجمالي المبيعات فقط
+                  {t("إجمالي المبيعات فقط")}
                 </Badge>
               }
             />
@@ -264,8 +264,8 @@ export default function DashboardPage() {
             sub={
               <Badge tone={data.kpis.lowCount > 0 ? "rose" : "sky"}>
                 {data.kpis.lowCount > 0
-                  ? `${data.kpis.lowCount} تنبيه نقص`
-                  : `${data.kpis.activeProducts} صنف نشط`}
+                  ? `${data.kpis.lowCount}${t("تنبيه نقص")}`
+                  : `${data.kpis.activeProducts}${t("صنف نشط")}`}
               </Badge>
             }
           />
@@ -276,11 +276,11 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
         <Card
           className="anim-in anim-d1 xl:col-span-3"
-          title="مبيعات آخر 14 يومًا"
+          title={t("مبيعات آخر 14 يومًا")}
           icon={<TrendingUp size={16} />}
           actions={
             <Badge tone="mint">
-              إجمالي ({currency}): <span className="num">{formatMoneyJOD(data?.series.reduce((a, s) => a + s.total, 0) ?? 0, currency, rates)}</span>
+              {t("إجمالي (")}{currency}): <span className="num">{formatMoneyJOD(data?.series.reduce((a, s) => a + s.total, 0) ?? 0, currency, rates)}</span>
             </Badge>
           }
           bodyClass="p-5"
@@ -292,7 +292,7 @@ export default function DashboardPage() {
               data={data.series.map((s) => ({
                 label: s.date.slice(5).replace("-", "/"),
                 value: Math.round(s.total),
-                sub: `${fmtDateTime(s.date).split("،")[0]} — ${s.count} فاتورة`,
+                sub: `${fmtDateTime(s.date).split("،")[0]} — ${s.count}${t("فاتورة")}`,
               }))}
               format={(n) => formatMoneyJOD(n, currency, rates)}
             />
@@ -301,14 +301,14 @@ export default function DashboardPage() {
 
         <Card
           className="anim-in anim-d2 xl:col-span-2"
-          title="الأصناف الأكثر مبيعًا — 30 يوم"
+          title={t("الأصناف الأكثر مبيعًا — 30 يوم")}
           icon={<Flame size={16} />}
           bodyClass="px-3 py-2"
         >
           {!data ? (
             <TableSkeleton />
           ) : data.topProducts.length === 0 ? (
-            <Empty icon={<Flame size={20} />} title="لا توجد مبيعات بعد" hint="ستظهر هنا الأصناف الأعلى مبيعًا" />
+            <Empty icon={<Flame size={20} />} title={t("لا توجد مبيعات بعد")} hint={t("ستظهر هنا الأصناف الأعلى مبيعًا")} />
           ) : (
             <ul className="divide-y divide-[var(--line-soft)]">
               {data.topProducts.map((p, i) => (
@@ -321,7 +321,7 @@ export default function DashboardPage() {
                     <div className="mb-1 flex items-center justify-between gap-2">
                       <span className="truncate text-[13px] font-extrabold">{p.name}</span>
                       <span className="num text-[12px] font-black text-[var(--mint)]">
-                        {fmtNum(p.qty)} قطعة
+                        {fmtNum(p.qty)} {t("قطعة")}
                       </span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
@@ -348,11 +348,11 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Card
           className="anim-in anim-d2"
-          title="تنبيهات المخزون"
+          title={t("تنبيهات المخزون")}
           icon={<BellRing size={16} />}
           actions={
             <Link href="/products" className="link text-[12px]">
-              إدارة الأصناف
+              {t("إدارة الأصناف")}
             </Link>
           }
           bodyClass="px-3 py-2"
@@ -360,7 +360,7 @@ export default function DashboardPage() {
           {!data ? (
             <TableSkeleton />
           ) : data.lowStock.length === 0 ? (
-            <Empty icon={<Package size={20} />} title="المخزون بحالة ممتازة" hint="لا توجد أصناف تحت حد التنبيه" />
+            <Empty icon={<Package size={20} />} title={t("المخزون بحالة ممتازة")} hint={t("لا توجد أصناف تحت حد التنبيه")} />
           ) : (
             <ul className="divide-y divide-[var(--line-soft)]">
               {data.lowStock.map((p) => (
@@ -369,16 +369,16 @@ export default function DashboardPage() {
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[13px] font-extrabold">{p.name}</div>
                     <div className="text-[11px] font-bold text-[var(--faint)]">
-                      حد التنبيه: <span className="num">{p.lowStockAt}</span>
+                      {t("حد التنبيه:")} <span className="num">{p.lowStockAt}</span>
                     </div>
                   </div>
                   {p.stock === 0 ? (
                     <Badge tone="rose">
-                      <CircleAlert size={11} /> نفد
+                      <CircleAlert size={11} /> {t("نفد")}
                     </Badge>
                   ) : (
                     <Badge tone="amber">
-                      متبقٍ <span className="num">{p.stock}</span>
+                      {t("متبقٍ")} <span className="num">{p.stock}</span>
                     </Badge>
                   )}
                 </li>
@@ -389,11 +389,11 @@ export default function DashboardPage() {
 
         <Card
           className="anim-in anim-d3"
-          title="أحدث الفواتير"
+          title={t("أحدث الفواتير")}
           icon={<ReceiptText size={16} />}
           actions={
             <Link href="/sales" className="link text-[12px]">
-              كل الفواتير
+              {t("كل الفواتير")}
             </Link>
           }
           bodyClass="px-3 py-2"
@@ -403,10 +403,10 @@ export default function DashboardPage() {
           ) : data.recentSales.length === 0 ? (
             <Empty
               icon={<ReceiptText size={20} />}
-              title="لا توجد فواتير بعد"
+              title={t("لا توجد فواتير بعد")}
               action={
                 <Link href="/sales/new" className="btn btn-primary btn-sm">
-                  <ArrowUpLeft size={14} /> أنشئ أول فاتورة
+                  <ArrowUpLeft size={14} /> {t("أنشئ أول فاتورة")}
                 </Link>
               }
             />
@@ -418,7 +418,7 @@ export default function DashboardPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="num text-[12.5px] font-extrabold">{invoiceNo(s.id)}</span>
-                        {s.status === "cancelled" && <Badge tone="rose">ملغاة</Badge>}
+                        {s.status === "cancelled" && <Badge tone="rose">{t("ملغاة")}</Badge>}
                       </div>
                       <div className="truncate text-[11.5px] font-bold text-[var(--faint)]">
                         {s.clientName} • {relTime(s.createdAt)}
@@ -437,14 +437,14 @@ export default function DashboardPage() {
         {can(me, "activity.view") && (
           <Card
             className="anim-in anim-d4"
-            title="آخر النشاطات"
+            title={t("آخر النشاطات")}
             icon={<ScrollText size={16} />}
             bodyClass="px-3 py-2"
           >
             {!data ? (
               <TableSkeleton />
             ) : data.recentActivity.length === 0 ? (
-              <Empty icon={<ScrollText size={20} />} title="لا يوجد نشاط بعد" />
+              <Empty icon={<ScrollText size={20} />} title={t("لا يوجد نشاط بعد")} />
             ) : (
               <ul className="divide-y divide-[var(--line-soft)]">
                 {data.recentActivity.map((a) => (

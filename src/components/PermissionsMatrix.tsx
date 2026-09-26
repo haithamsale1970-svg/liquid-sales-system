@@ -119,22 +119,22 @@ export default function PermissionsMatrix({
       {locked && (
         <p className="flex items-center gap-2 rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-2)] px-3 py-2.5 text-[12.5px] font-bold text-[var(--muted)]">
           <ShieldCheck size={15} className="text-[var(--mint)]" />
-          {lockedHint ?? "هذا الحساب يملك كل الصلاحيات ولا يمكن تقييده."}
+          {lockedHint ?? t("هذا الحساب يملك كل الصلاحيات ولا يمكن تقييده.")}
         </p>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-[12.5px] font-extrabold">
-          الصلاحيات الممنوحة:{" "}
+          {t("الصلاحيات الممنوحة:")}{" "}
           <span className="num text-[var(--mint)]">{grantedCount}</span>
         </span>
         {!locked && (
           <div className="flex items-center gap-1.5">
             <button type="button" className="btn btn-xs" onClick={() => setAll(true)}>
-              <Check size={12} /> تفعيل الكل
+              <Check size={12} /> {t("تفعيل الكل")}
             </button>
             <button type="button" className="btn btn-xs" onClick={() => setAll(false)}>
-              <Minus size={12} /> إلغاء الكل
+              <Minus size={12} /> {t("إلغاء الكل")}
             </button>
           </div>
         )}
@@ -183,7 +183,7 @@ export default function PermissionsMatrix({
                         checked={allOn}
                         disabled={locked}
                         onChange={(v) => setGroup(g.key, v)}
-                        label={`كل صلاحيات ${g.label}`}
+                        label={`${t("كل صلاحيات")}${g.label}`}
                       />
                     </div>
                   </td>
@@ -195,7 +195,7 @@ export default function PermissionsMatrix({
       </div>
 
       <div>
-        <p className="mb-2 text-[12.5px] font-extrabold">صلاحيات إضافية دقيقة</p>
+        <p className="mb-2 text-[12.5px] font-extrabold">{t("صلاحيات إضافية دقيقة")}</p>
         <div className="grid gap-2 sm:grid-cols-2">
           {EXTRA_PERMISSIONS.map((p) => (
             <div

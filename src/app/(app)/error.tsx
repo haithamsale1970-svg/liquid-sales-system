@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import { useEffect } from "react";
 import { RefreshCw, ShieldAlert } from "lucide-react";
 import { Btn } from "@/components/ui";
@@ -35,11 +37,9 @@ export default function AppError({
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-[17px] font-black">حدث خطأ غير متوقع</h2>
+        <h2 className="text-[17px] font-black">{t("حدث خطأ غير متوقع")}</h2>
         <p className="mx-auto max-w-[520px] text-[13px] font-semibold leading-7 text-[var(--muted)]">
-          تعذّر عرض هذه الصفحة. غالبًا بسبب بيانات صلاحيات غير مكتملة أو
-          مشكلة في الاتصال بقاعدة البيانات. أعد المحاولة، وإذا تكرر الأمر
-          راجع مدير النظام.
+          {t("تعذّر عرض هذه الصفحة. غالبًا بسبب بيانات صلاحيات غير مكتملة أو مشكلة في الاتصال بقاعدة البيانات. أعد المحاولة، وإذا تكرر الأمر راجع مدير النظام.")}
         </p>
         {error.message && (
           <p className="mx-auto max-w-[520px] break-words rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2 text-[11.5px] font-bold text-[var(--faint)]">
@@ -50,9 +50,9 @@ export default function AppError({
 
       <div className="flex flex-wrap items-center justify-center gap-2">
         <Btn variant="primary" onClick={() => reset()}>
-          <RefreshCw size={15} /> إعادة المحاولة
+          <RefreshCw size={15} /> {t("إعادة المحاولة")}
         </Btn>
-        <Btn onClick={() => (window.location.href = "/")}>العودة للرئيسية</Btn>
+        <Btn onClick={() => (window.location.href = "/")}>{t("العودة للرئيسية")}</Btn>
       </div>
     </div>
   );

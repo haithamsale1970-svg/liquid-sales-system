@@ -144,7 +144,7 @@ export default function ClientsPage() {
     try {
       setItems(await api<ClientDTO[]>("/api/clients"));
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر التحميل");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر التحميل"));
       setItems([]);
     }
   }
@@ -171,7 +171,7 @@ export default function ClientsPage() {
     try {
       setDetail(await api<ClientDetail>(`/api/clients/${id}`));
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر التحميل");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر التحميل"));
       setDetailId(null);
     } finally {
       setDetailLoading(false);
@@ -209,15 +209,15 @@ export default function ClientsPage() {
     try {
       if (editing) {
         await api(`/api/clients/${editing.id}`, { method: "PATCH", body: form });
-        toast.push("ok", "تم حفظ بيانات العميل");
+        toast.push("ok", t("تم حفظ بيانات العميل"));
       } else {
         await api("/api/clients", { method: "POST", body: form });
-        toast.push("ok", "تمت إضافة العميل");
+        toast.push("ok", t("تمت إضافة العميل"));
       }
       setFormOpen(false);
       await load();
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر الحفظ");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر الحفظ"));
     } finally {
       setSaving(false);
     }
@@ -228,11 +228,11 @@ export default function ClientsPage() {
     setDeleting(true);
     try {
       await api(`/api/clients/${deleteTarget.id}`, { method: "DELETE" });
-      toast.push("ok", `تم حذف "${deleteTarget.name}"`);
+      toast.push("ok", `${t("تم حذف \"")}${deleteTarget.name}"`);
       setDeleteTarget(null);
       await load();
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر الحذف");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر الحذف"));
     } finally {
       setDeleting(false);
     }
@@ -262,7 +262,7 @@ export default function ClientsPage() {
         <div className="relative min-w-[220px] flex-1">
           <input
             className="inp ps-10"
-            placeholder="ابحث بالاسم أو الهاتف…"
+            placeholder={t("ابحث بالاسم أو الهاتف…")}
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -270,7 +270,7 @@ export default function ClientsPage() {
         </div>
         {canEdit && (
           <Btn variant="primary" size="sm" onClick={() => openCreate(section)}>
-            <Plus size={15} /> إضافة {section === "shops" ? "محل" : "فرد"}
+            <Plus size={15} /> {t("إضافة")} {section === "shops" ? t("محل") : t("فرد")}
           </Btn>
         )}
         <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
@@ -286,12 +286,12 @@ export default function ClientsPage() {
         ) : filtered.length === 0 ? (
           <Empty
             icon={<Users size={22} />}
-            title="لا يوجد عملاء"
-            hint={canEdit ? "أضف عملاءك (محلات / متاجر / أفراد) لربطهم بالفواتير" : "لا يوجد عملاء مسجلون في هذا القسم"}
+            title={t("لا يوجد عملاء")}
+            hint={canEdit ? t("أضف عملاءك (محلات / متاجر / أفراد) لربطهم بالفواتير") : t("لا يوجد عملاء مسجلون في هذا القسم")}
             action={
               canEdit ? (
                 <Btn variant="primary" size="sm" onClick={() => openCreate(section)}>
-                  <Plus size={15} /> إضافة {section === "shops" ? "محل" : "فرد"}
+                  <Plus size={15} /> {t("إضافة")} {section === "shops" ? t("محل") : t("فرد")}
                 </Btn>
               ) : undefined
             }
@@ -352,12 +352,12 @@ export default function ClientsPage() {
                     <td onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1.5">
                         {canEdit && (
-                          <button className="icon-btn" title="تعديل" onClick={() => openEdit(c)}>
+                          <button className="icon-btn" title={t("تعديل")} onClick={() => openEdit(c)}>
                             <Pencil size={14} />
                           </button>
                         )}
                         {canDelete && (
-                          <button className="icon-btn danger" title="حذف" onClick={() => setDeleteTarget(c)}>
+                          <button className="icon-btn danger" title={t("حذف")} onClick={() => setDeleteTarget(c)}>
                             <Trash2 size={14} />
                           </button>
                         )}
@@ -375,7 +375,7 @@ export default function ClientsPage() {
       <Modal
         open={formOpen}
         onClose={() => setFormOpen(false)}
-        title={editing ? `تعديل: ${editing.name}` : "إضافة عميل جديد"}
+        title={editing ? `${t("تعديل:")}${editing.name}` : t("إضافة عميل جديد")}
         icon={<Users size={17} />}
       >
         <div className="space-y-4">
@@ -384,7 +384,7 @@ export default function ClientsPage() {
               <Input
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder={formIsShop ? "اسم المحل أو المتجر" : "اسم العميل"}
+                placeholder={formIsShop ? t("اسم المحل أو المتجر") : t("اسم العميل")}
               />
             </Field>
             <Field label={t("القسم")}>
@@ -400,8 +400,8 @@ export default function ClientsPage() {
                   }));
                 }}
               >
-                <option value="individuals">العملاء الأفراد</option>
-                <option value="shops">المحلات والمتاجر</option>
+                <option value="individuals">{t("العملاء الأفراد")}</option>
+                <option value="shops">{t("المحلات والمتاجر")}</option>
               </Select>
             </Field>
           </div>
@@ -421,11 +421,11 @@ export default function ClientsPage() {
           </div>
           {formIsShop && (
             <>
-              <Field label={t("العنوان")} hint="العنوان التفصيلي للمحل">
-                <Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder="المحافظة — المنطقة — الشارع" />
+              <Field label={t("العنوان")} hint={t("العنوان التفصيلي للمحل")}>
+                <Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder={t("المحافظة — المنطقة — الشارع")} />
               </Field>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label={t("Google Maps Location")} hint="رابط موقع المحل على الخريطة">
+                <Field label={t("Google Maps Location")} hint={t("رابط موقع المحل على الخريطة")}>
                   <Input
                     type="url"
                     value={form.googleMapsUrl}
@@ -434,7 +434,7 @@ export default function ClientsPage() {
                     dir="ltr"
                   />
                 </Field>
-                <Field label={t("Distribution Map")} hint="رابط خريطة التوزيع الكبرى">
+                <Field label={t("Distribution Map")} hint={t("رابط خريطة التوزيع الكبرى")}>
                   <Input
                     type="url"
                     value={form.distributionMapUrl}
@@ -447,12 +447,12 @@ export default function ClientsPage() {
             </>
           )}
           <Field label={t("ملاحظات")}>
-            <Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="شروط تعامل، أسعار خاصة…" />
+            <Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder={t("شروط تعامل، أسعار خاصة…")} />
           </Field>
           <div className="flex justify-end gap-2 border-t border-[var(--line-soft)] pt-4">
-            <Btn onClick={() => setFormOpen(false)}>إلغاء</Btn>
+            <Btn onClick={() => setFormOpen(false)}>{t("إلغاء")}</Btn>
             <Btn variant="primary" onClick={save} loading={saving} disabled={form.name.trim().length < 2}>
-              {editing ? "حفظ التعديلات" : "إضافة العميل"}
+              {editing ? t("حفظ التعديلات") : t("إضافة العميل")}
             </Btn>
           </div>
         </div>
@@ -462,7 +462,7 @@ export default function ClientsPage() {
       <Modal
         open={detailId !== null}
         onClose={() => setDetailId(null)}
-        title={detail ? detail.client.name : "سجل المشتريات"}
+        title={detail ? detail.client.name : t("سجل المشتريات")}
         icon={<ReceiptIcon />}
         wide
       >
@@ -488,7 +488,7 @@ export default function ClientsPage() {
               )}
               {(detail.stats.debt ?? 0) > 0 && (
                 <Badge tone="rose">
-                  دين قائم{" "}
+                  {t("دين قائم")}{" "}
                   <span className="num">
                     {formatMoneyJOD(detail.stats.debt ?? 0, currency, rates)}
                   </span>
@@ -496,7 +496,7 @@ export default function ClientsPage() {
               )}
               {detail.stats.lastOrderAt && (
                 <Badge tone="mint">
-                  آخر طلب <span className="num">{fmtDate(detail.stats.lastOrderAt)}</span>
+                  {t("آخر طلب")} <span className="num">{fmtDate(detail.stats.lastOrderAt)}</span>
                 </Badge>
               )}
               {isShopClient(detail.client.type) && detail.client.address && (
@@ -509,7 +509,7 @@ export default function ClientsPage() {
                    rel="noreferrer"
                    className="inline-flex items-center gap-1 text-[11.5px] font-extrabold text-[var(--mint)] hover:underline"
                  >
-                   <MapPinned size={12} /> فتح موقع المحل
+                   <MapPinned size={12} /> {t("فتح موقع المحل")}
                  </a>
                )}
                {isShopClient(detail.client.type) && detail.client.distributionMapUrl && (
@@ -519,40 +519,40 @@ export default function ClientsPage() {
                    rel="noreferrer"
                    className="inline-flex items-center gap-1 text-[11.5px] font-extrabold text-[var(--mint)] hover:underline"
                  >
-                   <MapPinned size={12} /> خريطة التوزيع
+                   <MapPinned size={12} /> {t("خريطة التوزيع")}
                  </a>
                )}
 
               <span className="me-auto text-[11.5px] font-bold text-[var(--faint)]">
-                عميل منذ {fmtDate(detail.client.createdAt)}
+                {t("عميل منذ")} {fmtDate(detail.client.createdAt)}
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-4 text-center">
                 <div className="num text-[22px] font-black text-[var(--mint)]">{fmtNum(detail.stats.orders)}</div>
-                <div className="text-[11.5px] font-bold text-[var(--muted)]">فاتورة مكتملة</div>
+                <div className="text-[11.5px] font-bold text-[var(--muted)]">{t("فاتورة مكتملة")}</div>
               </div>
               <div className="rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-4 text-center">
                 <div className="num text-[22px] font-black text-[var(--mint)]">{formatMoneyJOD(detail.stats.total, currency, rates)}</div>
-                <div className="text-[11.5px] font-bold text-[var(--muted)]">إجمالي المشتريات</div>
+                <div className="text-[11.5px] font-bold text-[var(--muted)]">{t("إجمالي المشتريات")}</div>
               </div>
               <div className="rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-4 text-center">
                 <div className="num text-[22px] font-black text-[var(--muted)]">
                   {formatMoneyJOD(detail.stats.avg ?? (detail.stats.orders ? detail.stats.total / detail.stats.orders : 0), currency, rates)}
                 </div>
-                <div className="text-[11.5px] font-bold text-[var(--muted)]">متوسط الفاتورة</div>
+                <div className="text-[11.5px] font-bold text-[var(--muted)]">{t("متوسط الفاتورة")}</div>
               </div>
               <div className="rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-4 text-center">
                 <div className={cls("num text-[22px] font-black", (detail.stats.debt ?? 0) > 0 ? "text-[var(--danger)]" : "text-[var(--mint)]")}>
                   {formatMoneyJOD(detail.stats.debt ?? 0, currency, rates)}
                 </div>
-                <div className="text-[11.5px] font-bold text-[var(--muted)]">الرصيد (دين)</div>
+                <div className="text-[11.5px] font-bold text-[var(--muted)]">{t("الرصيد (دين)")}</div>
               </div>
             </div>
 
             {detail.purchases.length === 0 ? (
-              <Empty icon={<ReceiptIcon />} title="لا توجد مشتريات بعد" />
+              <Empty icon={<ReceiptIcon />} title={t("لا توجد مشتريات بعد")} />
             ) : (
               <div className="max-h-[380px] space-y-2.5 overflow-y-auto pe-1">
                 {detail.purchases.map((p) => (
@@ -564,14 +564,14 @@ export default function ClientsPage() {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span className="num text-[13px] font-black">{invoiceNo(p.id)}</span>
-                        {p.status === "cancelled" && <Badge tone="rose">ملغاة</Badge>}
+                        {p.status === "cancelled" && <Badge tone="rose">{t("ملغاة")}</Badge>}
                       </div>
                       <span className={cls("num text-[13.5px] font-black", p.status === "cancelled" ? "text-[var(--faint)] line-through" : "text-[var(--mint)]")}>
                         {formatMoneyJOD(p.total, currency, rates)}
                       </span>
                     </div>
                     <div className="mt-1.5 text-[11px] font-bold text-[var(--faint)]">
-                      {fmtDateTime(p.createdAt)} • البائع: {p.userName}
+                      {fmtDateTime(p.createdAt)} {t("• البائع:")} {p.userName}
                     </div>
                     <div className="mt-2.5 flex items-center gap-2 overflow-x-auto">
                       {p.items.map((it, j) => (
@@ -595,9 +595,9 @@ export default function ClientsPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={doDelete}
         loading={deleting}
-        title="حذف العميل"
-        message={`سيتم حذف "${deleteTarget?.name}" نهائيًا. العملاء المرتبطون بفواتير لا يمكن حذفهم حفاظًا على السجلات.`}
-        confirmText="حذف"
+        title={t("حذف العميل")}
+        message={`${t("سيتم حذف \"")}${deleteTarget?.name}${t("\" نهائيًا. العملاء المرتبطون بفواتير لا يمكن حذفهم حفاظًا على السجلات.")}`}
+        confirmText={t("حذف")}
       />
     </div>
   );

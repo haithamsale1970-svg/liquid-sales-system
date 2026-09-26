@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import { Moon, Sun } from "lucide-react";
 import { THEMES } from "@/lib/theme";
 import { useTheme } from "./ThemeProvider";
@@ -17,8 +19,8 @@ export default function ThemeToggle({ compact = false }: { compact?: boolean }) 
     <button
       type="button"
       onClick={toggle}
-      aria-label={`التبديل إلى ${next.label}`}
-      title={`التبديل إلى ${next.label}`}
+      aria-label={`${t("التبديل إلى")}${next.label}`}
+      title={`${t("التبديل إلى")}${next.label}`}
       data-theme-toggle=""
       className="icon-btn"
     >

@@ -99,10 +99,10 @@ export default function SettingsPage() {
     setSavingProfile(true);
     try {
       await api(`/api/users/${me.id}`, { method: "PATCH", body: { name } });
-      toast.push("ok", "تم تحديث الاسم المعروض");
+      toast.push("ok", t("تم تحديث الاسم المعروض"));
       setMe({ ...me, name });
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر الحفظ");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر الحفظ"));
     } finally {
       setSavingProfile(false);
     }
@@ -111,7 +111,7 @@ export default function SettingsPage() {
   async function changePassword() {
     if (!me || savingPw) return;
     if (next !== confirm) {
-      toast.push("info", "تأكيد كلمة المرور غير متطابق");
+      toast.push("info", t("تأكيد كلمة المرور غير متطابق"));
       return;
     }
     setSavingPw(true);
@@ -120,12 +120,12 @@ export default function SettingsPage() {
         method: "PATCH",
         body: { password: next, currentPassword: cur },
       });
-      toast.push("ok", "تم تغيير كلمة المرور — بقية جلساتك الأخرى أُغلقت");
+      toast.push("ok", t("تم تغيير كلمة المرور — بقية جلساتك الأخرى أُغلقت"));
       setCur("");
       setNext("");
       setConfirm("");
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر التغيير");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر التغيير"));
     } finally {
       setSavingPw(false);
     }
@@ -136,7 +136,7 @@ export default function SettingsPage() {
     localStorage.setItem(LAST_BACKUP_KEY, stamp);
     setLastBackup(stamp);
     window.open("/api/backup", "_blank");
-    toast.push("ok", "بدأ تنزيل النسخة الاحتياطية");
+    toast.push("ok", t("بدأ تنزيل النسخة الاحتياطية"));
   }
 
   // إعدادات النظام والنسخ الاحتياطي تتطلب صلاحيات مستقلة يحددها الأدمن.
@@ -154,9 +154,9 @@ export default function SettingsPage() {
       setSettings(saved);
       setDraft(saved);
       window.dispatchEvent(new CustomEvent("cc:currency", { detail: undefined }));
-      toast.push("ok", "تم حفظ إعدادات العملات والتوصيل والصلاحيات");
+      toast.push("ok", t("تم حفظ إعدادات العملات والتوصيل والصلاحيات"));
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر الحفظ");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر الحفظ"));
     } finally {
       setSavingSettings(false);
     }
@@ -167,7 +167,7 @@ export default function SettingsPage() {
       {/* profile & security */}
       <Card
         className="anim-in self-start"
-        title="الملف الشخصي والأمان"
+        title={t("الملف الشخصي والأمان")}
         icon={<ShieldCheck size={16} />}
         bodyClass="space-y-5 p-5"
       >
@@ -189,7 +189,7 @@ export default function SettingsPage() {
                 <div className="text-[14px] font-extrabold">{me.name}</div>
                 <div className="text-[11.5px] font-bold text-[var(--faint)]">
                   <span className="num">@{me.username}</span> —{" "}
-                  {me.role === "admin" ? "مدير النظام (ماستر)" : "شريك"}
+                  {me.role === "admin" ? t("مدير النظام (ماستر)") : t("شريك")}
                 </div>
               </div>
             </div>
@@ -198,7 +198,7 @@ export default function SettingsPage() {
               <div className="flex gap-2">
                 <Input value={name} onChange={(e) => setName(e.target.value)} />
                 <Btn variant="primary" size="sm" onClick={saveProfile} loading={savingProfile} disabled={name.trim().length < 2 || name === me.name}>
-                  حفظ
+                  {t("حفظ")}
                 </Btn>
               </div>
             </Field>
@@ -207,7 +207,7 @@ export default function SettingsPage() {
             <div className="mt-5 border-t border-[var(--line-soft)] pt-4">
               <div className="mb-3 flex items-center gap-2 text-[13px] font-extrabold">
                 <Palette size={15} className="text-[var(--mint)]" />
-                ثيم النظام
+                {t("ثيم النظام")}
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {THEME_LIST.map((t) => (
@@ -243,7 +243,7 @@ export default function SettingsPage() {
             <div className="mt-5 border-t border-[var(--line-soft)] pt-4">
               <div className="mb-3 flex items-center gap-2 text-[13px] font-extrabold">
                 <Languages size={15} className="text-[var(--mint)]" />
-                لغة النظام
+                {t("لغة النظام")}
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {(Object.keys(LANGS) as (keyof typeof LANGS)[]).map((code) => (
@@ -262,7 +262,7 @@ export default function SettingsPage() {
                       {LANGS[code].label}
                     </div>
                     <div className="text-[11.5px] font-semibold text-[var(--faint)]">
-                      {code === "ar" ? "من اليمين إلى اليسار" : "Left to right"}
+                      {code === "ar" ? t("من اليمين إلى اليسار") : "Left to right"}
                     </div>
                   </button>
                 ))}
@@ -272,7 +272,7 @@ export default function SettingsPage() {
             <div>
               <div className="mb-3 flex items-center gap-2 text-[13px] font-extrabold">
                 <KeyRound size={15} className="text-[var(--mint)]" />
-                تغيير كلمة المرور
+                {t("تغيير كلمة المرور")}
               </div>
               <div className="space-y-3">
                 <Field label={t("كلمة المرور الحالية")}>
@@ -287,7 +287,7 @@ export default function SettingsPage() {
                   </Field>
                 </div>
                 <Btn variant="primary" size="sm" onClick={changePassword} loading={savingPw} disabled={!cur || next.length < 6 || confirm.length < 6}>
-                  تغيير كلمة المرور
+                  {t("تغيير كلمة المرور")}
                 </Btn>
               </div>
             </div>
@@ -301,7 +301,7 @@ export default function SettingsPage() {
         {canEditSettings && (
           <Card
             className="anim-in anim-d1"
-            title="إعدادات الأدمن: العملات والتوصيل والصلاحيات"
+            title={t("إعدادات الأدمن: العملات والتوصيل والصلاحيات")}
             icon={<Banknote size={16} />}
             bodyClass="space-y-4 p-5"
           >
@@ -312,7 +312,7 @@ export default function SettingsPage() {
               </div>
             ) : (
               <>
-                <Field label={t("العملة الافتراضية للنظام")} hint="تُستخدم عند إنشاء الفواتير الجديدة">
+                <Field label={t("العملة الافتراضية للنظام")} hint={t("تُستخدم عند إنشاء الفواتير الجديدة")}>
                   <Select value={draft.defaultCurrency} onChange={(e) => setDraft((d) => ({ ...d, defaultCurrency: e.target.value as CurrencyCode }))}>
                     {(Object.keys(CURRENCIES) as CurrencyCode[]).map((c) => (
                       <option key={c} value={c}>{c} — {CURRENCIES[c].label}</option>
@@ -320,34 +320,34 @@ export default function SettingsPage() {
                   </Select>
                 </Field>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label={t("سعر الصرف: دولار لكل دينار (USD)")} hint="افتراضي 1.41">
+                  <Field label={t("سعر الصرف: دولار لكل دينار (USD)")} hint={t("افتراضي 1.41")}>
                     <Input dir="ltr" type="number" step="any" min="0" className="num" value={String(draft.rateUSD)} onChange={(e) => setDraft((d) => ({ ...d, rateUSD: Number(e.target.value) }))} />
                   </Field>
-                  <Field label={t("سعر الصرف: جنيه لكل دينار (EGP)")} hint="افتراضي 67.5">
+                  <Field label={t("سعر الصرف: جنيه لكل دينار (EGP)")} hint={t("افتراضي 67.5")}>
                     <Input dir="ltr" type="number" step="any" min="0" className="num" value={String(draft.rateEGP)} onChange={(e) => setDraft((d) => ({ ...d, rateEGP: Number(e.target.value) }))} />
                   </Field>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label={t("التوصيل الداخلي (ثابت بالدينار)")} hint="افتراضي 1.5">
+                  <Field label={t("التوصيل الداخلي (ثابت بالدينار)")} hint={t("افتراضي 1.5")}>
                     <Input dir="ltr" type="number" step="any" min="0" className="num" value={String(draft.shippingInternal)} onChange={(e) => setDraft((d) => ({ ...d, shippingInternal: Number(e.target.value) }))} />
                   </Field>
-                  <Field label={t("التوصيل الخارجي (ثابت بالدينار)")} hint="افتراضي 2">
+                  <Field label={t("التوصيل الخارجي (ثابت بالدينار)")} hint={t("افتراضي 2")}>
                     <Input dir="ltr" type="number" step="any" min="0" className="num" value={String(draft.shippingExternal)} onChange={(e) => setDraft((d) => ({ ...d, shippingExternal: Number(e.target.value) }))} />
                   </Field>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[12px] font-extrabold text-[var(--muted)]">إظهار / إخفاء الأقسام عن المستخدمين العاديين (abood / hasan…)</p>
-                  <Toggle value={draft.showProductsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showProductsForUsers: v }))} label={t("الأصناف والمخزون")} hint="إخفاؤها يمنع المستخدم من فتح الصفحة" />
-                  <Toggle value={draft.showClientsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showClientsForUsers: v }))} label={t("العملاء")} hint="إخفاؤها يمنع المستخدم من فتح الصفحة" />
-                  <Toggle value={draft.showReportsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showReportsForUsers: v }))} label={t("التقارير")} hint="إخفاؤها يمنع المستخدم من فتح الصفحة" />
+                  <p className="text-[12px] font-extrabold text-[var(--muted)]">{t("إظهار / إخفاء الأقسام عن المستخدمين العاديين (abood / hasan…)")}</p>
+                  <Toggle value={draft.showProductsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showProductsForUsers: v }))} label={t("الأصناف والمخزون")} hint={t("إخفاؤها يمنع المستخدم من فتح الصفحة")} />
+                  <Toggle value={draft.showClientsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showClientsForUsers: v }))} label={t("العملاء")} hint={t("إخفاؤها يمنع المستخدم من فتح الصفحة")} />
+                  <Toggle value={draft.showReportsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showReportsForUsers: v }))} label={t("التقارير")} hint={t("إخفاؤها يمنع المستخدم من فتح الصفحة")} />
                   <p className="pt-1.5 text-[12px] font-extrabold text-[var(--muted)]">
-                    إدارة العملاء والأسعار والحذف محصورة بحساب المدير
+                    {t("إدارة العملاء والأسعار والحذف محصورة بحساب المدير")}
                   </p>
                   <p className="text-[11px] font-semibold leading-5 text-[var(--faint)]">
-                    كل عملية حساسة تُنفّذ من واجهة المدير فقط، وتُسجّل في سجل النشاط باسم المنفذ.
+                    {t("كل عملية حساسة تُنفّذ من واجهة المدير فقط، وتُسجّل في سجل النشاط باسم المنفذ.")}
                   </p>
                 </div>
-                <Btn variant="primary" onClick={saveSettings} loading={savingSettings}>حفظ إعدادات الأدمن</Btn>
+                <Btn variant="primary" onClick={saveSettings} loading={savingSettings}>{t("حفظ إعدادات الأدمن")}</Btn>
               </>
             )}
           </Card>
@@ -355,41 +355,37 @@ export default function SettingsPage() {
 
         <Card
           className="anim-in anim-d1"
-          title="عملة العرض"
+          title={t("عملة العرض")}
           icon={<Banknote size={16} />}
           bodyClass="space-y-3 p-5"
         >
           <p className="text-[12.5px] font-semibold leading-7 text-[var(--muted)]">
-            اختر عملة العرض (دينار JOD / دولار USD / جنيه EGP) — التحويل فوري في
-            الفواتير والحسابات والتقارير، والتخزين دائمًا بالدينار.
+            {t("اختر عملة العرض (دينار JOD / دولار USD / جنيه EGP) — التحويل فوري في الفواتير والحسابات والتقارير، والتخزين دائمًا بالدينار.")}
           </p>
           <CurrencySwitcher defaultCurrency={settings?.defaultCurrency ?? draft.defaultCurrency} />
         </Card>
         {canBackup && (
           <Card
             className="anim-in anim-d1"
-            title="النسخ الاحتياطي"
+            title={t("النسخ الاحتياطي")}
             icon={<DatabaseBackup size={16} />}
             bodyClass="space-y-4 p-5"
           >
             <p className="text-[12.5px] font-semibold leading-7 text-[var(--muted)]">
-              صدّر نسخة كاملة من قاعدة البيانات (الأصناف، العملاء، الفواتير،
-              المستخدمون، سجل النشاط) بصيغة JSON واحفظها في مكان آمن. يُنصح بأخذ
-              نسخة <span className="text-[var(--text)]">يوميًا أو أسبوعيًا</span> على
-              الأقل — والنسخة لا تتضمن كلمات المرور لأسباب أمنية.
+              {t("صدّر نسخة كاملة من قاعدة البيانات (الأصناف، العملاء، الفواتير، المستخدمون، سجل النشاط) بصيغة JSON واحفظها في مكان آمن. يُنصح بأخذ نسخة")} <span className="text-[var(--text)]">{t("يوميًا أو أسبوعيًا")}</span> {t("على الأقل — والنسخة لا تتضمن كلمات المرور لأسباب أمنية.")}
             </p>
             <Btn variant="primary" onClick={downloadBackup}>
-              <Download size={16} /> تنزيل نسخة احتياطية الآن
+              <Download size={16} /> {t("تنزيل نسخة احتياطية الآن")}
             </Btn>
             <div className="flex items-center gap-2 text-[11.5px] font-bold text-[var(--faint)]">
               <CalendarClock size={14} />
               {lastBackup ? (
                 <span>
-                  آخر نسخة من هذا الجهاز:{" "}
+                  {t("آخر نسخة من هذا الجهاز:")}{" "}
                   <span className="text-[var(--muted)]">{fmtDateTime(lastBackup)}</span>
                 </span>
               ) : (
-                "لم يتم أخذ نسخة من هذا الجهاز بعد"
+                t("لم يتم أخذ نسخة من هذا الجهاز بعد")
               )}
             </div>
           </Card>
@@ -397,26 +393,26 @@ export default function SettingsPage() {
 
         <Card
           className="anim-in anim-d2"
-          title="حول النظام"
+          title={t("حول النظام")}
           icon={<Info size={16} />}
           bodyClass="p-5"
         >
           <ul className="space-y-2.5 text-[12.5px] font-semibold leading-6 text-[var(--muted)]">
             <li className="flex gap-2">
               <span className="glow-dot mt-2 shrink-0" />
-              نظام «Cloud Culture» v1.0 — إدارة مبيعات ومخزون المنتجات.
+              {t("نظام «Cloud Culture» v1.0 — إدارة مبيعات ومخزون المنتجات.")}
             </li>
             <li className="flex gap-2">
               <span className="glow-dot mt-2 shrink-0" />
-              المخزون يُخصم تلقائيًا مع كل فاتورة، ويُسترجع عند إلغائها — وكل حركة مسجلة باسم منفذها في سجل النشاط.
+              {t("المخزون يُخصم تلقائيًا مع كل فاتورة، ويُسترجع عند إلغائها — وكل حركة مسجلة باسم منفذها في سجل النشاط.")}
             </li>
             <li className="flex gap-2">
               <span className="glow-dot mt-2 shrink-0" />
-              كلمات المرور مشفّرة بخوارزمية bcrypt، وتسجيل الدخول محمي بحد أقصى للمحاولات.
+              {t("كلمات المرور مشفّرة بخوارزمية bcrypt، وتسجيل الدخول محمي بحد أقصى للمحاولات.")}
             </li>
             <li className="flex gap-2">
               <span className="glow-dot mt-2 shrink-0" />
-              الفواتير قابلة للطباعة أو الحفظ PDF من نافذة الطباعة مباشرة.
+              {t("الفواتير قابلة للطباعة أو الحفظ PDF من نافذة الطباعة مباشرة.")}
             </li>
           </ul>
         </Card>

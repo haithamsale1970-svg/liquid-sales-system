@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -38,19 +40,19 @@ import type { AppSettings } from "@/lib/currency";
 
 /** صلاحية الدخول لكل عنصر في القائمة الجانبية. */
 const NAV = [
-  { href: "/", label: "لوحة التحكم", icon: LayoutDashboard, perm: "dashboard.view" },
-  { href: "/products", label: "الأصناف والمخزون", icon: Package, perm: "products.view", settingsKey: "products" },
-  { href: "/sales", label: "الفواتير", icon: ShoppingCart, perm: "sales.view" },
-  { href: "/sales/new", label: "فاتورة جديدة", icon: PlusCircle, perm: "sales.create", accent: true },
-  { href: "/clients", label: "العملاء", icon: Users, perm: "clients.view", settingsKey: "clients" },
-  { href: "/debts", label: "الديون والتحصيل", icon: Wallet, perm: "debts.view" },
-  { href: "/expenses", label: "المصاريف", icon: Banknote, perm: "expenses.view" },
-  { href: "/inventory", label: "حركة المخزون", icon: PackageSearch, perm: "inventory.view" },
-  { href: "/returns", label: "المرتجعات والاستبدال", icon: Undo2, perm: "returns.view" },
-  { href: "/reports", label: "التقارير", icon: BarChart3, perm: "reports.view", settingsKey: "reports" },
-  { href: "/users", label: "المستخدمون", icon: UsersRound, perm: "users.view" },
-  { href: "/activity", label: "سجل النشاط", icon: ScrollText, perm: "activity.view" },
-  { href: "/settings", label: "الإعدادات والنسخ", icon: Settings, perm: "settings.view" },
+  { href: "/", get label() { return t("لوحة التحكم"); }, icon: LayoutDashboard, perm: "dashboard.view" },
+  { href: "/products", get label() { return t("الأصناف والمخزون"); }, icon: Package, perm: "products.view", settingsKey: "products" },
+  { href: "/sales", get label() { return t("الفواتير"); }, icon: ShoppingCart, perm: "sales.view" },
+  { href: "/sales/new", get label() { return t("فاتورة جديدة"); }, icon: PlusCircle, perm: "sales.create", accent: true },
+  { href: "/clients", get label() { return t("العملاء"); }, icon: Users, perm: "clients.view", settingsKey: "clients" },
+  { href: "/debts", get label() { return t("الديون والتحصيل"); }, icon: Wallet, perm: "debts.view" },
+  { href: "/expenses", get label() { return t("المصاريف"); }, icon: Banknote, perm: "expenses.view" },
+  { href: "/inventory", get label() { return t("حركة المخزون"); }, icon: PackageSearch, perm: "inventory.view" },
+  { href: "/returns", get label() { return t("المرتجعات والاستبدال"); }, icon: Undo2, perm: "returns.view" },
+  { href: "/reports", get label() { return t("التقارير"); }, icon: BarChart3, perm: "reports.view", settingsKey: "reports" },
+  { href: "/users", get label() { return t("المستخدمون"); }, icon: UsersRound, perm: "users.view" },
+  { href: "/activity", get label() { return t("سجل النشاط"); }, icon: ScrollText, perm: "activity.view" },
+  { href: "/settings", get label() { return t("الإعدادات والنسخ"); }, icon: Settings, perm: "settings.view" },
 ] as const satisfies readonly {
   href: string;
   label: string;
@@ -72,8 +74,8 @@ function bestMatch(pathname: string): string {
 }
 
 function pageTitle(pathname: string): string {
-  if (pathname === "/") return "لوحة التحكم";
-  if (/^\/sales\/\d+/.test(pathname)) return "تفاصيل الفاتورة";
+  if (pathname === "/") return t("لوحة التحكم");
+  if (/^\/sales\/\d+/.test(pathname)) return t("تفاصيل الفاتورة");
   const m = bestMatch(pathname);
   return NAV.find((n) => n.href === m)?.label ?? "Cloud Culture";
 }
@@ -199,14 +201,14 @@ export default function AppShell({
               <div className="leading-tight">
                 <div className="text-[18px] font-black tracking-tight">Cloud Culture</div>
                 <div className="text-[10.5px] font-bold text-[var(--faint)]">
-                  إدارة المنتجات والمبيعات
+                  {t("إدارة المنتجات والمبيعات")}
                 </div>
               </div>
             </Link>
             <button
               className="icon-btn lg:hidden"
               onClick={() => setOpen(false)}
-              aria-label="إغلاق القائمة"
+              aria-label={t("إغلاق القائمة")}
             >
               <X size={16} />
             </button>
@@ -242,14 +244,14 @@ export default function AppShell({
               <div className="min-w-0 flex-1 leading-tight">
                 <div className="truncate text-[13px] font-extrabold">{user.name}</div>
                 <div className="text-[11px] font-bold text-[var(--faint)]">
-                  {user.role === "admin" ? "مدير النظام (ماستر)" : "شريك"}
+                  {user.role === "admin" ? t("مدير النظام (ماستر)") : t("شريك")}
                 </div>
               </div>
               <button
                 className="icon-btn danger"
                 onClick={logout}
-                title="تسجيل الخروج"
-                aria-label="تسجيل الخروج"
+                title={t("تسجيل الخروج")}
+                aria-label={t("تسجيل الخروج")}
               >
                 <LogOut size={15} />
               </button>
@@ -274,7 +276,7 @@ export default function AppShell({
               <button
                 className="icon-btn lg:hidden"
                 onClick={() => setOpen(true)}
-                aria-label="فتح القائمة"
+                aria-label={t("فتح القائمة")}
               >
                 <Menu size={17} />
               </button>
@@ -299,7 +301,7 @@ export default function AppShell({
               {can(user, "sales.create") && (
                 <Link href="/sales/new" className="btn btn-primary btn-sm">
                   <PlusCircle size={15} />
-                  <span className="hidden sm:inline">فاتورة جديدة</span>
+                  <span className="hidden sm:inline">{t("فاتورة جديدة")}</span>
                 </Link>
               )}
             </div>

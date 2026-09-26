@@ -85,7 +85,7 @@ const EMPTY_FORM: FormState = {
   variants: [],
 };
 
-const FIELD_PRESETS = ["VG / PG", "بلد الصنع", "نوع الكويل"];
+const FIELD_PRESETS = ["VG / PG", t("بلد الصنع"), t("نوع الكويل")];
 
 const EMPTY_VARIANT: FormVariant = {
   size: "",
@@ -128,7 +128,7 @@ export default function ProductsPage() {
       );
       setItems(data);
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر التحميل");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر التحميل"));
       setItems([]);
     }
   }
@@ -223,15 +223,15 @@ export default function ProductsPage() {
           method: "PATCH",
           body: { mode: "edit", ...payload },
         });
-        toast.push("ok", "تم حفظ تعديلات المنتج");
+        toast.push("ok", t("تم حفظ تعديلات المنتج"));
       } else {
         await api("/api/products", { method: "POST", body: payload });
-        toast.push("ok", "تمت إضافة المنتج بنجاح");
+        toast.push("ok", t("تمت إضافة المنتج بنجاح"));
       }
       setFormOpen(false);
       await load();
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر الحفظ");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر الحفظ"));
     } finally {
       setSaving(false);
     }
@@ -241,7 +241,7 @@ export default function ProductsPage() {
     if (!stockTarget || adjusting) return;
     const d = Math.trunc(Number(delta));
     if (!d) {
-      toast.push("info", "أدخل قيمة تعديل (موجبة للإضافة، سالبة للخصم)");
+      toast.push("info", t("أدخل قيمة تعديل (موجبة للإضافة، سالبة للخصم)"));
       return;
     }
     setAdjusting(true);
@@ -255,14 +255,14 @@ export default function ProductsPage() {
           ...(stockVariantId ? { variantId: Number(stockVariantId) } : {}),
         },
       });
-      toast.push("ok", `مخزون "${updated.name}" أصبح ${updated.stock}`);
+      toast.push("ok", `${t("مخزون \"")}${updated.name}${t("\" أصبح")}${updated.stock}`);
       setStockTarget(null);
       setDelta("");
       setStockNote("");
       setStockVariantId("");
       await load();
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر التعديل");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر التعديل"));
     } finally {
       setAdjusting(false);
     }
@@ -273,11 +273,11 @@ export default function ProductsPage() {
     setArchiving(true);
     try {
       await api(`/api/products/${archiveTarget.id}`, { method: "DELETE" });
-      toast.push("ok", `تمت أرشفة "${archiveTarget.name}"`);
+      toast.push("ok", `${t("تمت أرشفة \"")}${archiveTarget.name}"`);
       setArchiveTarget(null);
       await load();
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذرت الأرشفة");
+      toast.push("err", e instanceof Error ? e.message : t("تعذرت الأرشفة"));
     } finally {
       setArchiving(false);
     }
@@ -289,10 +289,10 @@ export default function ProductsPage() {
         method: "PATCH",
         body: { mode: "restore" },
       });
-      toast.push("ok", `تمت استعادة "${p.name}"`);
+      toast.push("ok", `${t("تمت استعادة \"")}${p.name}"`);
       await load();
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذرت الاستعادة");
+      toast.push("err", e instanceof Error ? e.message : t("تعذرت الاستعادة"));
     }
   }
 
@@ -302,7 +302,7 @@ export default function ProductsPage() {
       const url = await fileToDataUrl(file);
       setForm((f) => ({ ...f, imageUrl: url }));
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر تحميل الصورة");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر تحميل الصورة"));
     }
   }
 
@@ -343,7 +343,7 @@ export default function ProductsPage() {
         <div className="relative min-w-[220px] flex-1">
           <input
             className="inp ps-10"
-            placeholder="ابحث عن صنف أو نكهة…"
+            placeholder={t("ابحث عن صنف أو نكهة…")}
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -357,7 +357,7 @@ export default function ProductsPage() {
           onChange={(e) => setCat(e.target.value)}
           className="!w-auto"
         >
-          <option value="">كل التصنيفات</option>
+          <option value="">{t("كل التصنيفات")}</option>
           {categories.map((c) => (
             <option key={c} value={c}>
               {c}
@@ -371,24 +371,24 @@ export default function ProductsPage() {
             onClick={() => setShowArchived((s) => !s)}
           >
             <ArchiveRestore size={15} />
-            {showArchived ? "الأصناف النشطة" : "الأرشيف"}
+            {showArchived ? t("الأصناف النشطة") : t("الأرشيف")}
           </Btn>
         )}
         {!showArchived &&
           (items ?? []).some((p) => !p.archived && p.stock <= p.lowStockAt) && (
             <div className="flex items-center gap-2 rounded-2xl border border-[var(--alert-line)] bg-[var(--alert-soft)] px-4 py-2.5 text-[12.5px] font-extrabold text-[var(--alert-text)]">
               <CircleAlert size={16} className="shrink-0" />
-              تنبيه نقص المخزون:{" "}
+              {t("تنبيه نقص المخزون:")}{" "}
               <span className="num">
                 {(items ?? []).filter((p) => !p.archived && p.stock <= p.lowStockAt).length}
               </span>{" "}
-              صنف تحت حد التنبيه
+              {t("صنف تحت حد التنبيه")}
             </div>
           )}
         <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
         {can(me, "products.create") && (
           <Btn variant="primary" size="sm" onClick={openCreate}>
-            <Plus size={15} /> إضافة منتج
+            <Plus size={15} /> {t("إضافة منتج")}
           </Btn>
         )}
       </div>
@@ -404,12 +404,12 @@ export default function ProductsPage() {
         <Card>
           <Empty
             icon={<Package size={22} />}
-            title={showArchived ? "الأرشيف فارغ" : "لا توجد أصناف مطابقة"}
-            hint={showArchived ? "لم يتم أرشفة أي منتج بعد" : "أضف أول منتج لبدء البيع وإصدار الفواتير"}
+            title={showArchived ? t("الأرشيف فارغ") : t("لا توجد أصناف مطابقة")}
+            hint={showArchived ? t("لم يتم أرشفة أي منتج بعد") : t("أضف أول منتج لبدء البيع وإصدار الفواتير")}
             action={
               !showArchived && can(me, "products.create") ? (
                 <Btn variant="primary" size="sm" onClick={openCreate}>
-                  <Plus size={15} /> إضافة منتج
+                  <Plus size={15} /> {t("إضافة منتج")}
                 </Btn>
               ) : undefined
             }
@@ -448,14 +448,14 @@ export default function ProductsPage() {
                   <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 bg-gradient-to-b from-black/45 to-transparent p-2.5">
                     {out ? (
                       <Badge tone="rose">
-                        <CircleAlert size={11} /> نفد المخزون
+                        <CircleAlert size={11} /> {t("نفد المخزون")}
                       </Badge>
                     ) : low ? (
-                      <Badge tone="amber">مخزون منخفض</Badge>
+                      <Badge tone="amber">{t("مخزون منخفض")}</Badge>
                     ) : (
-                      <Badge tone="mint">متوفر</Badge>
+                      <Badge tone="mint">{t("متوفر")}</Badge>
                     )}
-                    {p.archived && <Badge tone="slate">مؤرشف</Badge>}
+                    {p.archived && <Badge tone="slate">{t("مؤرشف")}</Badge>}
                   </div>
                 </div>
 
@@ -478,9 +478,9 @@ export default function ProductsPage() {
                       </div>
                       <div className="num text-[10.5px] font-bold text-[var(--faint)]">
                         {can(me, "finances.view_profit") ? (
-                          <>ربح: {formatMoneyJOD(pProfit, currency, rates)}</>
+                          <>{t("ربح:")} {formatMoneyJOD(pProfit, currency, rates)}</>
                         ) : (
-                          <>المتبقي: {fmtNum(p.stock)}</>
+                          <>{t("المتبقي:")} {fmtNum(p.stock)}</>
                         )}
                       </div>
                     </div>
@@ -498,7 +498,7 @@ export default function ProductsPage() {
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Badge tone="slate">
                         <Boxes size={11} />
-                        <span className="num">{fmtNum(p.variants.length)}</span> خيار
+                        <span className="num">{fmtNum(p.variants.length)}</span> {t("خيار")}
                       </Badge>
                       {p.variants.slice(0, 2).map((v) => (
                         <span
@@ -537,7 +537,7 @@ export default function ProductsPage() {
                   <div className="mt-auto flex items-center justify-between gap-2 border-t border-[var(--line-soft)] pt-3">
                     <div className="flex min-w-0 flex-col">
                       <span className="text-[12px] font-extrabold">
-                        <span className="text-[var(--faint)]">المخزون: </span>
+                        <span className="text-[var(--faint)]">{t("المخزون:")} </span>
                         <span
                           className={cls(
                             "num",
@@ -553,9 +553,9 @@ export default function ProductsPage() {
                       </span>
                       <span className="truncate text-[10.5px] font-bold text-[var(--faint)]">
                         {p.barcode ? (
-                          <span className="num">باركود: {p.barcode}</span>
+                          <span className="num">{t("باركود:")} {p.barcode}</span>
                         ) : (
-                          "بدون باركود"
+                          t("بدون باركود")
                         )}
                       </span>
                     </div>
@@ -563,7 +563,7 @@ export default function ProductsPage() {
                       {can(me, "products.update") && (
                         <button
                           className="icon-btn"
-                          title="تعديل المخزون"
+                          title={t("تعديل المخزون")}
                           onClick={() => {
                             setStockTarget(p);
                             setDelta("");
@@ -575,19 +575,19 @@ export default function ProductsPage() {
                         </button>
                       )}
                       {can(me, "products.update") && (
-                        <button className="icon-btn" title="تعديل" onClick={() => openEdit(p)}>
+                        <button className="icon-btn" title={t("تعديل")} onClick={() => openEdit(p)}>
                           <Pencil size={15} />
                         </button>
                       )}
                       {can(me, "products.delete") &&
                         (p.archived ? (
-                          <button className="icon-btn" title="استعادة" onClick={() => restoreProduct(p)}>
+                          <button className="icon-btn" title={t("استعادة")} onClick={() => restoreProduct(p)}>
                             <ArchiveRestore size={15} />
                           </button>
                         ) : (
                           <button
                             className="icon-btn danger"
-                            title="أرشفة"
+                            title={t("أرشفة")}
                             onClick={() => setArchiveTarget(p)}
                           >
                             <Trash2 size={15} />
@@ -606,7 +606,7 @@ export default function ProductsPage() {
       <Modal
         open={formOpen}
         onClose={() => setFormOpen(false)}
-        title={editing ? `تعديل: ${editing.name}` : "إضافة منتج جديد"}
+        title={editing ? `${t("تعديل:")}${editing.name}` : t("إضافة منتج جديد")}
         icon={<Package size={17} />}
         wide
       >
@@ -615,14 +615,14 @@ export default function ProductsPage() {
             <Input
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="مثال: مانجو آيس 60مل"
+              placeholder={t("مثال: مانجو آيس 60مل")}
             />
           </Field>
           <Field label={t("التصنيف")}>
             <Input
               value={form.category}
               onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-              placeholder="سولت نيكوتين / فري بيز / بود…"
+              placeholder={t("سولت نيكوتين / فري بيز / بود…")}
             />
           </Field>
           <Field label={t("سعر البيع *")}>
@@ -673,7 +673,7 @@ export default function ProductsPage() {
               placeholder="5"
             />
           </Field>
-          <Field label={t("الباركود")} hint="رقم باركود للمسح السريع في فاتورة جديدة (اختياري)">
+          <Field label={t("الباركود")} hint={t("رقم باركود للمسح السريع في فاتورة جديدة (اختياري)")}>
             <Input
               dir="ltr"
               className="num"
@@ -687,20 +687,20 @@ export default function ProductsPage() {
               <Textarea
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                placeholder="نبذة مختصرة عن النكهة أو المنتج…"
+                placeholder={t("نبذة مختصرة عن النكهة أو المنتج…")}
               />
             </Field>
           </div>
 
           {/* image */}
           <div className="md:col-span-2">
-            <label className="lbl">صورة المنتج</label>
+            <label className="lbl">{t("صورة المنتج")}</label>
             <div className="flex flex-wrap items-center gap-3">
               {form.imageUrl ? (
                 <div className="relative">
                   <ProductImage
                     src={form.imageUrl}
-                    name={form.name || "صورة المنتج"}
+                    name={form.name || t("صورة المنتج")}
                     size={96}
                     radius={16}
                     className="h-24 w-24"
@@ -720,7 +720,7 @@ export default function ProductsPage() {
                   className="flex h-24 w-24 flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[var(--line)] text-[var(--faint)] transition-colors hover:border-[var(--mint)] hover:text-[var(--mint)]"
                 >
                   <ImagePlus size={22} />
-                  <span className="text-[10px] font-bold">رفع صورة</span>
+                  <span className="text-[10px] font-bold">{t("رفع صورة")}</span>
                 </button>
               )}
               <input
@@ -734,7 +734,7 @@ export default function ProductsPage() {
                 <Input
                   value={form.imageUrl.startsWith("data:") ? "" : form.imageUrl}
                   onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
-                  placeholder="أو الصق رابط صورة https://…"
+                  placeholder={t("أو الصق رابط صورة https://…")}
                   dir="ltr"
                 />
               </div>
@@ -744,9 +744,9 @@ export default function ProductsPage() {
           <div className="md:col-span-2">
             <div className="mb-2 flex items-center justify-between gap-2">
               <div>
-                <label className="lbl !mb-0">المقاسات والنيكوتين والأسعار</label>
+                <label className="lbl !mb-0">{t("المقاسات والنيكوتين والأسعار")}</label>
                 <p className="mt-1 text-[11px] font-semibold text-[var(--faint)]">
-                  اربط كل حجم ونيكوتين بسعر الأفراد وسعر المحلات/الجملة ومخزون مستقل.
+                  {t("اربط كل حجم ونيكوتين بسعر الأفراد وسعر المحلات/الجملة ومخزون مستقل.")}
                 </p>
               </div>
               <Btn
@@ -756,12 +756,12 @@ export default function ProductsPage() {
                   setForm((f) => ({ ...f, variants: [...f.variants, { ...EMPTY_VARIANT }] }))
                 }
               >
-                <Plus size={13} /> إضافة خيار
+                <Plus size={13} /> {t("إضافة خيار")}
               </Btn>
             </div>
             {form.variants.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-[var(--line)] p-4 text-center text-[12px] font-bold text-[var(--faint)]">
-                لا توجد خيارات بعد — اضغط «إضافة خيار» لتحديد الحجم والنيكوتين وأسعاره.
+                {t("لا توجد خيارات بعد — اضغط «إضافة خيار» لتحديد الحجم والنيكوتين وأسعاره.")}
               </div>
             ) : (
               <div className="space-y-3">
@@ -788,17 +788,17 @@ export default function ProductsPage() {
                   >
                     <div className="mb-3 flex items-center justify-between gap-2">
                       <span className="num text-[11.5px] font-extrabold text-[var(--faint)]">
-                        الخيار {index + 1}
+                        {t("الخيار")} {index + 1}
                       </span>
                       {isEmpty ? (
                         <span className="text-[10.5px] font-bold text-[var(--amber)]">
-                          سيُتجاهل عند الحفظ (فارغ)
+                          {t("سيُتجاهل عند الحفظ (فارغ)")}
                         </span>
                       ) : null}
                       <button
                         type="button"
                         className="icon-btn danger"
-                        title="حذف الخيار"
+                        title={t("حذف الخيار")}
                         onClick={() =>
                           setForm((f) => ({
                             ...f,
@@ -812,7 +812,7 @@ export default function ProductsPage() {
 
                     {/* أحجام العبوات — خيارات ثابتة ومرتبة */}
                     <div className="mb-3">
-                      <label className="lbl !mb-1.5">حجم العبوة *</label>
+                      <label className="lbl !mb-1.5">{t("حجم العبوة *")}</label>
                       <div className="flex flex-wrap gap-1.5">
                         {PRODUCT_SIZES.map((size) => (
                           <button
@@ -837,7 +837,7 @@ export default function ProductsPage() {
 
                     {/* نسب النيكوتين — خيارات ثابتة ومرتبة */}
                     <div className="mb-3">
-                      <label className="lbl !mb-1.5">نسبة النيكوتين *</label>
+                      <label className="lbl !mb-1.5">{t("نسبة النيكوتين *")}</label>
                       <div className="flex flex-wrap gap-1.5">
                         {NICOTINE_LEVELS.map((level) => (
                           <button
@@ -922,8 +922,7 @@ export default function ProductsPage() {
                   );
                 })}
                 <p className="text-[11px] font-semibold text-[var(--faint)]">
-                  الخانات الفارغة التي لا تملؤها لا تُحفظ ولا تدخل في المخزون — تُحفظ
-                  فقط القيم التي تكتبها.
+                  {t("الخانات الفارغة التي لا تملؤها لا تُحفظ ولا تدخل في المخزون — تُحفظ فقط القيم التي تكتبها.")}
                 </p>
               </div>
             )}
@@ -932,14 +931,14 @@ export default function ProductsPage() {
           {/* dynamic fields */}
           <div className="md:col-span-2">
             <div className="mb-2 flex items-center justify-between">
-              <label className="lbl !mb-0">حقول إضافية (مواصفات / تكاليف خاصة)</label>
+              <label className="lbl !mb-0">{t("حقول إضافية (مواصفات / تكاليف خاصة)")}</label>
               <Btn
                 size="xs"
                 onClick={() =>
                   setForm((f) => ({ ...f, fields: [...f.fields, { label: "", value: "" }] }))
                 }
               >
-                <Plus size={13} /> حقل جديد
+                <Plus size={13} /> {t("حقل جديد")}
               </Btn>
             </div>
             {form.fields.length > 0 && (
@@ -966,7 +965,7 @@ export default function ProductsPage() {
                 <div key={i} className="flex items-center gap-2">
                   <Input
                     value={fld.label}
-                    placeholder="اسم الحقل"
+                    placeholder={t("اسم الحقل")}
                     className="!w-[38%]"
                     onChange={(e) =>
                       setForm((f) => ({
@@ -979,7 +978,7 @@ export default function ProductsPage() {
                   />
                   <Input
                     value={fld.value}
-                    placeholder="القيمة"
+                    placeholder={t("القيمة")}
                     onChange={(e) =>
                       setForm((f) => ({
                         ...f,
@@ -1002,7 +1001,7 @@ export default function ProductsPage() {
               ))}
               {form.fields.length === 0 && (
                 <p className="text-[11.5px] font-semibold text-[var(--faint)]">
-                  لا توجد حقول إضافية — أضف أي مواصفة خاصة (نيكوتين، حجم، نسبة VG…)
+                  {t("لا توجد حقول إضافية — أضف أي مواصفة خاصة (نيكوتين، حجم، نسبة VG…)")}
                 </p>
               )}
             </div>
@@ -1011,12 +1010,12 @@ export default function ProductsPage() {
 
         <div className="mt-6 flex items-center justify-between border-t border-[var(--line-soft)] pt-4">
           <span className="num text-[12.5px] font-bold text-[var(--muted)]">
-            هامش الربح ({currency}): <span className={profit >= 0 ? "text-[var(--mint)]" : "text-[var(--danger)]"}>{formatMoneyJOD(profit, currency, rates)}</span>
+            {t("هامش الربح (")}{currency}): <span className={profit >= 0 ? "text-[var(--mint)]" : "text-[var(--danger)]"}>{formatMoneyJOD(profit, currency, rates)}</span>
           </span>
           <div className="flex gap-2">
-            <Btn onClick={() => setFormOpen(false)}>إلغاء</Btn>
+            <Btn onClick={() => setFormOpen(false)}>{t("إلغاء")}</Btn>
             <Btn variant="primary" onClick={saveProduct} loading={saving} disabled={!valid}>
-              {editing ? "حفظ التعديلات" : "إضافة المنتج"}
+              {editing ? t("حفظ التعديلات") : t("إضافة المنتج")}
             </Btn>
           </div>
         </div>
@@ -1026,12 +1025,12 @@ export default function ProductsPage() {
       <Modal
         open={!!stockTarget}
         onClose={() => setStockTarget(null)}
-        title={stockTarget ? `تعديل مخزون: ${stockTarget.name}` : ""}
+        title={stockTarget ? `${t("تعديل مخزون:")}${stockTarget.name}` : ""}
         icon={<SlidersHorizontal size={17} />}
       >
         <div className="space-y-4">
           <div className="flex items-center justify-between rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-4 py-3">
-            <span className="text-[12.5px] font-bold text-[var(--muted)]">الرصيد الحالي</span>
+            <span className="text-[12.5px] font-bold text-[var(--muted)]">{t("الرصيد الحالي")}</span>
             <span className="num text-[20px] font-black">{stockTarget?.stock ?? 0}</span>
           </div>
            {stockTarget && stockTarget.variants.length > 0 && (
@@ -1042,13 +1041,13 @@ export default function ProductsPage() {
                >
                  {stockTarget.variants.map((v) => (
                    <option key={v.id} value={v.id}>
-                     {v.size} — {v.nicotine} (الحالي {v.stock})
+                     {v.size} — {v.nicotine} {t("(الحالي")} {v.stock})
                    </option>
                  ))}
                </Select>
              </Field>
            )}
-           <Field label={t("قيمة التعديل (+ إضافة / − خصم)")} hint="مثال: 24+ لاستلام شحنة، أو 3- لتالف">
+           <Field label={t("قيمة التعديل (+ إضافة / − خصم)")} hint={t("مثال: 24+ لاستلام شحنة، أو 3- لتالف")}>
             <Input
               type="number"
               step="1"
@@ -1056,7 +1055,7 @@ export default function ProductsPage() {
               className="num"
               value={delta}
               onChange={(e) => setDelta(e.target.value)}
-              placeholder="مثال: 24 أو -3"
+              placeholder={t("مثال: 24 أو -3")}
               autoFocus
             />
           </Field>
@@ -1064,18 +1063,18 @@ export default function ProductsPage() {
             <Input
               value={stockNote}
               onChange={(e) => setStockNote(e.target.value)}
-              placeholder="استلام شحنة مورد / تسوية جرد…"
+              placeholder={t("استلام شحنة مورد / تسوية جرد…")}
             />
           </Field>
           <div className="flex items-center justify-between border-t border-[var(--line-soft)] pt-4">
             <span className="num text-[12.5px] font-bold text-[var(--muted)]">
-              الرصيد بعد التعديل:{" "}
+              {t("الرصيد بعد التعديل:")}{" "}
               <span className={(stockTarget?.stock ?? 0) + (Math.trunc(Number(delta)) || 0) >= 0 ? "text-[var(--mint)]" : "text-[var(--danger)]"}>
                 {(stockTarget?.stock ?? 0) + (Math.trunc(Number(delta)) || 0)}
               </span>
             </span>
             <Btn variant="primary" onClick={applyStock} loading={adjusting}>
-              تطبيق التعديل
+              {t("تطبيق التعديل")}
             </Btn>
           </div>
         </div>
@@ -1087,9 +1086,9 @@ export default function ProductsPage() {
         onClose={() => setArchiveTarget(null)}
         onConfirm={archiveProduct}
         loading={archiving}
-        title="أرشفة المنتج"
-        message={`سيتم إخفاء "${archiveTarget?.name}" من البيع والقوائم، مع بقاء الفواتير السابقة كما هي. يمكن استعادته لاحقًا من الأرشيف.`}
-        confirmText="أرشفة"
+        title={t("أرشفة المنتج")}
+        message={`${t("سيتم إخفاء \"")}${archiveTarget?.name}${t("\" من البيع والقوائم، مع بقاء الفواتير السابقة كما هي. يمكن استعادته لاحقًا من الأرشيف.")}`}
+        confirmText={t("أرشفة")}
       />
     </div>
   );

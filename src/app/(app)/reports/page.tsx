@@ -144,11 +144,11 @@ function presetRange(p: Preset): { from: string; to: string } {
 }
 
 const PRESETS: Array<{ key: Preset; label: string }> = [
-  { key: "today", label: "اليوم" },
-  { key: "week", label: "آخر 7 أيام" },
-  { key: "month", label: "آخر 30 يوم" },
-  { key: "thisMonth", label: "الشهر الحالي" },
-  { key: "custom", label: "مخصص" },
+  { key: "today", label: t("اليوم") },
+  { key: "week", label: t("آخر 7 أيام") },
+  { key: "month", label: t("آخر 30 يوم") },
+  { key: "thisMonth", label: t("الشهر الحالي") },
+  { key: "custom", label: t("مخصص") },
 ];
 
 function Stat({
@@ -189,12 +189,12 @@ export default function ReportsPage() {
     api<SessionUserDTO>("/api/auth/me").then(setMe).catch(() => {});
   }, []);
 
-  const load = useCallback(async (f: string, t: string) => {
+  const load = useCallback(async (f: string, toDate: string) => {
     setLoading(true);
     try {
-      setData(await api<ReportData>(`/api/reports?from=${f}&to=${t}`));
+      setData(await api<ReportData>(`/api/reports?from=${f}&to=${toDate}`));
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر تحميل التقرير");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر تحميل التقرير"));
     } finally {
       setLoading(false);
     }
@@ -223,7 +223,7 @@ export default function ReportsPage() {
     if (!data) return;
     downloadCsv(
       `top-products-${data.range.from}_${data.range.to}.csv`,
-      ["الصنف", "الكمية المباعة", "الإيراد", "الربح"],
+      [t("الصنف"), t("الكمية المباعة"), t("الإيراد"), t("الربح")],
       data.topProducts.map((p) => [p.name, p.qty, p.revenue.toFixed(2), p.profit.toFixed(2)]),
     );
   }
@@ -232,7 +232,7 @@ export default function ReportsPage() {
     if (!data) return;
     downloadCsv(
       `top-clients-${data.range.from}_${data.range.to}.csv`,
-      ["العميل", "النوع", "عدد الفواتير", "إجمالي المشتريات"],
+      [t("العميل"), t("النوع"), t("عدد الفواتير"), t("إجمالي المشتريات")],
       data.topClients.map((c) => [c.name, CLIENT_TYPES[c.type], c.orders, c.revenue.toFixed(2)]),
     );
   }
@@ -241,7 +241,7 @@ export default function ReportsPage() {
     if (!data) return;
     downloadCsv(
       `daily-sales-${data.range.from}_${data.range.to}.csv`,
-      ["التاريخ", "إجمالي المبيعات", "عدد الفواتير"],
+      [t("التاريخ"), t("إجمالي المبيعات"), t("عدد الفواتير")],
       data.series.map((s) => [s.date, s.total.toFixed(2), s.count]),
     );
   }
@@ -251,34 +251,34 @@ export default function ReportsPage() {
     if (!data) return;
     const sheets = [
       {
-        name: "ملخص",
+        name: t("ملخص"),
         rows: [
-          ["الفترة", `${data.range.from} ← ${data.range.to}`],
-          ["إجمالي المبيعات قبل المرتجعات", data.totals.grossSales.toFixed(2)],
-           ["قيمة المرتجعات/الاستبدال", data.totals.returns.toFixed(2)],
-           ["صافي المبيعات بعد المرتجعات", data.totals.total.toFixed(2)],
-           ["عدد المرتجعات", data.totals.returnCount],
-          ["عدد الفواتير", data.totals.count],
-          ["الوحدات المباعة", data.totals.units],
-          ["إجمالي التوصيل", data.totals.shipping.toFixed(2)],
-          ["إجمالي الخصومات", data.totals.discount.toFixed(2)],
-          ["المستحق (آجل)", data.totals.unpaid.toFixed(2)],
-          ["صافي الربح", data.totals.profit.toFixed(2)],
-          ["المصاريف", data.totals.expenses.toFixed(2)],
-          ["الربح الصافي (ربح − مصاريف)", data.totals.netProfit.toFixed(2)],
+          [t("الفترة"), `${data.range.from} ← ${data.range.to}`],
+          [t("إجمالي المبيعات قبل المرتجعات"), data.totals.grossSales.toFixed(2)],
+           [t("قيمة المرتجعات/الاستبدال"), data.totals.returns.toFixed(2)],
+           [t("صافي المبيعات بعد المرتجعات"), data.totals.total.toFixed(2)],
+           [t("عدد المرتجعات"), data.totals.returnCount],
+          [t("عدد الفواتير"), data.totals.count],
+          [t("الوحدات المباعة"), data.totals.units],
+          [t("إجمالي التوصيل"), data.totals.shipping.toFixed(2)],
+          [t("إجمالي الخصومات"), data.totals.discount.toFixed(2)],
+          [t("المستحق (آجل)"), data.totals.unpaid.toFixed(2)],
+          [t("صافي الربح"), data.totals.profit.toFixed(2)],
+          [t("المصاريف"), data.totals.expenses.toFixed(2)],
+          [t("الربح الصافي (ربح − مصاريف)"), data.totals.netProfit.toFixed(2)],
         ],
       },
       {
-        name: "يومي",
+        name: t("يومي"),
         rows: [
-          ["التاريخ", "المبيعات", "عدد الفواتير"],
+          [t("التاريخ"), t("المبيعات"), t("عدد الفواتير")],
           ...data.series.map((s) => [s.date, s.total.toFixed(2), s.count]),
         ],
       },
       {
-        name: "طرق الدفع",
+        name: t("طرق الدفع"),
         rows: [
-          ["الطريقة", "عدد الفواتير", "الإجمالي", "المتبقي"],
+          [t("الطريقة"), t("عدد الفواتير"), t("الإجمالي"), t("المتبقي")],
           ...data.byPayment.map((p) => [
             PAYMENT_METHODS[p.method],
             p.count,
@@ -288,9 +288,9 @@ export default function ReportsPage() {
         ],
       },
       {
-        name: "مطابقة طرق الدفع اليومية",
+        name: t("مطابقة طرق الدفع اليومية"),
         rows: [
-          ["التاريخ", "الطريقة", "عدد الفواتير", "إجمالي المبيعات", "المحصّل", "المتبقي"],
+          [t("التاريخ"), t("الطريقة"), t("عدد الفواتير"), t("إجمالي المبيعات"), t("المحصّل"), t("المتبقي")],
           ...data.paymentSeries.map((p) => [
             p.date,
             PAYMENT_METHODS[p.method],
@@ -302,9 +302,9 @@ export default function ReportsPage() {
         ],
       },
       {
-        name: "تحصيل الذمم",
+        name: t("تحصيل الذمم"),
         rows: [
-          ["العميل", "المبلغ", "الطريقة", "المنفّذ", "التاريخ", "ملاحظة"],
+          [t("العميل"), t("المبلغ"), t("الطريقة"), t("المنفّذ"), t("التاريخ"), t("ملاحظة")],
           ...data.collections.payments.map((p) => [
             p.clientName,
             p.amount.toFixed(2),
@@ -316,9 +316,9 @@ export default function ReportsPage() {
         ],
       },
       {
-        name: "المصاريف",
+        name: t("المصاريف"),
         rows: [
-          ["الفئة", "المبلغ", "الملاحظة", "المنفّذ", "التاريخ"],
+          [t("الفئة"), t("المبلغ"), t("الملاحظة"), t("المنفّذ"), t("التاريخ")],
           ...data.expenses.rows.map((e) => [
             e.category,
             e.amount.toFixed(2),
@@ -329,25 +329,25 @@ export default function ReportsPage() {
         ],
       },
       {
-        name: "أصناف",
+        name: t("أصناف"),
         rows: [
-          ["الصنف", "الكمية", "الإيراد", "الربح"],
+          [t("الصنف"), t("الكمية"), t("الإيراد"), t("الربح")],
           ...data.topProducts.map((p) => [p.name, p.qty, p.revenue.toFixed(2), p.profit.toFixed(2)]),
         ],
       },
       {
-        name: "عملاء",
+        name: t("عملاء"),
         rows: [
-          ["العميل", "النوع", "الفواتير", "الإجمالي"],
+          [t("العميل"), t("النوع"), t("الفواتير"), t("الإجمالي")],
           ...data.topClients.map((c) => [c.name, CLIENT_TYPES[c.type], c.orders, c.revenue.toFixed(2)]),
         ],
       },
       ...(can(me, "finances.view_profit") && data.byEmployee.length
         ? [
             {
-              name: "موظفون",
+              name: t("موظفون"),
               rows: [
-                ["الموظف", "الفواتير", "المبيعات", "الربح"],
+                [t("الموظف"), t("الفواتير"), t("المبيعات"), t("الربح")],
                 ...data.byEmployee.map((e) => [
                   e.name,
                   e.orders,
@@ -359,7 +359,7 @@ export default function ReportsPage() {
           ]
         : []),
     ];
-    downloadXlsx(`تقرير-${data.range.from}_${data.range.to}`, sheets);
+    downloadXlsx(`${t("تقرير-")}${data.range.from}_${data.range.to}`, sheets);
   }
 
   return (
@@ -384,10 +384,10 @@ export default function ReportsPage() {
         {preset === "custom" && (
           <>
             <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="!w-auto" />
-            <span className="text-[12px] font-bold text-[var(--faint)]">إلى</span>
+            <span className="text-[12px] font-bold text-[var(--faint)]">{t("إلى")}</span>
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="!w-auto" />
             <Btn size="sm" variant="primary" onClick={() => from && to && load(from, to)} loading={loading}>
-              عرض
+              {t("عرض")}
             </Btn>
           </>
         )}
@@ -407,18 +407,18 @@ export default function ReportsPage() {
         </div>
       ) : (
         <div className={cls("grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6", loading && "opacity-60 transition-opacity")}>
-          <Stat icon={<Coins size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label={`إجمالي المبيعات (${currency})`} value={formatMoneyJOD(data.totals.total, currency, rates)} />
+          <Stat icon={<Coins size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label={`${t("إجمالي المبيعات (")}${currency})`} value={formatMoneyJOD(data.totals.total, currency, rates)} />
           {can(me, "finances.view_profit") && (
-            <Stat icon={<TrendingUp size={18} className="text-[var(--amber)]" />} tone="var(--alert-soft)" label={`صافي الربح (هامش ${margin.toFixed(0)}%)`} value={formatMoneyJOD(data.totals.profit, currency, rates)} />
+            <Stat icon={<TrendingUp size={18} className="text-[var(--amber)]" />} tone="var(--alert-soft)" label={`${t("صافي الربح (هامش")}${margin.toFixed(0)}%)`} value={formatMoneyJOD(data.totals.profit, currency, rates)} />
           )}
           <Stat icon={<ReceiptText size={18} className="text-[var(--violet)]" />} tone="var(--overlay-2)" label={t("عدد الفواتير")} value={fmtNum(data.totals.count)} />
-          <Stat icon={<Scale size={18} className="text-[var(--sky)]" />} tone="var(--overlay-2)" label={`متوسط الفاتورة (${currency})`} value={formatMoneyJOD(data.totals.avg, currency, rates)} />
-          <Stat icon={<Truck size={18} className="text-[var(--rose)]" />} tone="var(--critical-soft)" label={`إجمالي التوصيل (${currency})`} value={formatMoneyJOD(data.totals.shipping, currency, rates)} />
+          <Stat icon={<Scale size={18} className="text-[var(--sky)]" />} tone="var(--overlay-2)" label={`${t("متوسط الفاتورة (")}${currency})`} value={formatMoneyJOD(data.totals.avg, currency, rates)} />
+          <Stat icon={<Truck size={18} className="text-[var(--rose)]" />} tone="var(--critical-soft)" label={`${t("إجمالي التوصيل (")}${currency})`} value={formatMoneyJOD(data.totals.shipping, currency, rates)} />
           <Stat icon={<BarChart3 size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label={t("وحدات مباعة")} value={fmtNum(data.totals.units)} />
           {can(me, "finances.view_profit") && (
             <>
-              <Stat icon={<Banknote size={18} className="text-[var(--rose)]" />} tone="var(--critical-soft)" label={`المصاريف (${currency})`} value={formatMoneyJOD(data.totals.expenses, currency, rates)} />
-              <Stat icon={<TrendingUp size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label={`الربح الصافي (${currency})`} value={formatMoneyJOD(data.totals.netProfit, currency, rates)} />
+              <Stat icon={<Banknote size={18} className="text-[var(--rose)]" />} tone="var(--critical-soft)" label={`${t("المصاريف (")}${currency})`} value={formatMoneyJOD(data.totals.expenses, currency, rates)} />
+              <Stat icon={<TrendingUp size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label={`${t("الربح الصافي (")}${currency})`} value={formatMoneyJOD(data.totals.netProfit, currency, rates)} />
             </>
           )}
         </div>
@@ -427,7 +427,7 @@ export default function ReportsPage() {
       {/* daily chart */}
       <Card
         className="anim-in anim-d1"
-        title="المبيعات اليومية"
+        title={t("المبيعات اليومية")}
         icon={<BarChart3 size={16} />}
         actions={
           <Btn size="xs" onClick={exportDaily} disabled={!data}>
@@ -439,14 +439,14 @@ export default function ReportsPage() {
         {!data ? (
           <Skeleton className="h-[200px]" />
         ) : data.totals.count === 0 ? (
-          <Empty icon={<BarChart3 size={20} />} title="لا توجد مبيعات في هذه الفترة" />
+          <Empty icon={<BarChart3 size={20} />} title={t("لا توجد مبيعات في هذه الفترة")} />
         ) : (
           <BarsChart
             height={210}
             data={data.series.map((s) => ({
               label: s.date.slice(5).replace("-", "/"),
               value: Math.round(s.total),
-              sub: `${s.date} — ${s.count} فاتورة`,
+              sub: `${s.date} — ${s.count}${t("فاتورة")}`,
             }))}
             format={(n) => formatMoneyJOD(n, currency, rates)}
           />
@@ -457,7 +457,7 @@ export default function ReportsPage() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Card
           className="anim-in anim-d2 overflow-hidden"
-          title={`الأصناف الأكثر مبيعًا (${currency})`}
+          title={`${t("الأصناف الأكثر مبيعًا (")}${currency})`}
           icon={<Flame size={16} />}
           actions={
             <Btn size="xs" onClick={exportProducts} disabled={!data || data.topProducts.length === 0}>
@@ -469,7 +469,7 @@ export default function ReportsPage() {
           {!data ? (
             <div className="space-y-3 p-5">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-11" />)}</div>
           ) : data.topProducts.length === 0 ? (
-            <Empty icon={<Flame size={20} />} title="لا توجد بيانات" />
+            <Empty icon={<Flame size={20} />} title={t("لا توجد بيانات")} />
           ) : (
             <table className="tbl min-w-[430px]">
               <thead>
@@ -507,7 +507,7 @@ export default function ReportsPage() {
 
         <Card
           className="anim-in anim-d3 overflow-hidden"
-          title="العملاء الأكثر شراءً"
+          title={t("العملاء الأكثر شراءً")}
           icon={<Users size={16} />}
           actions={
             <Btn size="xs" onClick={exportClients} disabled={!data || data.topClients.length === 0}>
@@ -519,7 +519,7 @@ export default function ReportsPage() {
           {!data ? (
             <div className="space-y-3 p-5">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-11" />)}</div>
           ) : data.topClients.length === 0 ? (
-            <Empty icon={<Users size={20} />} title="لا توجد بيانات" />
+            <Empty icon={<Users size={20} />} title={t("لا توجد بيانات")} />
           ) : (
             <table className="tbl min-w-[430px]">
               <thead>
@@ -555,7 +555,7 @@ export default function ReportsPage() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Card
           className="anim-in anim-d4 overflow-hidden"
-          title="الحسابات اليومية — طرق الدفع"
+          title={t("الحسابات اليومية — طرق الدفع")}
           icon={<Banknote size={16} />}
           actions={
             <Btn size="xs" onClick={exportExcel} disabled={!data || data.byPayment.length === 0}>
@@ -567,14 +567,14 @@ export default function ReportsPage() {
           {!data ? (
             <div className="space-y-3 p-5">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-11" />)}</div>
           ) : data.byPayment.length === 0 ? (
-            <Empty icon={<Banknote size={20} />} title="لا توجد مبيعات في هذه الفترة" />
+            <Empty icon={<Banknote size={20} />} title={t("لا توجد مبيعات في هذه الفترة")} />
           ) : (
             <table className="tbl min-w-[430px]">
               <thead>
                 <tr>
                   <th>{t("الطريقة")}</th>
                   <th>{t("الفواتير")}</th>
-                  <th>الإجمالي ({currency})</th>
+                  <th>{t("الإجمالي (")}{currency})</th>
                   <th>{t("المتبقي")}</th>
                 </tr>
               </thead>
@@ -603,14 +603,14 @@ export default function ReportsPage() {
         {can(me, "finances.view_profit") && (
           <Card
             className="anim-in anim-d5 overflow-hidden"
-            title="أرباح كل موظف"
+            title={t("أرباح كل موظف")}
             icon={<Users size={16} />}
             bodyClass="overflow-x-auto"
           >
             {!data ? (
               <div className="space-y-3 p-5">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-11" />)}</div>
             ) : data.byEmployee.length === 0 ? (
-              <Empty icon={<Users size={20} />} title="لا توجد مبيعات في هذه الفترة" />
+              <Empty icon={<Users size={20} />} title={t("لا توجد مبيعات في هذه الفترة")} />
             ) : (
               <table className="tbl min-w-[430px]">
                 <thead>
@@ -618,7 +618,7 @@ export default function ReportsPage() {
                     <th>#</th>
                     <th>{t("الموظف")}</th>
                     <th>{t("الفواتير")}</th>
-                    <th>المبيعات ({currency})</th>
+                    <th>{t("المبيعات (")}{currency})</th>
                     <th>{t("الربح")}</th>
                   </tr>
                 </thead>

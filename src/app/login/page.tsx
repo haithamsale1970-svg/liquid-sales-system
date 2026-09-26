@@ -75,7 +75,7 @@ export default function LoginPage() {
         role?: "admin" | "user";
         permissions?: Record<string, boolean>;
       };
-      if (!res.ok) throw new Error(data.error || "تعذر تسجيل الدخول");
+      if (!res.ok) throw new Error(data.error || t("تعذر تسجيل الدخول"));
       // توجيه ذكي: أول صفحة يملكها المستخدم (لا داشبورد بلا صلاحية)
       const landing = firstAllowedPath({
         role: data.role ?? "user",
@@ -83,7 +83,7 @@ export default function LoginPage() {
       });
       window.location.href = landing ?? "/";
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذر تسجيل الدخول");
+      setError(err instanceof Error ? err.message : t("تعذر تسجيل الدخول"));
       setLoading(false);
     }
   }
@@ -171,7 +171,7 @@ export default function LoginPage() {
             >
               <span className="welcome-cta-label">
                 <Sparkles size={17} />
-                ابدأ الآن
+                {t("ابدأ الآن")}
               </span>
             </button>
           </div>
@@ -184,7 +184,7 @@ export default function LoginPage() {
               <div className="text-center">
                 <h2 className="text-[17px] font-black">{t("تسجيل الدخول")}</h2>
                 <p className="mt-1.5 text-[12.5px] font-semibold text-[var(--faint)]">
-                  أدخل بياناتك للمتابعة إلى لوحة التحكم
+                  {t("أدخل بياناتك للمتابعة إلى لوحة التحكم")}
                 </p>
               </div>
 
@@ -198,7 +198,7 @@ export default function LoginPage() {
                 <input
                   id="login-user"
                   className="auth-input"
-                  placeholder="مثال: admin"
+                  placeholder={t("مثال: admin")}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   autoComplete="username"
@@ -232,9 +232,9 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => setShowPw((s) => !s)}
                   className="auth-toggle"
-                  aria-label={showPw ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                  aria-label={showPw ? t("إخفاء كلمة المرور") : t("إظهار كلمة المرور")}
                   aria-pressed={showPw}
-                  title={showPw ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                  title={showPw ? t("إخفاء كلمة المرور") : t("إظهار كلمة المرور")}
                 >
                   {showPw ? (
                     <EyeOff size={17} aria-hidden />
@@ -260,7 +260,7 @@ export default function LoginPage() {
               className="btn btn-primary w-full !py-3.5 !text-[14.5px] !rounded-[14px]"
             >
               {loading ? <Spinner size={16} /> : <LogIn size={16} />}
-              {loading ? "جارٍ الدخول…" : t("دخول")}
+              {loading ? t("جارٍ الدخول…") : t("دخول")}
             </button>
           </form>
             </div>
@@ -272,7 +272,7 @@ export default function LoginPage() {
               className="btn btn-ghost mx-auto mt-4 !py-2 !text-[12.5px]"
             >
               <ArrowLeft size={14} />
-              رجوع لشاشة الترحيب
+              {t("رجوع لشاشة الترحيب")}
             </button>
           </>
         )}

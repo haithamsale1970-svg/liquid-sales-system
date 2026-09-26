@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { BellRing, ChevronDown, X } from "lucide-react";
@@ -49,10 +51,10 @@ export default function InstallmentsDueBanner() {
   const level = overdue.length > 0 ? "critical" : "warning";
   const headline =
     overdue.length > 0
-      ? `تأخّر ${overdue.length} دفعة عن موعدها`
+      ? `${t("تأخّر")}${overdue.length}${t("دفعة عن موعدها")}`
       : dueToday.length > 0
-        ? `${dueToday.length} دفعة مستحقة اليوم`
-        : `${soon.length} دفعة مستحقة غدًا`;
+        ? `${dueToday.length}${t("دفعة مستحقة اليوم")}`
+        : `${soon.length}${t("دفعة مستحقة غدًا")}`;
 
   return (
     <div
@@ -71,7 +73,7 @@ export default function InstallmentsDueBanner() {
           <BellRing size={16} />
         </span>
         <div className="min-w-0 flex-1 text-[12.5px] font-extrabold leading-6 text-[var(--text)]">
-          تنبيه الذمم: <span className="num">{headline}</span> — بإجمالي{" "}
+          {t("تنبيه الذمم:")} <span className="num">{headline}</span> {t("— بإجمالي")}{" "}
           <span className="num">{formatMoneyJOD(total, currency, rates)}</span>
         </div>
         <button
@@ -80,11 +82,11 @@ export default function InstallmentsDueBanner() {
           aria-expanded={open}
         >
           <ChevronDown size={13} className={cls("transition-transform", open && "rotate-180")} />
-          {open ? "إخفاء" : "عرض الدفعات"}
+          {open ? t("إخفاء") : t("عرض الدفعات")}
         </button>
         <button
           className="icon-btn !h-7 !w-7"
-          title="إخفاء التنبيه"
+          title={t("إخفاء التنبيه")}
           onClick={() => setDismissed(true)}
         >
           <X size={13} />
@@ -96,7 +98,7 @@ export default function InstallmentsDueBanner() {
           {items.map((i) => {
             const d = daysUntil(i.dueDate);
             const tag =
-              d < 0 ? `متأخرة ${Math.abs(d)} يوم` : d === 0 ? "مستحقة اليوم" : d === 1 ? "غدًا" : `بعد ${d} يوم`;
+              d < 0 ? `${t("متأخرة")}${Math.abs(d)}${t("يوم")}` : d === 0 ? t("مستحقة اليوم") : d === 1 ? t("غدًا") : `${t("بعد")}${d}${t("يوم")}`;
             return (
               <li key={i.id}>
                 <Link
@@ -105,10 +107,10 @@ export default function InstallmentsDueBanner() {
                 >
                   <div className="min-w-0">
                     <div className="truncate text-[12px] font-extrabold">
-                      {i.clientName || `فاتورة #${i.saleId}`}
+                      {i.clientName || `${t("فاتورة #")}${i.saleId}`}
                     </div>
                     <div className="num text-[10.5px] font-bold text-[var(--faint)]">
-                      دفعة {i.seq} · {tag}
+                      {t("دفعة")} {i.seq} · {tag}
                     </div>
                   </div>
                   <span className="num shrink-0 text-[11.5px] font-black text-[var(--text)]">

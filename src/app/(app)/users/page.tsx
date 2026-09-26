@@ -108,11 +108,11 @@ export default function UsersPage() {
         method: "PUT",
         body: { permissions: permDraft },
       });
-      toast.push("ok", `تم حفظ صلاحيات "${permTarget.name}"`);
+      toast.push("ok", `${t("تم حفظ صلاحيات \"")}${permTarget.name}"`);
       setPermTarget(null);
       await load();
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر الحفظ");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر الحفظ"));
     } finally {
       setPermSaving(false);
     }
@@ -129,7 +129,7 @@ export default function UsersPage() {
     try {
       setRows(await api<UserRow[]>("/api/users"));
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر التحميل");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر التحميل"));
       setRows([]);
     }
   }
@@ -154,14 +154,14 @@ export default function UsersPage() {
             : {}),
         },
       });
-      toast.push("ok", `تم إنشاء حساب "${form.username}"`);
+      toast.push("ok", `${t("تم إنشاء حساب \"")}${form.username}"`);
       setCreateOpen(false);
       setCreatePermStep(false);
       setForm({ username: "", name: "", password: "", role: "user" });
       setCreatePerms(permissionsFromList(PERMISSION_TEMPLATES[0].permissions));
       await load();
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر الإنشاء");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر الإنشاء"));
     } finally {
       setSaving(false);
     }
@@ -170,10 +170,10 @@ export default function UsersPage() {
   async function changeRole(u: UserRow, role: string) {
     try {
       await api(`/api/users/${u.id}`, { method: "PATCH", body: { role } });
-      toast.push("ok", `تم تحديث صلاحية "${u.name}"`);
+      toast.push("ok", `${t("تم تحديث صلاحية \"")}${u.name}"`);
       await load();
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر التحديث");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر التحديث"));
       await load();
     }
   }
@@ -183,11 +183,11 @@ export default function UsersPage() {
     setPwSaving(true);
     try {
       await api(`/api/users/${pwTarget.id}`, { method: "PATCH", body: { password: newPw } });
-      toast.push("ok", `تم تعيين كلمة مرور جديدة لـ "${pwTarget.name}"`);
+      toast.push("ok", `${t("تم تعيين كلمة مرور جديدة لـ \"")}${pwTarget.name}"`);
       setPwTarget(null);
       setNewPw("");
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر التعيين");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر التعيين"));
     } finally {
       setPwSaving(false);
     }
@@ -198,11 +198,11 @@ export default function UsersPage() {
     setDeleting(true);
     try {
       await api(`/api/users/${deleteTarget.id}`, { method: "DELETE" });
-      toast.push("ok", `تم حذف "${deleteTarget.username}"`);
+      toast.push("ok", `${t("تم حذف \"")}${deleteTarget.username}"`);
       setDeleteTarget(null);
       await load();
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر الحذف");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر الحذف"));
     } finally {
       setDeleting(false);
     }
@@ -212,10 +212,10 @@ export default function UsersPage() {
     <div className="space-y-5">
       <div className="anim-in flex flex-wrap items-center justify-between gap-2.5">
         <p className="text-[13px] font-bold text-[var(--muted)]">
-          حسابات الدخول للنظام — المدير يملك كل الصلاحيات، والشركاء يديرون العمليات اليومية
+          {t("حسابات الدخول للنظام — المدير يملك كل الصلاحيات، والشركاء يديرون العمليات اليومية")}
         </p>
         <Btn variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
-          <Plus size={15} /> مستخدم جديد
+          <Plus size={15} /> {t("مستخدم جديد")}
         </Btn>
       </div>
 
@@ -223,7 +223,7 @@ export default function UsersPage() {
         {!rows ? (
           <div className="space-y-3 p-5">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12" />)}</div>
         ) : rows.length === 0 ? (
-          <Empty icon={<UsersRound size={22} />} title="لا يوجد مستخدمون" />
+          <Empty icon={<UsersRound size={22} />} title={t("لا يوجد مستخدمون")} />
         ) : (
           <>
             {/* ===== الجوال: كروت مرنة بدل جدول ضيّق (منع الازدحام) ===== */}
@@ -253,7 +253,7 @@ export default function UsersPage() {
                           <span className="truncate text-[13.5px] font-extrabold">
                             {u.name}
                           </span>
-                          {isSelf && <Badge tone="mint">أنت</Badge>}
+                          {isSelf && <Badge tone="mint">{t("أنت")}</Badge>}
                         </div>
                         <div className="num truncate text-[12px] font-bold text-[var(--muted)]">
                           @{u.username}
@@ -267,24 +267,24 @@ export default function UsersPage() {
                         value={u.role}
                         disabled={isSelf}
                         onChange={(e) => changeRole(u, e.target.value)}
-                        aria-label={`صلاحية ${u.name}`}
+                        aria-label={`${t("صلاحية")}${u.name}`}
                         className="!w-auto !py-1.5 !text-[12px]"
                       >
-                        <option value="admin">مدير (ماستر)</option>
-                        <option value="user">مستخدم (شريك)</option>
+                        <option value="admin">{t("مدير (ماستر)")}</option>
+                        <option value="user">{t("مستخدم (شريك)")}</option>
                       </Select>
                       {u.role === "admin" ? (
-                        <Badge tone="rose">كل الصلاحيات</Badge>
+                        <Badge tone="rose">{t("كل الصلاحيات")}</Badge>
                       ) : (
                         <Badge tone={permCount(u) > 0 ? "violet" : "slate"}>
-                          {permCount(u)} صلاحية
+                          {permCount(u)} {t("صلاحية")}
                         </Badge>
                       )}
                       <span className="ms-auto text-[11.5px] font-bold text-[var(--faint)]">
                         <span className="num font-black text-[var(--text)]">
                           {fmtNum(u.salesCount)}
                         </span>{" "}
-                        فاتورة · {fmtDate(u.createdAt)}
+                        {t("فاتورة ·")} {fmtDate(u.createdAt)}
                       </span>
                     </div>
 
@@ -295,12 +295,12 @@ export default function UsersPage() {
                         className="!flex-1"
                         onClick={() => openPermissions(u)}
                       >
-                        <ShieldCheck size={14} /> الصلاحيات
+                        <ShieldCheck size={14} /> {t("الصلاحيات")}
                       </Btn>
                       <button
                         className="icon-btn"
-                        title="تعيين كلمة مرور"
-                        aria-label={`تعيين كلمة مرور ${u.name}`}
+                        title={t("تعيين كلمة مرور")}
+                        aria-label={`${t("تعيين كلمة مرور")}${u.name}`}
                         onClick={() => {
                           setPwTarget(u);
                           setNewPw("");
@@ -311,8 +311,8 @@ export default function UsersPage() {
                       {!isSelf && (
                         <button
                           className="icon-btn danger"
-                          title="حذف"
-                          aria-label={`حذف ${u.name}`}
+                          title={t("حذف")}
+                          aria-label={`${t("حذف")}${u.name}`}
                           onClick={() => setDeleteTarget(u)}
                         >
                           <Trash2 size={14} />
@@ -357,7 +357,7 @@ export default function UsersPage() {
                         </div>
                         <div>
                           <span className="font-extrabold">{u.name}</span>
-                          {isSelf && <Badge tone="mint" className="ms-2">أنت</Badge>}
+                          {isSelf && <Badge tone="mint" className="ms-2">{t("أنت")}</Badge>}
                         </div>
                       </div>
                     </td>
@@ -369,16 +369,16 @@ export default function UsersPage() {
                         onChange={(e) => changeRole(u, e.target.value)}
                         className="!w-auto !py-1.5 !text-[12px]"
                       >
-                        <option value="admin">مدير (ماستر)</option>
-                        <option value="user">مستخدم (شريك)</option>
+                        <option value="admin">{t("مدير (ماستر)")}</option>
+                        <option value="user">{t("مستخدم (شريك)")}</option>
                       </Select>
                     </td>
                     <td>
                       {u.role === "admin" ? (
-                        <Badge tone="rose">كل الصلاحيات</Badge>
+                        <Badge tone="rose">{t("كل الصلاحيات")}</Badge>
                       ) : (
                         <Badge tone={permCount(u) > 0 ? "violet" : "slate"}>
-                          {permCount(u)} صلاحية
+                          {permCount(u)} {t("صلاحية")}
                         </Badge>
                       )}
                     </td>
@@ -389,14 +389,14 @@ export default function UsersPage() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           className="icon-btn"
-                          title="التحكم بالصلاحيات"
+                          title={t("التحكم بالصلاحيات")}
                           onClick={() => openPermissions(u)}
                         >
                           <ShieldCheck size={14} />
                         </button>
                         <button
                           className="icon-btn"
-                          title="تعيين كلمة مرور"
+                          title={t("تعيين كلمة مرور")}
                           onClick={() => {
                             setPwTarget(u);
                             setNewPw("");
@@ -405,7 +405,7 @@ export default function UsersPage() {
                           <KeyRound size={14} />
                         </button>
                         {!isSelf && (
-                          <button className="icon-btn danger" title="حذف" onClick={() => setDeleteTarget(u)}>
+                          <button className="icon-btn danger" title={t("حذف")} onClick={() => setDeleteTarget(u)}>
                             <Trash2 size={14} />
                           </button>
                         )}
@@ -421,24 +421,24 @@ export default function UsersPage() {
       </Card>
 
       {/* create modal */}
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="إنشاء مستخدم جديد" icon={<UserCog size={17} />}>
+      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title={t("إنشاء مستخدم جديد")} icon={<UserCog size={17} />}>
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label={t("اسم الدخول *")} hint="إنجليزي/أرقام بدون مسافات">
+            <Field label={t("اسم الدخول *")} hint={t("إنجليزي/أرقام بدون مسافات")}>
               <Input dir="ltr" className="num" value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} placeholder="partner1" />
             </Field>
             <Field label={t("الاسم المعروض *")}>
-              <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="أحمد محمد" />
+              <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder={t("أحمد محمد")} />
             </Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Field label={t("كلمة المرور *")} hint="6 أحرف على الأقل — تُخزّن مشفّرة">
+            <Field label={t("كلمة المرور *")} hint={t("6 أحرف على الأقل — تُخزّن مشفّرة")}>
               <Input dir="ltr" type="password" className="num" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} placeholder="••••••••" />
             </Field>
             <Field label={t("الصلاحية")}>
               <Select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
-                <option value="user">مستخدم (شريك)</option>
-                <option value="admin">مدير (ماستر)</option>
+                <option value="user">{t("مستخدم (شريك)")}</option>
+                <option value="admin">{t("مدير (ماستر)")}</option>
               </Select>
             </Field>
           </div>
@@ -447,9 +447,9 @@ export default function UsersPage() {
           {form.role === "user" && (
             <div className="space-y-3 border-t border-[var(--line-soft)] pt-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <label className="lbl !mb-0">صلاحيات الحساب الجديد</label>
+                <label className="lbl !mb-0">{t("صلاحيات الحساب الجديد")}</label>
                 <Btn size="xs" onClick={() => setCreatePermStep((v) => !v)}>
-                  {createPermStep ? "إخفاء التخصيص" : "تخصيص الصلاحيات"}
+                  {createPermStep ? t("إخفاء التخصيص") : t("تخصيص الصلاحيات")}
                 </Btn>
               </div>
 
@@ -481,32 +481,32 @@ export default function UsersPage() {
           )}
 
           <div className="flex justify-end gap-2 border-t border-[var(--line-soft)] pt-4">
-            <Btn onClick={() => setCreateOpen(false)}>إلغاء</Btn>
+            <Btn onClick={() => setCreateOpen(false)}>{t("إلغاء")}</Btn>
             <Btn
               variant="primary"
               onClick={createUser}
               loading={saving}
               disabled={!/^[a-z0-9_.-]{3,30}$/i.test(form.username) || form.name.trim().length < 2 || form.password.length < 6}
             >
-              إنشاء الحساب
+              {t("إنشاء الحساب")}
             </Btn>
           </div>
         </div>
       </Modal>
 
       {/* reset password modal */}
-      <Modal open={!!pwTarget} onClose={() => setPwTarget(null)} title={pwTarget ? `كلمة مرور جديدة لـ ${pwTarget.name}` : ""} icon={<KeyRound size={17} />}>
+      <Modal open={!!pwTarget} onClose={() => setPwTarget(null)} title={pwTarget ? `${t("كلمة مرور جديدة لـ")}${pwTarget.name}` : ""} icon={<KeyRound size={17} />}>
         <div className="space-y-4">
           <p className="text-[12.5px] font-semibold leading-6 text-[var(--muted)]">
-            سيتم إنهاء جميع جلسات هذا المستخدم الحالية وسيُطلب منه الدخول بكلمة المرور الجديدة.
+            {t("سيتم إنهاء جميع جلسات هذا المستخدم الحالية وسيُطلب منه الدخول بكلمة المرور الجديدة.")}
           </p>
           <Field label={t("كلمة المرور الجديدة")}>
-            <Input dir="ltr" type="text" className="num" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="6 أحرف على الأقل" autoFocus />
+            <Input dir="ltr" type="text" className="num" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder={t("6 أحرف على الأقل")} autoFocus />
           </Field>
           <div className="flex justify-end gap-2 border-t border-[var(--line-soft)] pt-4">
-            <Btn onClick={() => setPwTarget(null)}>إلغاء</Btn>
+            <Btn onClick={() => setPwTarget(null)}>{t("إلغاء")}</Btn>
             <Btn variant="primary" onClick={resetPassword} loading={pwSaving} disabled={newPw.length < 6}>
-              تعيين كلمة المرور
+              {t("تعيين كلمة المرور")}
             </Btn>
           </div>
         </div>
@@ -517,13 +517,12 @@ export default function UsersPage() {
         open={!!permTarget}
         onClose={() => setPermTarget(null)}
         wide
-        title={permTarget ? `صلاحيات ${permTarget.name} (@${permTarget.username})` : ""}
+        title={permTarget ? `${t("صلاحيات")}${permTarget.name} (@${permTarget.username})` : ""}
         icon={<ShieldCheck size={17} />}
       >
         <div className="space-y-4">
           <p className="text-[12.5px] font-semibold leading-6 text-[var(--muted)]">
-            كل صلاحية تطبَّق فورًا على هذا الحساب: إخفاء الصفحات والأزرار التي لا
-            يملكها، ومنع تنفيذ الإجراءات من الواجهة أو من الـ API.
+            {t("كل صلاحية تطبَّق فورًا على هذا الحساب: إخفاء الصفحات والأزرار التي لا يملكها، ومنع تنفيذ الإجراءات من الواجهة أو من الـ API.")}
           </p>
 
           {permTarget && permTarget.role === "admin" ? (
@@ -531,12 +530,12 @@ export default function UsersPage() {
               perms={{}}
               onChange={() => {}}
               locked
-              lockedHint="حساب المدير (ماستر) يملك كل الصلاحيات تلقائيًا ولا يمكن تقييده. حوّل الحساب إلى «مستخدم» أولًا إن أردت ضبط صلاحياته."
+              lockedHint={t("حساب المدير (ماستر) يملك كل الصلاحيات تلقائيًا ولا يمكن تقييده. حوّل الحساب إلى «مستخدم» أولًا إن أردت ضبط صلاحياته.")}
             />
           ) : (
             <>
               <div>
-                <label className="lbl">قالب جاهز</label>
+                <label className="lbl">{t("قالب جاهز")}</label>
                 <div className="grid gap-1.5 sm:grid-cols-3">
                   {PERMISSION_TEMPLATES.map((t) => (
                     <button
@@ -559,7 +558,7 @@ export default function UsersPage() {
                 </div>
                 {activeTemplate === "custom" && (
                   <p className="mt-1.5 text-[11.5px] font-semibold text-[var(--faint)]">
-                    إعدادات مخصّصة — لم يتم اختيار أي قالب جاهز.
+                    {t("إعدادات مخصّصة — لم يتم اختيار أي قالب جاهز.")}
                   </p>
                 )}
               </div>
@@ -577,10 +576,10 @@ export default function UsersPage() {
           )}
 
           <div className="flex justify-end gap-2 border-t border-[var(--line-soft)] pt-4">
-            <Btn onClick={() => setPermTarget(null)}>إلغاء</Btn>
+            <Btn onClick={() => setPermTarget(null)}>{t("إلغاء")}</Btn>
             {permTarget && permTarget.role !== "admin" && (
               <Btn variant="primary" onClick={savePermissions} loading={permSaving}>
-                حفظ الصلاحيات
+                {t("حفظ الصلاحيات")}
               </Btn>
             )}
           </div>
@@ -592,9 +591,9 @@ export default function UsersPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={doDelete}
         loading={deleting}
-        title="حذف المستخدم"
-        message={`سيتم حذف حساب "${deleteTarget?.username}" نهائيًا وإنهاء جلساته. المستخدمون المرتبطون بفواتير لا يمكن حذفهم حفاظًا على سلامة السجلات.`}
-        confirmText="حذف"
+        title={t("حذف المستخدم")}
+        message={`${t("سيتم حذف حساب \"")}${deleteTarget?.username}${t("\" نهائيًا وإنهاء جلساته. المستخدمون المرتبطون بفواتير لا يمكن حذفهم حفاظًا على سلامة السجلات.")}`}
+        confirmText={t("حذف")}
       />
     </div>
   );

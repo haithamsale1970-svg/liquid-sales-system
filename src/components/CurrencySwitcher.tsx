@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import { useEffect, useState } from "react";
 import { CURRENCIES, getPreferredCurrency, setPreferredCurrency, type CurrencyCode } from "@/lib/currency";
 import { cls } from "@/lib/shared";
@@ -29,7 +31,7 @@ export default function CurrencySwitcher({
   }
 
   return (
-    <div className="flex items-center gap-1 rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-1" title="عملة العرض — التحويل فوري">
+    <div className="flex items-center gap-1 rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-1" title={t("عملة العرض — التحويل فوري")}>
       {(Object.keys(CURRENCIES) as CurrencyCode[]).map((c) => (
         <button
           key={c}

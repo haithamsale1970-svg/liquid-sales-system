@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogOut, ShieldAlert, ShieldX } from "lucide-react";
@@ -53,19 +55,19 @@ export default function NoAccess({
       <div className="space-y-2">
         <h2 className="text-[17px] font-black">
           {kind === "no-permissions"
-            ? "لم يتم منحك أي صلاحية بعد"
-            : "لا تملك صلاحية فتح هذه الصفحة"}
+            ? t("لم يتم منحك أي صلاحية بعد")
+            : t("لا تملك صلاحية فتح هذه الصفحة")}
         </h2>
         <p className="mx-auto max-w-[520px] text-[13px] font-semibold leading-7 text-[var(--muted)]">
           {kind === "no-permissions"
-            ? "حسابك مسجّل ونشط، لكنه لا يملك حتى الآن أي صلاحية من صلاحيات النظام. راجع مدير النظام (الأدمن) ليستطيع فتح الأقسام التي تحتاجها."
-            : `قسم «${section ?? "المطلوب"}» غير مُفعّل لحسابك. يمكنك متابعة العمل من إحدى الصفحات المسموحة لك.`}
+            ? t("حسابك مسجّل ونشط، لكنه لا يملك حتى الآن أي صلاحية من صلاحيات النظام. راجع مدير النظام (الأدمن) ليستطيع فتح الأقسام التي تحتاجها.")
+            : `${t("قسم «")}${section ?? t("المطلوب")}${t("» غير مُفعّل لحسابك. يمكنك متابعة العمل من إحدى الصفحات المسموحة لك.")}`}
         </p>
       </div>
 
       {kind === "no-permissions" && (
         <p className="text-[11.5px] font-bold text-[var(--faint)]">
-          الأقسام التي يمكن للأدمن تفعيلها:{" "}
+          {t("الأقسام التي يمكن للأدمن تفعيلها:")}{" "}
           {PERMISSION_GROUPS.slice(0, 6)
             .map((g) => g.label)
             .join("، ")}
@@ -76,17 +78,17 @@ export default function NoAccess({
       <div className="flex flex-wrap items-center justify-center gap-2">
         {retryHref && (
           <Btn variant="primary" onClick={() => router.push(retryHref)}>
-            الذهاب إلى الصفحة المسموحة
+            {t("الذهاب إلى الصفحة المسموحة")}
           </Btn>
         )}
         {!retryHref && (
           <Link href="/login" className="btn btn-ghost">
-            إعادة تحميل الجلسة
+            {t("إعادة تحميل الجلسة")}
           </Link>
         )}
         {showLogout && (
           <Btn onClick={logout}>
-            <LogOut size={15} /> تسجيل الخروج
+            <LogOut size={15} /> {t("تسجيل الخروج")}
           </Btn>
         )}
       </div>

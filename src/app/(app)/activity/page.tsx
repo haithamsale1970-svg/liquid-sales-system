@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import { useCallback, useEffect, useState } from "react";
 import { RefreshCw, ScrollText, Search } from "lucide-react";
 import { api } from "@/lib/client";
@@ -19,6 +21,7 @@ const ENTITY_TONES: Record<string, string> = {
   مرتجع: "violet",
   مخزون: "mint",
 };
+// القيم الخام (عربية) تُرسل للـ API كـ filter — الترجمة للعرض فقط.
 const ENTITIES = ["", "منتج", "عميل", "فاتورة", "مستخدم", "دخول", "نظام", "ديون", "مصروف", "مرتجع", "مخزون"];
 
 type ActivitySummary = {
@@ -64,7 +67,7 @@ export default function ActivityPage() {
         setRows(result.items);
         setSummary(result.summary);
       } catch (err) {
-        toast.push("err", err instanceof Error ? err.message : "تعذر التحميل");
+        toast.push("err", err instanceof Error ? err.message : t("تعذر التحميل"));
         setRows([]);
       } finally {
         setLoading(false);
@@ -87,7 +90,7 @@ export default function ActivityPage() {
         <div className="relative min-w-[220px] flex-1">
           <input
             className="inp ps-10"
-            placeholder="ابحث في التفاصيل أو باسم المستخدم…"
+            placeholder={t("ابحث في التفاصيل أو باسم المستخدم…")}
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && load()}
@@ -104,7 +107,7 @@ export default function ActivityPage() {
         >
           {ENTITIES.map((e) => (
             <option key={e} value={e}>
-              {e || "كل الأنواع"}
+              {e ? t(e) : t("كل الأنواع")}
             </option>
           ))}
         </Select>
@@ -116,7 +119,7 @@ export default function ActivityPage() {
           }}
           className="!w-auto min-w-[130px]"
         >
-          <option value="">كل المستخدمين</option>
+          <option value="">{t("كل المستخدمين")}</option>
           {users.map((u) => (
             <option key={u.id} value={u.id}>
               {u.name}
@@ -130,7 +133,7 @@ export default function ActivityPage() {
           onBlur={() => load()}
           className="!w-auto"
         />
-        <span className="text-[12px] font-bold text-[var(--faint)]">إلى</span>
+        <span className="text-[12px] font-bold text-[var(--faint)]">{t("إلى")}</span>
         <Input
           type="date"
           value={to}
@@ -139,7 +142,7 @@ export default function ActivityPage() {
           className="!w-auto"
         />
         <Btn variant="primary" size="sm" onClick={() => load()} loading={loading}>
-          <RefreshCw size={14} /> تحديث
+          <RefreshCw size={14} /> {t("تحديث")}
         </Btn>
       </div>
 
@@ -149,19 +152,19 @@ export default function ActivityPage() {
             <Card key={`${s.userId ?? "system"}-${s.userName}`} className="p-3">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[12px] font-extrabold">{s.userName}</span>
-                <Badge tone="slate">{fmtNum(s.total)} حركة</Badge>
+                <Badge tone="slate">{fmtNum(s.total)} {t("حركة")}</Badge>
               </div>
               <div className="mt-2 grid grid-cols-3 gap-1 text-center text-[10.5px] font-bold text-[var(--muted)]">
-                <span>فواتير<br /><b className="text-[var(--mint)]">{s.invoices}</b></span>
-                <span>تحصيل<br /><b className="text-[var(--mint)]">{s.collections}</b></span>
-                <span>مرتجع<br /><b className="text-[var(--violet)]">{s.returns}</b></span>
+                <span>{t("فواتير")}<br /><b className="text-[var(--mint)]">{s.invoices}</b></span>
+                <span>{t("تحصيل")}<br /><b className="text-[var(--mint)]">{s.collections}</b></span>
+                <span>{t("مرتجع")}<br /><b className="text-[var(--violet)]">{s.returns}</b></span>
               </div>
             </Card>
           ))}
         </div>
       )}
 
-      <Card className="anim-in anim-d1" title="كل الحركات المسجلة" icon={<ScrollText size={16} />} bodyClass="p-2">
+      <Card className="anim-in anim-d1" title={t("كل الحركات المسجلة")} icon={<ScrollText size={16} />} bodyClass="p-2">
         {!rows ? (
           <div className="space-y-3 p-4">
             {Array.from({ length: 10 }).map((_, i) => (
@@ -169,7 +172,7 @@ export default function ActivityPage() {
             ))}
           </div>
         ) : rows.length === 0 ? (
-          <Empty icon={<ScrollText size={22} />} title="لا يوجد نشاط مطابق" hint="جرّب توسيع البحث" />
+          <Empty icon={<ScrollText size={22} />} title={t("لا يوجد نشاط مطابق")} hint={t("جرّب توسيع البحث")} />
         ) : (
           <ul className="divide-y divide-[var(--line-soft)]">
             {rows.map((a) => (

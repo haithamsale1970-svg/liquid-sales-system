@@ -1,17 +1,21 @@
 // Client-safe shared helpers, constants and DTO types.
 
+import { t } from "./i18n";
+
 export const CURRENCY = "ج.م";
 
+// ملاحظة: كل خرائط العرض هنا تستخدم getters حتى تُترجم النصوص لحظة العرض
+// (قيم const العادية تُحسب مرة واحدة عند تحميل الملف وتبقى عربية).
 export const CLIENT_TYPES = {
-  store: "محل",
-  company: "شركة",
-  individual: "فرد",
+  get store() { return t("محل"); },
+  get company() { return t("شركة"); },
+  get individual() { return t("فرد"); },
 } as const;
 export type ClientType = keyof typeof CLIENT_TYPES;
 
 export const CLIENT_SECTIONS = {
-  individuals: "العملاء الأفراد",
-  shops: "المحلات والمتاجر",
+  get individuals() { return t("العملاء الأفراد"); },
+  get shops() { return t("المحلات والمتاجر"); },
 } as const;
 export type ClientSection = keyof typeof CLIENT_SECTIONS;
 
@@ -20,21 +24,21 @@ export function isShopClient(type: ClientType): boolean {
 }
 
 export const SHIPPING_TYPES = {
-  none: "بدون توصيل",
-  internal: "توصيل داخلي",
-  external: "توصيل خارجي",
+  get none() { return t("بدون توصيل"); },
+  get internal() { return t("توصيل داخلي"); },
+  get external() { return t("توصيل خارجي"); },
 } as const;
 export type ShippingType = keyof typeof SHIPPING_TYPES;
 
   // المفاتيح القديمة محفوظة للتوافق مع الفواتير المسجلة سابقًا؛ النصوص الظاهرة وحيدة.
 export const PAYMENT_METHODS = {
-  cash: "CASH",
+  get cash() { return "CASH"; },
   // أسماء المستودع القديمة محفوظة للتوافق مع الفواتير القديمة؛
   // النصوص الظاهرة للمستخدم موحّدة حسب المتطلبات.
-  clink_haitham: "QLICK - HAITHAM",
-  clink_lahsan: "QLICK - HASAN",
-  delivery: "مستحقات شركة التوصيل",
-  credit: "آجل (ذمة العميل)",
+  get clink_haitham() { return "QLICK - HAITHAM"; },
+  get clink_lahsan() { return "QLICK - HASAN"; },
+  get delivery() { return t("مستحقات شركة التوصيل"); },
+  get credit() { return t("آجل (ذمة العميل)"); },
 } as const;
 export type PaymentMethod = keyof typeof PAYMENT_METHODS;
 
@@ -61,8 +65,8 @@ export function availablePaymentMethods(
 
 /** خيارات سعر البيع المرتبطة بالمتغير. */
 export const PRICE_TYPES = {
-  retail: "سعر الأفراد",
-  wholesale: "سعر المحلات/الجملة",
+  get retail() { return t("سعر الأفراد"); },
+  get wholesale() { return t("سعر المحلات/الجملة"); },
 } as const;
 export type PriceType = keyof typeof PRICE_TYPES;
 
@@ -84,9 +88,9 @@ export const RETURN_REASONS = [
 export type ReturnReason = (typeof RETURN_REASONS)[number];
 
 export const DISCOUNT_TYPES = {
-  none: "بدون خصم",
-  percent: "نسبة %",
-  amount: "مبلغ ثابت",
+  get none() { return t("بدون خصم"); },
+  get percent() { return t("نسبة %"); },
+  get amount() { return t("مبلغ ثابت"); },
 } as const;
 export type DiscountType = keyof typeof DISCOUNT_TYPES;
 

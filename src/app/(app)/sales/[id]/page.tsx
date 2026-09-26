@@ -62,7 +62,7 @@ export default function InvoicePage({
     try {
       setSale(await api<SaleDetailDTO>(`/api/sales/${id}`));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "تعذر تحميل الفاتورة");
+      setError(e instanceof Error ? e.message : t("تعذر تحميل الفاتورة"));
     }
   }
 
@@ -77,11 +77,11 @@ export default function InvoicePage({
     setCancelling(true);
     try {
       await api(`/api/sales/${id}`, { method: "PATCH", body: { action: "cancel" } });
-      toast.push("ok", "تم إلغاء الفاتورة واسترجاع الكميات للمخزون");
+      toast.push("ok", t("تم إلغاء الفاتورة واسترجاع الكميات للمخزون"));
       setCancelOpen(false);
       await load();
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر الإلغاء");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر الإلغاء"));
     } finally {
       setCancelling(false);
     }
@@ -146,12 +146,12 @@ export default function InvoicePage({
       quantity: l.quantity,
     }));
     if (!returned.length && !exchange.length) {
-      toast.push("info", "حدد كميات للإرجاع أو أضف أصناف استبدال");
+      toast.push("info", t("حدد كميات للإرجاع أو أضف أصناف استبدال"));
       return;
     }
     const reason = (retReason === "أخرى" ? retCustomReason : retReason).trim();
     if (!reason) {
-      toast.push("err", "حدد سبب الإرجاع أو الاستبدال");
+      toast.push("err", t("حدد سبب الإرجاع أو الاستبدال"));
       return;
     }
     setRetLoading(true);
@@ -167,11 +167,11 @@ export default function InvoicePage({
           method: retMethod,
         },
       });
-      toast.push("ok", "تم تسجيل المرتجع/الاستبدال وتحديث المخزون والحساب");
+      toast.push("ok", t("تم تسجيل المرتجع/الاستبدال وتحديث المخزون والحساب"));
       setRetOpen(false);
       await load();
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر تسجيل المرتجع");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر تسجيل المرتجع"));
     } finally {
       setRetLoading(false);
     }
@@ -182,7 +182,7 @@ export default function InvoicePage({
       <div className="panel anim-in p-10 text-center">
         <p className="text-[15px] font-extrabold text-[var(--danger)]">{error}</p>
         <Link href="/sales" className="btn btn-ghost btn-sm mt-4">
-          <ArrowRight size={14} /> العودة للفواتير
+          <ArrowRight size={14} /> {t("العودة للفواتير")}
         </Link>
       </div>
     );
@@ -209,15 +209,15 @@ export default function InvoicePage({
       {/* action bar (screen only) */}
       <div data-chrome className="anim-in flex flex-wrap items-center justify-between gap-2.5">
         <Link href="/sales" className="btn btn-ghost btn-sm">
-          <ArrowRight size={15} /> كل الفواتير
+          <ArrowRight size={15} /> {t("كل الفواتير")}
         </Link>
         <div className="flex items-center gap-2">
           {cancelled ? (
-            <Badge tone="rose">فاتورة ملغاة — تم استرجاع الكميات</Badge>
+            <Badge tone="rose">{t("فاتورة ملغاة — تم استرجاع الكميات")}</Badge>
           ) : (
-            <Badge tone="mint">فاتورة مكتملة</Badge>
+            <Badge tone="mint">{t("فاتورة مكتملة")}</Badge>
           )}
-          <Badge tone="slate">{isCurrencyCode(sale.currency) ? (sale.currency as CurrencyCode) : currency} • سعر {sale.rate || 1}</Badge>
+          <Badge tone="slate">{isCurrencyCode(sale.currency) ? (sale.currency as CurrencyCode) : currency} {t("• سعر")} {sale.rate || 1}</Badge>
           <Badge tone={sale.paymentMethod === "credit" ? "rose" : "mint"}>
             {PAYMENT_METHODS[sale.paymentMethod]}
           </Badge>
@@ -225,19 +225,19 @@ export default function InvoicePage({
             <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
           </span>
           <Btn variant="primary" size="sm" onClick={printThermal}>
-            <Printer size={15} /> طباعة حرارية (80mm)
+            <Printer size={15} /> {t("طباعة حرارية (80mm)")}
           </Btn>
           {can(me, "returns.create") && !cancelled && (
             <Btn size="sm" onClick={openReturn}>
-              <Undo2 size={15} /> مرتجع / استبدال
+              <Undo2 size={15} /> {t("مرتجع / استبدال")}
             </Btn>
           )}
           <Btn variant="primary" size="sm" onClick={() => window.print()}>
-            <Printer size={15} /> طباعة / حفظ PDF
+            <Printer size={15} /> {t("طباعة / حفظ PDF")}
           </Btn>
           {can(me, "sales.update") && !cancelled && (
             <Btn variant="danger" size="sm" onClick={() => setCancelOpen(true)}>
-              <Ban size={15} /> إلغاء الفاتورة
+              <Ban size={15} /> {t("إلغاء الفاتورة")}
             </Btn>
           )}
         </div>
@@ -265,7 +265,7 @@ export default function InvoicePage({
                 className="rounded-2xl border-4 border-rose-500/60 px-10 py-3 text-[42px] font-black text-rose-500/60"
                 style={{ transform: "rotate(-14deg)" }}
               >
-                ملغاة
+                {t("ملغاة")}
               </span>
             </div>
           )}
@@ -282,12 +282,12 @@ export default function InvoicePage({
               <div>
                 <div className="text-[22px] font-black tracking-tight text-[#0f1c26]">Cloud Culture</div>
                 <div className="text-[11.5px] font-bold text-[#5c6b77]">
-                  لتجارة المنتجات والتدخين الإلكتروني
+                  {t("لتجارة المنتجات والتدخين الإلكتروني")}
                 </div>
               </div>
             </div>
             <div className="text-end">
-              <div className="text-[26px] font-black tracking-tight text-[#0f1c26]">فاتورة مبيعات</div>
+              <div className="text-[26px] font-black tracking-tight text-[#0f1c26]">{t("فاتورة مبيعات")}</div>
               <div className="num text-[13px] font-extrabold text-[#c40000]">{invoiceNo(sale.id)}</div>
               <div className="mt-1 text-[11.5px] font-bold text-[#5c6b77]">
                 {fmtDateTime(sale.createdAt)}
@@ -298,7 +298,7 @@ export default function InvoicePage({
           {/* parties */}
           <div className="grid grid-cols-1 gap-4 py-6 sm:grid-cols-2">
             <div className="rounded-2xl bg-[#f4f8f6] p-5">
-              <div className="mb-1.5 text-[11px] font-black tracking-wide text-[#5c6b77]">فاتورة إلى</div>
+              <div className="mb-1.5 text-[11px] font-black tracking-wide text-[#5c6b77]">{t("فاتورة إلى")}</div>
               <div className="flex flex-wrap items-center gap-2 text-[15px] font-black text-[#0f1c26]">
                 {sale.client.name}
                 <span className="rounded-full bg-[#c40000]/10 px-2.5 py-0.5 text-[11px] font-extrabold text-[#c40000]">
@@ -306,25 +306,25 @@ export default function InvoicePage({
                 </span>
               </div>
               <div className="mt-1.5 space-y-0.5 text-[12px] font-bold text-[#5c6b77]">
-                {sale.client.phone && <div className="num">هاتف: {sale.client.phone}</div>}
-                {sale.client.address && <div>العنوان: {sale.client.address}</div>}
+                {sale.client.phone && <div className="num">{t("هاتف:")} {sale.client.phone}</div>}
+                {sale.client.address && <div>{t("العنوان:")} {sale.client.address}</div>}
               </div>
             </div>
             <div className="rounded-2xl bg-[#f4f8f6] p-5">
-              <div className="mb-1.5 text-[11px] font-black tracking-wide text-[#5c6b77]">تفاصيل البيع</div>
+              <div className="mb-1.5 text-[11px] font-black tracking-wide text-[#5c6b77]">{t("تفاصيل البيع")}</div>
               <div className="space-y-1 text-[12.5px] font-bold text-[#33424e]">
                 <div>
-                  البائع: <span className="font-black">{sale.seller.name}</span>
+                  {t("البائع:")} <span className="font-black">{sale.seller.name}</span>
                   <span className="num text-[#8a97a3]"> @{sale.seller.username}</span>
                 </div>
                 <div>
-                  التوصيل: <span className="font-black">{SHIPPING_TYPES[sale.shippingType]}</span>
+                  {t("التوصيل:")} <span className="font-black">{SHIPPING_TYPES[sale.shippingType]}</span>
                 </div>
                 <div>
-                  إجمالي القطع: <span className="num font-black">{units}</span>
+                  {t("إجمالي القطع:")} <span className="num font-black">{units}</span>
                 </div>
                 <div>
-                  طريقة الدفع:{" "}
+                  {t("طريقة الدفع:")}{" "}
                   <span className="font-black">{PAYMENT_METHODS[sale.paymentMethod]}</span>
                 </div>
               </div>
@@ -358,7 +358,7 @@ export default function InvoicePage({
                          {it.productName}
                          {it.size && (
                            <span className="block text-[9.5px] font-bold text-[#71808b]">
-                             {it.size} • {it.nicotine} • {it.priceType === "wholesale" ? "جملة" : "أفراد"}
+                             {it.size} • {it.nicotine} • {it.priceType === "wholesale" ? t("جملة") : t("أفراد")}
                            </span>
                          )}
                        </span>
@@ -383,41 +383,41 @@ export default function InvoicePage({
             <div className="max-w-[340px] text-[11.5px] font-semibold leading-6 text-[#5c6b77]">
               {sale.notes ? (
                 <>
-                  <span className="font-black text-[#33424e]">ملاحظات: </span>
+                  <span className="font-black text-[#33424e]">{t("ملاحظات:")} </span>
                   {sale.notes}
                 </>
               ) : (
-                "شكرًا لتعاملكم معنا — المنتجات المباعة لا تُرد إلا بموجب سياسة الاستبدال خلال 24 ساعة بحالتها الأصلية."
+                t("شكرًا لتعاملكم معنا — المنتجات المباعة لا تُرد إلا بموجب سياسة الاستبدال خلال 24 ساعة بحالتها الأصلية.")
               )}
             </div>
             <div className="w-full max-w-[300px] space-y-1.5 text-[13px] font-bold text-[#33424e]">
               <div className="flex justify-between">
-                <span>الإجمالي الفرعي ({currency})</span>
+                <span>{t("الإجمالي الفرعي (")}{currency})</span>
                 <span className="num">{formatMoneyJOD(sale.subtotal, currency, rates)}</span>
               </div>
               <div className="flex justify-between">
-                <span>التوصيل ({SHIPPING_TYPES[sale.shippingType]})</span>
+                <span>{t("التوصيل (")}{SHIPPING_TYPES[sale.shippingType]})</span>
                 <span className="num">{formatMoneyJOD(sale.shippingCost, currency, rates)}</span>
               </div>
               {sale.discount > 0 && (
                 <div className="flex justify-between text-[var(--danger)]">
-                  <span>الخصم</span>
+                  <span>{t("الخصم")}</span>
                   <span className="num">− {formatMoneyJOD(sale.discount, currency, rates)}</span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span>المدفوع</span>
+                <span>{t("المدفوع")}</span>
                 <span className="num">{formatMoneyJOD(sale.paid, currency, rates)}</span>
               </div>
               {sale.deliveryReceivable > 0 && (
                 <div className="flex justify-between font-black text-[var(--amber)]">
-                  <span>بذمة شركة التوصيل</span>
+                  <span>{t("بذمة شركة التوصيل")}</span>
                   <span className="num">{formatMoneyJOD(sale.deliveryReceivable, currency, rates)}</span>
                 </div>
               )}
               {sale.remaining > 0 && (
                 <div className="flex justify-between font-black text-[var(--danger)]">
-                  <span>المتبقي (دين)</span>
+                  <span>{t("المتبقي (دين)")}</span>
                   <span className="num">{formatMoneyJOD(sale.remaining, currency, rates)}</span>
                 </div>
               )}
@@ -425,7 +425,7 @@ export default function InvoicePage({
                 className="flex items-center justify-between rounded-2xl px-4 py-3 text-[15px] font-black text-[var(--text)]"
                 style={{ background: "linear-gradient(135deg,#c40000,#5c0000)" }}
               >
-                <span>الإجمالي المستحق ({currency})</span>
+                <span>{t("الإجمالي المستحق (")}{currency})</span>
                 <span className="num text-[19px]">{formatMoneyJOD(sale.total, currency, rates)}</span>
               </div>
             </div>
@@ -433,7 +433,7 @@ export default function InvoicePage({
 
           {/* footer */}
           <div className="mt-8 flex items-center justify-between border-t border-[#eaeff2] pt-4 text-[10.5px] font-bold text-[#8a97a3]">
-            <span>أُنشئت إلكترونيًا بواسطة نظام Cloud Culture لإدارة المبيعات والمخزون</span>
+            <span>{t("أُنشئت إلكترونيًا بواسطة نظام Cloud Culture لإدارة المبيعات والمخزون")}</span>
             <span className="num">{invoiceNo(sale.id)}</span>
           </div>
         </div>
@@ -455,15 +455,15 @@ export default function InvoicePage({
         }}
       >
         <div style={{ textAlign: "center", fontWeight: 800, fontSize: "16px" }}>Cloud Culture</div>
-        <div style={{ textAlign: "center", fontSize: "11px" }}>لتجارة المنتجات والتدخين الإلكتروني</div>
+        <div style={{ textAlign: "center", fontSize: "11px" }}>{t("لتجارة المنتجات والتدخين الإلكتروني")}</div>
         <div style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span style={{ fontWeight: 700 }}>{invoiceNo(sale.id)}</span>
           <span>{fmtDateTime(sale.createdAt)}</span>
         </div>
-        <div>العميل: {sale.client.name}</div>
-        <div>البائع: {sale.seller.name}</div>
-        <div>الدفع: {PAYMENT_METHODS[sale.paymentMethod]}</div>
+        <div>{t("العميل:")} {sale.client.name}</div>
+        <div>{t("البائع:")} {sale.seller.name}</div>
+        <div>{t("الدفع:")} {PAYMENT_METHODS[sale.paymentMethod]}</div>
         <div style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
         {sale.items.map((it) => (
           <div
@@ -479,17 +479,17 @@ export default function InvoicePage({
         ))}
         <div style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
         <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>الفرعي</span>
+          <span>{t("الفرعي")}</span>
           <span>{formatMoneyJOD(sale.subtotal, currency, rates)}</span>
         </div>
         {sale.discount > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>الخصم</span>
+            <span>{t("الخصم")}</span>
             <span>- {formatMoneyJOD(sale.discount, currency, rates)}</span>
           </div>
         )}
         <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>التوصيل</span>
+          <span>{t("التوصيل")}</span>
           <span>{formatMoneyJOD(sale.shippingCost, currency, rates)}</span>
         </div>
         <div
@@ -503,27 +503,27 @@ export default function InvoicePage({
             paddingTop: "4px",
           }}
         >
-          <span>الإجمالي</span>
+          <span>{t("الإجمالي")}</span>
           <span>{formatMoneyJOD(sale.total, currency, rates)}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>المدفوع</span>
+          <span>{t("المدفوع")}</span>
           <span>{formatMoneyJOD(sale.paid, currency, rates)}</span>
         </div>
         {sale.deliveryReceivable > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800 }}>
-            <span>بذمة شركة التوصيل</span>
+            <span>{t("بذمة شركة التوصيل")}</span>
             <span>{formatMoneyJOD(sale.deliveryReceivable, currency, rates)}</span>
           </div>
         )}
         {sale.remaining > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800 }}>
-            <span>المتبقي</span>
+            <span>{t("المتبقي")}</span>
             <span>{formatMoneyJOD(sale.remaining, currency, rates)}</span>
           </div>
         )}
         <div style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
-        <div style={{ textAlign: "center", fontSize: "11px" }}>شكرًا لتعاملكم معنا — Cloud Culture</div>
+        <div style={{ textAlign: "center", fontSize: "11px" }}>{t("شكرًا لتعاملكم معنا — Cloud Culture")}</div>
       </div>
 
       {/* ===== مرتجع / استبدال ===== */}
@@ -531,13 +531,13 @@ export default function InvoicePage({
         <Modal
           open={retOpen}
           onClose={() => setRetOpen(false)}
-          title={`مرتجع / استبدال — ${invoiceNo(sale.id)}`}
+          title={`${t("مرتجع / استبدال —")}${invoiceNo(sale.id)}`}
           icon={<Undo2 size={17} />}
           wide
         >
           <div className="space-y-4">
             <div>
-              <p className="lbl">أصناف الفاتورة — حدد كمية الإرجاع (تعود للمخزون)</p>
+              <p className="lbl">{t("أصناف الفاتورة — حدد كمية الإرجاع (تعود للمخزون)")}</p>
               <ul className="max-h-[220px] space-y-2 overflow-y-auto pe-1">
                 {sale.items.map((it) => {
                   const already = sale.returnedQty?.[it.id] ?? 0;
@@ -551,12 +551,12 @@ export default function InvoicePage({
                         {it.productName}
                          {it.variantId !== null && (
                            <span className="ms-2 text-[10px] font-bold text-[var(--faint)]">
-                             {it.size} • {it.nicotine} • {it.priceType === "wholesale" ? "جملة" : "أفراد"}
+                             {it.size} • {it.nicotine} • {it.priceType === "wholesale" ? t("جملة") : t("أفراد")}
                            </span>
                          )}
                       </span>
                       <span className="num shrink-0 text-[11px] font-bold text-[var(--faint)]">
-                        بيع {it.quantity} • مرتجع {already}
+                        {t("بيع")} {it.quantity} {t("• مرتجع")} {already}
                       </span>
                       <Input
                         type="number"
@@ -583,7 +583,7 @@ export default function InvoicePage({
             </div>
 
             <div>
-              <p className="lbl">أصناف الاستبدال (تُخصم من المخزون)</p>
+              <p className="lbl">{t("أصناف الاستبدال (تُخصم من المخزون)")}</p>
 
               <div className="flex gap-2">
                 <Select
@@ -594,12 +594,12 @@ export default function InvoicePage({
                   }}
                   className="min-w-0 flex-1"
                 >
-                  <option value="">— اختر صنفًا —</option>
+                  <option value="">{t("— اختر صنفًا —")}</option>
                   {catalog
                     .filter((p) => p.stock > 0)
                     .map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.name} (متاح {p.stock})
+                        {p.name} {t("(متاح")} {p.stock})
                       </option>
                     ))}
                 </Select>
@@ -609,10 +609,10 @@ export default function InvoicePage({
                       value={exchVariantPick}
                       onChange={(e) => setExchVariantPick(e.target.value)}
                     >
-                      <option value="">— المقاس / النيكوتين —</option>
+                      <option value="">{t("— المقاس / النيكوتين —")}</option>
                       {exchangeProduct.variants.map((v) => (
                         <option key={v.id} value={v.id}>
-                          {v.size} — {v.nicotine} (متاح {v.stock})
+                          {v.size} — {v.nicotine} {t("(متاح")} {v.stock})
                         </option>
                       ))}
                     </Select>
@@ -620,8 +620,8 @@ export default function InvoicePage({
                       value={exchPriceType}
                       onChange={(e) => setExchPriceType(e.target.value as PriceType)}
                     >
-                      <option value="retail">سعر الأفراد</option>
-                      <option value="wholesale">سعر المحلات/الجملة</option>
+                      <option value="retail">{t("سعر الأفراد")}</option>
+                      <option value="wholesale">{t("سعر المحلات/الجملة")}</option>
                     </Select>
                   </div>
                 )}
@@ -642,13 +642,13 @@ export default function InvoicePage({
                         (v) => String(v.id) === exchVariantPick,
                       );
                       if (p.variants.length && !selectedVariant) {
-                        toast.push("info", "اختر المقاس والنيكوتين أولًا");
+                        toast.push("info", t("اختر المقاس والنيكوتين أولًا"));
                         return;
                       }
                       const available = selectedVariant ? selectedVariant.stock : p.stock;
                       const qty = Math.max(1, Math.trunc(Number(exchCount) || 1));
                       if (qty > available) {
-                        toast.push("info", `المتاح من "${p.name}" هو ${available} فقط`);
+                        toast.push("info", `${t("المتاح من \"")}${p.name}${t("\" هو")}${available}${t("فقط")}`);
                         return;
                       }
                       setExch((xs) => [
@@ -667,7 +667,7 @@ export default function InvoicePage({
                     }}
                     disabled={!exchPick}
                   >
-                    إضافة
+                    {t("إضافة")}
                   </Btn>
               </div>
               </div>
@@ -684,7 +684,7 @@ export default function InvoicePage({
                       <button
                         className="icon-btn !h-6 !w-6"
                         onClick={() => setExch((xs) => xs.filter((_, j) => j !== i))}
-                        aria-label="حذف"
+                        aria-label={t("حذف")}
                       >
                         <Trash2 size={12} />
                       </button>
@@ -696,9 +696,9 @@ export default function InvoicePage({
 
              <Field label={t("سبب الإرجاع أو الاستبدال *")}>
                <Select value={retReason} onChange={(e) => setRetReason(e.target.value)}>
-                 <option value="">— اختر السبب —</option>
+                 <option value="">{t("— اختر السبب —")}</option>
                  {RETURN_REASONS.map((reason) => (
-                   <option key={reason} value={reason}>{reason}</option>
+                   <option key={reason} value={reason}>{t(reason)}</option>
                  ))}
                </Select>
              </Field>
@@ -707,7 +707,7 @@ export default function InvoicePage({
                  <Input
                    value={retCustomReason}
                    onChange={(e) => setRetCustomReason(e.target.value)}
-                   placeholder="اكتب سبب الإرجاع أو الاستبدال"
+                   placeholder={t("اكتب سبب الإرجاع أو الاستبدال")}
                  />
                </Field>
              )}
@@ -731,19 +731,18 @@ export default function InvoicePage({
               <Input
                 value={retNote}
                 onChange={(e) => setRetNote(e.target.value)}
-                placeholder="سبب الإرجاع / ملاحظات…"
+                placeholder={t("سبب الإرجاع / ملاحظات…")}
               />
             </Field>
 
             <p className="rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2 text-[11.5px] font-bold text-[var(--muted)]">
-              فرق القيمة (مرتجع − استبدال) يُخصم أو يُضاف على حساب العميل تلقائيًا، وتُسجَّل كل
-              حركة في سجل المخزون.
+              {t("فرق القيمة (مرتجع − استبدال) يُخصم أو يُضاف على حساب العميل تلقائيًا، وتُسجَّل كل حركة في سجل المخزون.")}
             </p>
 
             <div className="flex justify-end gap-2 border-t border-[var(--line-soft)] pt-4">
-              <Btn onClick={() => setRetOpen(false)}>إلغاء</Btn>
+              <Btn onClick={() => setRetOpen(false)}>{t("إلغاء")}</Btn>
               <Btn variant="primary" onClick={submitReturn} loading={retLoading}>
-                تسجيل المرتجع
+                {t("تسجيل المرتجع")}
               </Btn>
             </div>
           </div>
@@ -755,9 +754,9 @@ export default function InvoicePage({
         onClose={() => setCancelOpen(false)}
         onConfirm={doCancel}
         loading={cancelling}
-        title="إلغاء الفاتورة"
-        message={`سيتم إلغاء الفاتورة ${invoiceNo(sale.id)} واسترجاع ${units} قطعة إلى المخزون تلقائيًا. ستبقى الفاتورة في السجلات بحالة "ملغاة" مع تسجيل من قام بالإلغاء.`}
-        confirmText="إلغاء الفاتورة"
+        title={t("إلغاء الفاتورة")}
+        message={`${t("سيتم إلغاء الفاتورة")}${invoiceNo(sale.id)}${t("واسترجاع")}${units}${t("قطعة إلى المخزون تلقائيًا. ستبقى الفاتورة في السجلات بحالة \"ملغاة\" مع تسجيل من قام بالإلغاء.")}`}
+        confirmText={t("إلغاء الفاتورة")}
       />
     </div>
   );

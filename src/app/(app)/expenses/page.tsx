@@ -75,11 +75,11 @@ function presetRange(p: Preset): { from: string; to: string } {
 }
 
 const PRESETS: Array<{ key: Preset; label: string }> = [
-  { key: "today", label: "اليوم" },
-  { key: "week", label: "آخر 7 أيام" },
-  { key: "month", label: "آخر 30 يوم" },
-  { key: "thisMonth", label: "الشهر الحالي" },
-  { key: "all", label: "كل الفترات" },
+  { key: "today", label: t("اليوم") },
+  { key: "week", label: t("آخر 7 أيام") },
+  { key: "month", label: t("آخر 30 يوم") },
+  { key: "thisMonth", label: t("الشهر الحالي") },
+  { key: "all", label: t("كل الفترات") },
 ];
 
 export default function ExpensesPage() {
@@ -102,22 +102,22 @@ export default function ExpensesPage() {
   const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(
-    async (f = from, t = to) => {
+    async (f = from, toDate = to) => {
       setLoading(true);
       try {
         const params = new URLSearchParams();
         if (f) params.set("from", f);
-        if (t) params.set("to", t);
+        if (toDate) params.set("to", toDate);
         const list = await api<ExpenseDTO[]>(`/api/expenses?${params.toString()}`);
         setRows(list);
-        if (f && t) {
-          const r = await api<ReportTotals>(`/api/reports?from=${f}&to=${t}`);
+        if (f && toDate) {
+          const r = await api<ReportTotals>(`/api/reports?from=${f}&to=${toDate}`);
           setReport(r.totals);
         } else {
           setReport(null);
         }
       } catch (e) {
-        toast.push("err", e instanceof Error ? e.message : "تعذر تحميل المصاريف");
+        toast.push("err", e instanceof Error ? e.message : t("تعذر تحميل المصاريف"));
         setRows([]);
       } finally {
         setLoading(false);
@@ -136,7 +136,7 @@ export default function ExpensesPage() {
   const byCategory = useMemo(() => {
     const m = new Map<string, { amount: number; count: number }>();
     for (const r of rows ?? []) {
-      const key = r.category || "أخرى";
+      const key = r.category || t("أخرى");
       const prev = m.get(key) ?? { amount: 0, count: 0 };
       m.set(key, { amount: prev.amount + r.amount, count: prev.count + 1 });
     }
@@ -157,24 +157,24 @@ export default function ExpensesPage() {
     if (saving) return;
     const value = Math.round((Number(amount) || 0) * 1000) / 1000;
     if (!(value > 0)) {
-      toast.push("info", "أدخل مبلغ المصروف أولاً");
+      toast.push("info", t("أدخل مبلغ المصروف أولاً"));
       return;
     }
     const finalCategory =
-      category === "__custom__" ? customCategory.trim() || "أخرى" : category;
+      category === "__custom__" ? customCategory.trim() || t("أخرى") : category;
     setSaving(true);
     try {
       await api("/api/expenses", {
         method: "POST",
         body: { category: finalCategory, amount: value, note },
       });
-      toast.push("ok", `تم تسجيل مصروف ${value} (${finalCategory})`);
+      toast.push("ok", `${t("تم تسجيل مصروف")}${value} (${finalCategory})`);
       setAmount("");
       setNote("");
       setCustomCategory("");
       await load();
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر حفظ المصروف");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر حفظ المصروف"));
     } finally {
       setSaving(false);
     }
@@ -185,11 +185,11 @@ export default function ExpensesPage() {
     setDeleting(true);
     try {
       await api(`/api/expenses/${deleteTarget.id}`, { method: "DELETE" });
-      toast.push("ok", "تم حذف المصروف");
+      toast.push("ok", t("تم حذف المصروف"));
       setDeleteTarget(null);
       await load();
     } catch (e) {
-      toast.push("err", e instanceof Error ? e.message : "تعذر الحذف");
+      toast.push("err", e instanceof Error ? e.message : t("تعذر الحذف"));
     } finally {
       setDeleting(false);
     }
@@ -197,30 +197,30 @@ export default function ExpensesPage() {
 
   function exportExcel() {
     const list = rows ?? [];
-    downloadXlsx(`المصاريف-${from || "الكل"}_${to || iso(new Date())}`, [
+    downloadXlsx(`${t("المصاريف-")}${from || t("الكل")}_${to || iso(new Date())}`, [
       {
-        name: "المصاريف",
+        name: t("المصاريف"),
         rows: [
-          ["الفترة", from && to ? `${from} ← ${to}` : "كل الفترات"],
-          ["إجمالي المصاريف", total.toFixed(2)],
-          ["عدد المصاريف", list.length],
+          [t("الفترة"), from && to ? `${from} ← ${to}` : t("كل الفترات")],
+          [t("إجمالي المصاريف"), total.toFixed(2)],
+          [t("عدد المصاريف"), list.length],
           [],
-          ["التاريخ", "التصنيف", "المبلغ", "أضافه", "ملاحظة"],
+          [t("التاريخ"), t("التصنيف"), t("المبلغ"), t("أضافه"), t("ملاحظة")],
           ...list.map((r) => [
             r.createdAt.slice(0, 10),
-            r.category || "أخرى",
+            r.category || t("أخرى"),
             r.amount.toFixed(2),
             r.userName,
             r.note,
           ]),
           [],
-          ["الإجمالي", "", total.toFixed(2), "", ""],
+          [t("الإجمالي"), "", total.toFixed(2), "", ""],
         ],
       },
       {
-        name: "حسب التصنيف",
+        name: t("حسب التصنيف"),
         rows: [
-          ["التصنيف", "عدد المصاريف", "الإجمالي", "النسبة %"],
+          [t("التصنيف"), t("عدد المصاريف"), t("الإجمالي"), t("النسبة %")],
           ...byCategory.map((c) => [
             c.name,
             c.count,
@@ -230,17 +230,17 @@ export default function ExpensesPage() {
         ],
       },
       {
-        name: "صافي الأرباح",
+        name: t("صافي الأرباح"),
         rows: [
-          ["البند", "المبلغ"],
-          ["إجمالي المبيعات", (report?.total ?? 0).toFixed(2)],
-          ["إجمالي الربح", (report?.profit ?? 0).toFixed(2)],
-          ["المصاريف التشغيلية", (report?.expenses ?? total).toFixed(2)],
-          ["صافي الربح", (report?.netProfit ?? 0).toFixed(2)],
+          [t("البند"), t("المبلغ")],
+          [t("إجمالي المبيعات"), (report?.total ?? 0).toFixed(2)],
+          [t("إجمالي الربح"), (report?.profit ?? 0).toFixed(2)],
+          [t("المصاريف التشغيلية"), (report?.expenses ?? total).toFixed(2)],
+          [t("صافي الربح"), (report?.netProfit ?? 0).toFixed(2)],
         ],
       },
     ]);
-    toast.push("ok", "تم تنزيل تقرير المصاريف وصافي الأرباح");
+    toast.push("ok", t("تم تنزيل تقرير المصاريف وصافي الأرباح"));
   }
 
   return (
@@ -268,7 +268,7 @@ export default function ExpensesPage() {
           onChange={(e) => setFrom(e.target.value)}
           className="!w-auto"
         />
-        <span className="text-[12px] font-bold text-[var(--faint)]">إلى</span>
+        <span className="text-[12px] font-bold text-[var(--faint)]">{t("إلى")}</span>
         <Input
           type="date"
           value={to}
@@ -276,11 +276,11 @@ export default function ExpensesPage() {
           className="!w-auto"
         />
         <Btn size="sm" variant="primary" onClick={() => load()} loading={loading}>
-          عرض
+          {t("عرض")}
         </Btn>
         <Badge tone="slate" className="ms-auto">
           <CalendarDays size={12} />{" "}
-          <span className="num">{from && to ? `${from} ← ${to}` : "كل الفترات"}</span>
+          <span className="num">{from && to ? `${from} ← ${to}` : t("كل الفترات")}</span>
         </Badge>
       </div>
 
@@ -289,19 +289,19 @@ export default function ExpensesPage() {
         <Stat
           icon={<Coins size={17} />}
           tone="rose"
-          label={`إجمالي المصاريف (${currency})`}
+          label={`${t("إجمالي المصاريف (")}${currency})`}
           value={formatMoneyJOD(total, currency, rates)}
         />
         <Stat
           icon={<TrendingUp size={17} />}
           tone="mint"
-          label={`إجمالي الربح (${currency})`}
+          label={`${t("إجمالي الربح (")}${currency})`}
           value={formatMoneyJOD(report?.profit ?? 0, currency, rates)}
         />
         <Stat
           icon={<TrendingDown size={17} />}
           tone="amber"
-          label={`صافي الربح (${currency})`}
+          label={`${t("صافي الربح (")}${currency})`}
           value={formatMoneyJOD(report?.netProfit ?? 0, currency, rates)}
         />
         <Stat
@@ -316,7 +316,7 @@ export default function ExpensesPage() {
         {/* ===== إضافة مصروف ===== */}
         <Card
           className="anim-in anim-d1 self-start"
-          title="إضافة مصروف تشغيلي"
+          title={t("إضافة مصروف تشغيلي")}
           icon={<Plus size={16} />}
           bodyClass="space-y-4 p-5"
         >
@@ -324,10 +324,10 @@ export default function ExpensesPage() {
             <Select value={category} onChange={(e) => setCategory(e.target.value)}>
               {EXPENSE_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
-                  {c}
+                  {t(c)}
                 </option>
               ))}
-              <option value="__custom__">تصنيف آخر…</option>
+              <option value="__custom__">{t("تصنيف آخر…")}</option>
             </Select>
           </Field>
           {category === "__custom__" && (
@@ -335,11 +335,11 @@ export default function ExpensesPage() {
               <Input
                 value={customCategory}
                 onChange={(e) => setCustomCategory(e.target.value)}
-                placeholder="مثال: عمولة مندوب"
+                placeholder={t("مثال: عمولة مندوب")}
               />
             </Field>
           )}
-          <Field label={`المبلغ (${currency})`}>
+          <Field label={`${t("المبلغ (")}${currency})`}>
             <Input
               type="number"
               min="0"
@@ -355,15 +355,14 @@ export default function ExpensesPage() {
             <Textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="تفاصيل المصروف — تُدرج في التقارير وسجل النشاط"
+              placeholder={t("تفاصيل المصروف — تُدرج في التقارير وسجل النشاط")}
             />
           </Field>
           <Btn variant="primary" className="w-full" onClick={addExpense} loading={saving}>
-            <Banknote size={15} /> تسجيل المصروف
+            <Banknote size={15} /> {t("تسجيل المصروف")}
           </Btn>
           <p className="text-[11px] font-semibold leading-5 text-[var(--faint)]">
-            تُخصم المصاريف من الربح في التقارير، ويظهر «صافي الربح» في لوحة التحكم
-            والتقارير مع تفصيل كل مصروف واسم من أضافه.
+            {t("تُخصم المصاريف من الربح في التقارير، ويظهر «صافي الربح» في لوحة التحكم والتقارير مع تفصيل كل مصروف واسم من أضافه.")}
           </p>
         </Card>
 
@@ -371,7 +370,7 @@ export default function ExpensesPage() {
         <div className="space-y-4 xl:col-span-2">
           <Card
             className="anim-in anim-d2"
-            title="توزيع المصاريف على التصنيفات"
+            title={t("توزيع المصاريف على التصنيفات")}
             icon={<TrendingDown size={16} />}
             bodyClass="space-y-2.5 p-4"
           >
@@ -379,7 +378,7 @@ export default function ExpensesPage() {
               <Skeleton className="h-24" />
             ) : byCategory.length === 0 ? (
               <p className="py-3 text-center text-[12.5px] font-bold text-[var(--faint)]">
-                لا مصاريف في هذه الفترة
+                {t("لا مصاريف في هذه الفترة")}
               </p>
             ) : (
               byCategory.map((c) => (
@@ -411,7 +410,7 @@ export default function ExpensesPage() {
 
           <Card
             className="anim-in anim-d3 overflow-hidden"
-            title="سجل المصاريف"
+            title={t("سجل المصاريف")}
             icon={<Receipt size={16} />}
             actions={
               <div className="flex items-center gap-2">
@@ -434,8 +433,8 @@ export default function ExpensesPage() {
             ) : rows.length === 0 ? (
               <Empty
                 icon={<Receipt size={22} />}
-                title="لا مصاريف مسجّلة في هذه الفترة"
-                hint="أضف المصاريف (إيجار، فواتير، رواتب، نقل…) لتظهر في صافي الأرباح"
+                title={t("لا مصاريف مسجّلة في هذه الفترة")}
+                hint={t("أضف المصاريف (إيجار، فواتير، رواتب، نقل…) لتظهر في صافي الأرباح")}
               />
             ) : (
               <table className="tbl min-w-[640px]">
@@ -456,7 +455,7 @@ export default function ExpensesPage() {
                         {fmtDate(r.createdAt)}
                       </td>
                       <td>
-                        <Badge tone="amber">{r.category || "أخرى"}</Badge>
+                        <Badge tone="amber">{r.category || t("أخرى")}</Badge>
                       </td>
                       <td className="num font-black text-[var(--rose)]">
                         {formatMoneyJOD(r.amount, currency, rates)}
@@ -471,7 +470,7 @@ export default function ExpensesPage() {
                         <div className="flex justify-end">
                           <button
                             className="icon-btn danger"
-                            title="حذف"
+                            title={t("حذف")}
                             onClick={() => setDeleteTarget(r)}
                           >
                             <Trash2 size={14} />
@@ -492,11 +491,9 @@ export default function ExpensesPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={doDelete}
         loading={deleting}
-        title="حذف مصروف"
-        message={`سيتم حذف مصروف ${deleteTarget?.amount ?? 0} (${
-          deleteTarget?.category ?? ""
-        }) من السجل، وسيتأثر صافي الربح لهذه الفترة.`}
-        confirmText="حذف"
+        title={t("حذف مصروف")}
+        message={`${t("سيتم حذف مصروف")}${deleteTarget?.amount ?? 0} (${deleteTarget?.category ?? ""}${t(") من السجل، وسيتأثر صافي الربح لهذه الفترة.")}`}
+        confirmText={t("حذف")}
       />
     </div>
   );

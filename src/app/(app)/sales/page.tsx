@@ -62,7 +62,7 @@ export default function SalesPage() {
         params.set("page", String(p));
         setRes(await api<SalesResponse>(`/api/sales?${params.toString()}`));
       } catch (e) {
-        toast.push("err", e instanceof Error ? e.message : "تعذر التحميل");
+        toast.push("err", e instanceof Error ? e.message : t("تعذر التحميل"));
       } finally {
         setLoading(false);
       }
@@ -99,7 +99,7 @@ export default function SalesPage() {
       <div className="anim-in rounded-[20px] border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3 shadow-[0_16px_36px_-28px_rgba(0,0,0,.8)] sm:p-4">
         <div className="grid grid-cols-2 items-end gap-2 sm:grid-cols-4 sm:gap-2.5">
           <div className="min-w-0">
-            <label className="lbl mb-1.5">من تاريخ</label>
+            <label className="lbl mb-1.5">{t("من تاريخ")}</label>
             <Input
               type="date"
               value={from}
@@ -108,7 +108,7 @@ export default function SalesPage() {
             />
           </div>
           <div className="min-w-0">
-            <label className="lbl mb-1.5">إلى تاريخ</label>
+            <label className="lbl mb-1.5">{t("إلى تاريخ")}</label>
             <Input
               type="date"
               value={to}
@@ -117,13 +117,13 @@ export default function SalesPage() {
             />
           </div>
           <div className="min-w-0">
-            <label className="lbl mb-1.5">العميل</label>
+            <label className="lbl mb-1.5">{t("العميل")}</label>
             <Select
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
               className="!w-full min-w-0"
             >
-              <option value="">كل العملاء</option>
+              <option value="">{t("كل العملاء")}</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -132,15 +132,15 @@ export default function SalesPage() {
             </Select>
           </div>
           <div className="min-w-0">
-            <label className="lbl mb-1.5">الحالة</label>
+            <label className="lbl mb-1.5">{t("الحالة")}</label>
             <Select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               className="!w-full min-w-0"
             >
-              <option value="">الكل</option>
-              <option value="completed">مكتملة</option>
-              <option value="cancelled">ملغاة</option>
+              <option value="">{t("الكل")}</option>
+              <option value="completed">{t("مكتملة")}</option>
+              <option value="cancelled">{t("ملغاة")}</option>
             </Select>
           </div>
         </div>
@@ -154,20 +154,20 @@ export default function SalesPage() {
               loading={loading}
               className="w-full sm:w-auto"
             >
-              تصفية
+              {t("تصفية")}
             </Btn>
             <Btn size="sm" onClick={resetFilters} className="w-full sm:w-auto">
-              <FilterX size={14} /> مسح
+              <FilterX size={14} /> {t("مسح")}
             </Btn>
             <Link
               href="/sales/new"
               className="btn btn-primary btn-sm col-span-2 w-full sm:ms-1 sm:w-auto"
             >
-              <Plus size={15} /> فاتورة جديدة
+              <Plus size={15} /> {t("فاتورة جديدة")}
             </Link>
           </div>
           <div className="flex items-center justify-between gap-2 sm:justify-end">
-            <span className="text-[11.5px] font-bold text-[var(--faint)]">عملة العرض</span>
+            <span className="text-[11.5px] font-bold text-[var(--faint)]">{t("عملة العرض")}</span>
             <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
           </div>
         </div>
@@ -176,7 +176,7 @@ export default function SalesPage() {
       <Card
         className="anim-in anim-d1 overflow-hidden"
         bodyClass="p-0"
-        title={res ? `${fmtNum(res.totalCount)} فاتورة` : "الفواتير"}
+        title={res ? `${fmtNum(res.totalCount)}${t("فاتورة")}` : t("الفواتير")}
         icon={<ReceiptText size={16} />}
       >
         {!res ? (
@@ -188,11 +188,11 @@ export default function SalesPage() {
         ) : res.data.length === 0 ? (
           <Empty
             icon={<ReceiptText size={22} />}
-            title="لا توجد فواتير مطابقة"
-            hint="جرّب تعديل الفلاتر أو أنشئ فاتورة جديدة"
+            title={t("لا توجد فواتير مطابقة")}
+            hint={t("جرّب تعديل الفلاتر أو أنشئ فاتورة جديدة")}
             action={
               <Link href="/sales/new" className="btn btn-primary btn-sm">
-                <Plus size={14} /> فاتورة جديدة
+                <Plus size={14} /> {t("فاتورة جديدة")}
               </Link>
             }
           />
@@ -215,7 +215,7 @@ export default function SalesPage() {
                   <div className="mt-1 truncate text-[13px] font-extrabold">{s.clientName}</div>
                   <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                     <Badge tone={s.status === "completed" ? "mint" : "rose"}>
-                      {s.status === "completed" ? "مكتملة" : "ملغاة"}
+                      {s.status === "completed" ? t("مكتملة") : t("ملغاة")}
                     </Badge>
                     <Badge tone={s.paymentMethod === "credit" ? "rose" : "slate"}>
                       {PAYMENT_METHODS[s.paymentMethod]}
@@ -228,7 +228,7 @@ export default function SalesPage() {
                   </div>
                   <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--line-soft)] pt-2 text-[11px] font-bold text-[var(--faint)]">
                     <span className="num">
-                      {fmtNum(s.itemsCount)} صنف / {fmtNum(s.unitsCount)} قطعة
+                      {fmtNum(s.itemsCount)} {t("صنف /")} {fmtNum(s.unitsCount)} {t("قطعة")}
                     </span>
                     <span>{s.userName}</span>
                     <span>{fmtDateTime(s.createdAt)}</span>
@@ -246,7 +246,7 @@ export default function SalesPage() {
                 <th>{t("العميل")}</th>
                 <th>{t("الأصناف")}</th>
                 <th>{t("التوصيل")}</th>
-                <th>الإجمالي ({currency})</th>
+                <th>{t("الإجمالي (")}{currency})</th>
                 {can(me, "finances.view_profit") && <th>{t("الربح")}</th>}
                 <th>{t("البائع")}</th>
                 <th>{t("الحالة")}</th>
@@ -262,7 +262,7 @@ export default function SalesPage() {
                   <td className="font-extrabold">{s.clientName}</td>
                   <td>
                     <span className="num text-[12.5px] font-bold text-[var(--muted)]">
-                      {fmtNum(s.itemsCount)} صنف / {fmtNum(s.unitsCount)} قطعة
+                      {fmtNum(s.itemsCount)} {t("صنف /")} {fmtNum(s.unitsCount)} {t("قطعة")}
                     </span>
                   </td>
                   <td>
@@ -288,7 +288,7 @@ export default function SalesPage() {
                     <span className="text-[12.5px] font-bold text-[var(--muted)]">{s.userName}</span>
                   </td>
                   <td>
-                    {s.status === "completed" ? <Badge tone="mint">مكتملة</Badge> : <Badge tone="rose">ملغاة</Badge>}
+                    {s.status === "completed" ? <Badge tone="mint">{t("مكتملة")}</Badge> : <Badge tone="rose">{t("ملغاة")}</Badge>}
                   <Badge tone={s.paymentMethod === "credit" ? "rose" : "slate"}>
                     {PAYMENT_METHODS[s.paymentMethod]}
                   </Badge>
@@ -308,13 +308,13 @@ export default function SalesPage() {
       {res && res.pages > 1 && (
         <div className="anim-in flex items-center justify-center gap-3">
           <Btn size="sm" disabled={page >= res.pages} onClick={() => setPage((p) => p + 1)}>
-            <ChevronRight size={15} /> الأقدم
+            <ChevronRight size={15} /> {t("الأقدم")}
           </Btn>
           <span className="num text-[12.5px] font-bold text-[var(--muted)]">
-            صفحة {fmtNum(res.page)} من {fmtNum(res.pages)}
+            {t("صفحة")} {fmtNum(res.page)} {t("من")} {fmtNum(res.pages)}
           </span>
           <Btn size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-            الأحدث <ChevronLeft size={15} />
+            {t("الأحدث")} <ChevronLeft size={15} />
           </Btn>
         </div>
       )}

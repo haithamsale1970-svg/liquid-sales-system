@@ -50,14 +50,14 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(false);
 
   const load = useCallback(
-    async (pid = productId, dir = direction, f = from, t = to) => {
+    async (pid = productId, dir = direction, f = from, toDate = to) => {
       setLoading(true);
       try {
         const params = new URLSearchParams();
         if (pid) params.set("productId", pid);
         if (dir) params.set("direction", dir);
         if (f) params.set("from", f);
-        if (t) params.set("to", t);
+        if (toDate) params.set("to", toDate);
         params.set("limit", "300");
         setRows(
           await api<InventoryMovementDTO[]>(
@@ -65,7 +65,7 @@ export default function InventoryPage() {
           ),
         );
       } catch (e) {
-        toast.push("err", e instanceof Error ? e.message : "تعذر تحميل الحركات");
+        toast.push("err", e instanceof Error ? e.message : t("تعذر تحميل الحركات"));
         setRows([]);
       } finally {
         setLoading(false);
@@ -96,45 +96,45 @@ export default function InventoryPage() {
   function exportExcel() {
     const list = rows ?? [];
     const name = productId
-      ? products.find((p) => String(p.id) === productId)?.name ?? "صنف"
-      : "كل الأصناف";
-    downloadXlsx(`حركة-المخزون-${name}`, [
+      ? products.find((p) => String(p.id) === productId)?.name ?? t("صنف")
+      : t("كل الأصناف");
+    downloadXlsx(`${t("حركة-المخزون-")}${name}`, [
       {
-        name: "حركات المخزون",
+        name: t("حركات المخزون"),
         rows: [
-          ["الصنف", name],
-          ["الفترة", from || to ? `${from || "البداية"} ← ${to || "الآن"}` : "كل الفترات"],
-          ["عدد الحركات", list.length],
-          ["إجمالي الدخول", stats.inQty],
-          ["إجمالي الخروج", stats.outQty],
-          ["الصافي", stats.net],
+          [t("الصنف"), name],
+          [t("الفترة"), from || to ? `${from || t("البداية")} ← ${to || t("الآن")}` : t("كل الفترات")],
+          [t("عدد الحركات"), list.length],
+          [t("إجمالي الدخول"), stats.inQty],
+          [t("إجمالي الخروج"), stats.outQty],
+          [t("الصافي"), stats.net],
           [],
           [
-            "التاريخ",
-            "الصنف",
-            "الحجم",
-            "النيكوتين",
-            "نوع السعر",
-            "النوع",
-            "الكمية",
-            "الرصيد بعد",
-            "السبب",
-            "المرجع",
-            "المنفّذ",
-            "ملاحظة",
+            t("التاريخ"),
+            t("الصنف"),
+            t("الحجم"),
+            t("النيكوتين"),
+            t("نوع السعر"),
+            t("النوع"),
+            t("الكمية"),
+            t("الرصيد بعد"),
+            t("السبب"),
+            t("المرجع"),
+            t("المنفّذ"),
+            t("ملاحظة"),
           ],
           ...list.map((r) => [
             r.createdAt.slice(0, 19).replace("T", " "),
             r.productName,
             r.size,
             r.nicotine,
-            r.priceType === "wholesale" ? "جملة" : "أفراد",
-            r.direction === "in" ? "دخول" : "خروج",
+            r.priceType === "wholesale" ? t("جملة") : t("أفراد"),
+            r.direction === "in" ? t("دخول") : t("خروج"),
             r.delta,
             r.stockAfter,
             r.reason,
             r.refId
-              ? `${r.refType === "return" ? "مرتجع" : "فاتورة"} ${invoiceNo(r.refId)}`
+              ? `${r.refType === "return" ? t("مرتجع") : t("فاتورة")} ${invoiceNo(r.refId)}`
               : "",
             r.userName,
             r.note,
@@ -142,7 +142,7 @@ export default function InventoryPage() {
         ],
       },
     ]);
-    toast.push("ok", "تم تنزيل سجل حركات المخزون");
+    toast.push("ok", t("تم تنزيل سجل حركات المخزون"));
   }
 
   return (
@@ -186,7 +186,7 @@ export default function InventoryPage() {
             }}
             className="!w-auto min-w-[200px]"
           >
-            <option value="">كل الأصناف</option>
+            <option value="">{t("كل الأصناف")}</option>
             {products.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -203,9 +203,9 @@ export default function InventoryPage() {
             }}
             className="!w-auto"
           >
-            <option value="">الكل</option>
-            <option value="in">دخول</option>
-            <option value="out">خروج</option>
+            <option value="">{t("الكل")}</option>
+            <option value="in">{t("دخول")}</option>
+            <option value="out">{t("خروج")}</option>
           </Select>
         </Field>
         <Field label={t("من تاريخ")}>
@@ -225,7 +225,7 @@ export default function InventoryPage() {
           />
         </Field>
         <Btn variant="primary" size="sm" onClick={() => load()} loading={loading}>
-          <RefreshCw size={14} /> تحديث
+          <RefreshCw size={14} /> {t("تحديث")}
         </Btn>
         <Btn size="sm" onClick={exportExcel} disabled={!rows?.length}>
           <Download size={14} /> Excel
@@ -236,7 +236,7 @@ export default function InventoryPage() {
       {/* ===== السجل ===== */}
       <Card
         className="anim-in anim-d2 overflow-hidden"
-        title="سجل حركات المخزون (دخول / خروج)"
+        title={t("سجل حركات المخزون (دخول / خروج)")}
         icon={<Boxes size={16} />}
         bodyClass="overflow-x-auto"
       >
@@ -249,8 +249,8 @@ export default function InventoryPage() {
         ) : rows.length === 0 ? (
           <Empty
             icon={<Boxes size={22} />}
-            title="لا حركات مطابقة"
-            hint="تُسجَّل الحركات تلقائيًا مع كل بيع أو إلغاء فاتورة أو مرتجع أو تسوية مخزون"
+            title={t("لا حركات مطابقة")}
+            hint={t("تُسجَّل الحركات تلقائيًا مع كل بيع أو إلغاء فاتورة أو مرتجع أو تسوية مخزون")}
           />
         ) : (
           <table className="tbl min-w-[860px]">
@@ -278,7 +278,7 @@ export default function InventoryPage() {
                     <div className="font-extrabold">{r.productName}</div>
                     {r.size && (
                       <div className="mt-0.5 text-[10px] font-bold text-[var(--faint)]">
-                        {r.size} • {r.nicotine} • {r.priceType === "wholesale" ? "جملة" : "أفراد"}
+                        {r.size} • {r.nicotine} • {r.priceType === "wholesale" ? t("جملة") : t("أفراد")}
                       </div>
                     )}
                   </td>
@@ -289,7 +289,7 @@ export default function InventoryPage() {
                       ) : (
                         <ArrowUpFromLine size={11} />
                       )}
-                      {r.direction === "in" ? "دخول" : "خروج"}
+                      {r.direction === "in" ? t("دخول") : t("خروج")}
                     </Badge>
                   </td>
                   <td>
@@ -316,7 +316,7 @@ export default function InventoryPage() {
                   <td>
                     {r.refId ? (
                       <span className="num text-[11.5px] font-bold text-[var(--muted)]">
-                        {r.refType === "return" ? "مرتجع" : "فاتورة"} {invoiceNo(r.refId)}
+                        {r.refType === "return" ? t("مرتجع") : t("فاتورة")} {invoiceNo(r.refId)}
                       </span>
                     ) : (
                       <span className="text-[11.5px] text-[var(--faint)]">—</span>

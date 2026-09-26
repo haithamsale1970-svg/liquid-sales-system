@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import { Loader2, TriangleAlert, X } from "lucide-react";
 import {
   useEffect,
@@ -205,7 +207,7 @@ export function Modal({
             {icon && <span className="text-[var(--mint)]">{icon}</span>}
             {title}
           </h3>
-          <button className="icon-btn" onClick={onClose} aria-label="إغلاق">
+          <button className="icon-btn" onClick={onClose} aria-label={t("إغلاق")}>
             <X size={16} />
           </button>
         </header>
@@ -244,7 +246,7 @@ export function ConfirmDialog({
         {message}
       </p>
       <div className="mt-6 flex justify-end gap-2">
-        <Btn onClick={onClose}>تراجع</Btn>
+        <Btn onClick={onClose}>{t("تراجع")}</Btn>
         <Btn variant="danger" onClick={onConfirm} loading={loading}>
           {confirmText}
         </Btn>

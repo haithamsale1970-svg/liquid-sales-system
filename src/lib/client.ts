@@ -1,4 +1,5 @@
 import { buildXlsx, type Sheet } from "./xlsx";
+import { t } from "./i18n";
 
 // Client-side API helper.
 export async function api<T = unknown>(
@@ -16,7 +17,9 @@ export async function api<T = unknown>(
     if (res.status === 401 && typeof window !== "undefined" && !path.includes("/auth/")) {
       window.location.href = "/login";
     }
-    throw new Error(data.error || "حدث خطأ غير متوقع");
+    // رسائل الخادم تصل بالعربية (لأنها مخزّنة/مولّدة على الخادم)،
+    // فنتولاها هنا في الواجهة لتظهر بلغة المستخدم الحالية.
+    throw new Error(t(data.error || "حدث خطأ غير متوقع"));
   }
   return data as T;
 }
