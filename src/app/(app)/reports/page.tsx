@@ -33,6 +33,7 @@ import {
   type PaymentMethod,
   type SessionUserDTO,
 } from "@/lib/shared";
+import { can } from "@/lib/permissions";
 
 type ReportData = {
   range: { from: string; to: string };
@@ -339,7 +340,7 @@ export default function ReportsPage() {
           ...data.topClients.map((c) => [c.name, CLIENT_TYPES[c.type], c.orders, c.revenue.toFixed(2)]),
         ],
       },
-      ...(me?.role === "admin" && data.byEmployee.length
+      ...(can(me, "finances.view_profit") && data.byEmployee.length
         ? [
             {
               name: "موظفون",
@@ -405,14 +406,14 @@ export default function ReportsPage() {
       ) : (
         <div className={cls("grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6", loading && "opacity-60 transition-opacity")}>
           <Stat icon={<Coins size={18} className="text-[var(--mint)]" />} tone="rgba(255,34,34,.12)" label={`إجمالي المبيعات (${currency})`} value={formatMoneyJOD(data.totals.total, currency, rates)} />
-          {me?.role === "admin" && (
+          {can(me, "finances.view_profit") && (
             <Stat icon={<TrendingUp size={18} className="text-[var(--amber)]" />} tone="rgba(255,122,122,.12)" label={`صافي الربح (هامش ${margin.toFixed(0)}%)`} value={formatMoneyJOD(data.totals.profit, currency, rates)} />
           )}
           <Stat icon={<ReceiptText size={18} className="text-[var(--violet)]" />} tone="rgba(255,255,255,.1)" label="عدد الفواتير" value={fmtNum(data.totals.count)} />
           <Stat icon={<Scale size={18} className="text-[var(--sky)]" />} tone="rgba(255,255,255,.07)" label={`متوسط الفاتورة (${currency})`} value={formatMoneyJOD(data.totals.avg, currency, rates)} />
           <Stat icon={<Truck size={18} className="text-[var(--rose)]" />} tone="rgba(255,43,43,.12)" label={`إجمالي التوصيل (${currency})`} value={formatMoneyJOD(data.totals.shipping, currency, rates)} />
           <Stat icon={<BarChart3 size={18} className="text-[var(--mint)]" />} tone="rgba(255,34,34,.12)" label="وحدات مباعة" value={fmtNum(data.totals.units)} />
-          {me?.role === "admin" && (
+          {can(me, "finances.view_profit") && (
             <>
               <Stat icon={<Banknote size={18} className="text-[var(--rose)]" />} tone="rgba(255,43,43,.12)" label={`المصاريف (${currency})`} value={formatMoneyJOD(data.totals.expenses, currency, rates)} />
               <Stat icon={<TrendingUp size={18} className="text-[var(--mint)]" />} tone="rgba(255,34,34,.12)" label={`الربح الصافي (${currency})`} value={formatMoneyJOD(data.totals.netProfit, currency, rates)} />
@@ -475,7 +476,7 @@ export default function ReportsPage() {
                   <th>الصنف</th>
                   <th>الكمية</th>
                   <th>الإيراد</th>
-                  {me?.role === "admin" && <th>الربح</th>}
+                  {can(me, "finances.view_profit") && <th>الربح</th>}
                 </tr>
               </thead>
               <tbody>
@@ -494,7 +495,7 @@ export default function ReportsPage() {
                     </td>
                     <td><span className="num font-black text-[var(--mint)]">{fmtNum(p.qty)}</span></td>
                     <td><span className="num font-bold">{formatMoneyJOD(p.revenue, currency, rates)}</span></td>
-                    {me?.role === "admin" && <td><span className="num font-bold text-[var(--amber)]">{formatMoneyJOD(p.profit, currency, rates)}</span></td>}
+                    {can(me, "finances.view_profit") && <td><span className="num font-bold text-[var(--amber)]">{formatMoneyJOD(p.profit, currency, rates)}</span></td>}
                   </tr>
                 ))}
               </tbody>
@@ -597,7 +598,7 @@ export default function ReportsPage() {
           )}
         </Card>
 
-        {me?.role === "admin" && (
+        {can(me, "finances.view_profit") && (
           <Card
             className="anim-in anim-d5 overflow-hidden"
             title="أرباح كل موظف"

@@ -26,6 +26,7 @@ import {
   type SaleListDTO,
   type SessionUserDTO,
 } from "@/lib/shared";
+import { can } from "@/lib/permissions";
 
 type SalesResponse = {
   data: SaleListDTO[];
@@ -244,7 +245,7 @@ export default function SalesPage() {
                 <th>الأصناف</th>
                 <th>التوصيل</th>
                 <th>الإجمالي ({currency})</th>
-                {me?.role === "admin" && <th>الربح</th>}
+                {can(me, "finances.view_profit") && <th>الربح</th>}
                 <th>البائع</th>
                 <th>الحالة</th>
                 <th>التاريخ</th>
@@ -276,7 +277,7 @@ export default function SalesPage() {
                       {formatMoneyJOD(s.total, currency, rates)}
                     </span>
                   </td>
-                  {me?.role === "admin" && (
+                  {can(me, "finances.view_profit") && (
                     <td>
                       <span className="num text-[12.5px] font-bold text-[var(--amber)]">{formatMoneyJOD(s.profit, currency, rates)}</span>
                     </td>

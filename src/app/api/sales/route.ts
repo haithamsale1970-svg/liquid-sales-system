@@ -10,9 +10,10 @@ import {
   num,
   ok,
   readBody,
-  requireUser,
+  requirePermission,
   type DbOrTx,
 } from "@/lib/api";
+import { can } from "@/lib/permissions";
 import { f2 } from "@/lib/products";
 import { getAppSettings } from "@/lib/settings";
 import { isCurrencyCode } from "@/lib/currency";
@@ -33,9 +34,10 @@ function dayStart(d: Date) {
 }
 
 export async function GET(req: Request) {
-  const auth = await requireUser();
+  const auth = await requirePermission("sales.view");
   if (isErr(auth)) return auth.res;
-  const isAdmin = auth.user.role === "admin";
+  // الأرباح تظهر لمن يملك صلاحية الاطلاع عليها فقط.
+  const showProfit = can(auth.user, "finances.view_profit");
   const url = new URL(req.url);
   const from = url.searchParams.get("from");
   const to = url.searchParams.get("to");
@@ -125,7 +127,7 @@ export async function GET(req: Request) {
       total: num(r.total),
       deliveryReceivable: num(r.deliveryReceivable),
       // الربح للأدمن فقط — المستخدم العادي يرى إجمالي المبيعات فقط.
-      profit: isAdmin ? num(r.profit) : 0,
+      profit: showProfit ? num(r.profit) : 0,
       currency: (r.currency as string) ?? "JOD",
       rate: num(r.rate) || 1,
       itemsCount: aggMap.get(r.id)?.itemsCount ?? 0,
@@ -156,7 +158,7 @@ type SaleItemInput = {
 };
 
 export async function POST(req: Request) {
-  const auth = await requireUser();
+  const auth = await requirePermission("sales.create");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
 

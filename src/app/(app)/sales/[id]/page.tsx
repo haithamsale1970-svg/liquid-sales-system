@@ -24,6 +24,7 @@ import {
   type SaleDetailDTO,
   type SessionUserDTO,
 } from "@/lib/shared";
+import { can } from "@/lib/permissions";
 
 export default function InvoicePage({
   params,
@@ -223,7 +224,7 @@ export default function InvoicePage({
           <Btn variant="primary" size="sm" onClick={printThermal}>
             <Printer size={15} /> طباعة حرارية (80mm)
           </Btn>
-          {me?.role === "admin" && !cancelled && (
+          {can(me, "returns.create") && !cancelled && (
             <Btn size="sm" onClick={openReturn}>
               <Undo2 size={15} /> مرتجع / استبدال
             </Btn>
@@ -231,7 +232,7 @@ export default function InvoicePage({
           <Btn variant="primary" size="sm" onClick={() => window.print()}>
             <Printer size={15} /> طباعة / حفظ PDF
           </Btn>
-          {me?.role === "admin" && !cancelled && (
+          {can(me, "sales.update") && !cancelled && (
             <Btn variant="danger" size="sm" onClick={() => setCancelOpen(true)}>
               <Ban size={15} /> إلغاء الفاتورة
             </Btn>

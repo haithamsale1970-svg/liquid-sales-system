@@ -11,7 +11,7 @@ import {
   num,
   ok,
   readBody,
-  requireAdmin,
+  requirePermission,
   type DbOrTx,
 } from "@/lib/api";
 import { f2 } from "@/lib/products";
@@ -40,7 +40,7 @@ function remainingAfterReturns(
 
 // تفاصيل دين عميل: فواتير غير مسددة + سجل السداد.
 export async function GET(_req: Request, ctx: Ctx) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("debts.view");
   if (isErr(auth)) return auth.res;
   const { id: rawId } = await ctx.params;
   const id = Math.trunc(num(rawId));
@@ -133,7 +133,7 @@ export async function GET(_req: Request, ctx: Ctx) {
 
 // تسديد دفعة: يوزّع المبلغ بالترتيب FIFO على أقدم الفواتير غير المسددة.
 export async function POST(req: Request, ctx: Ctx) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("debts.create");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
   const { id: rawId } = await ctx.params;

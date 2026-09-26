@@ -48,15 +48,15 @@ export function isPaymentMethod(v: unknown): v is PaymentMethod {
  *   لأنها لا معنى لها دون شركة توصيل أو تكلفة توصيل.
  * - عند وجود توصيل فعلي (داخلي/خارجي) لا تظهر إلا هذه الطريقة،
  *   لأن كامل الفاتورة تُسجَّل على ذمة شركة التوصيل.
- * - "آجل (ذمة العميل)" متاحة للمدير فقط.
+ * - "آجل (ذمة العميل)" متاحة لمن يملك صلاحية البيع الآجل فقط.
  */
 export function availablePaymentMethods(
   shippingType: ShippingType,
-  isAdmin: boolean,
+  canUseCredit: boolean,
 ): PaymentMethod[] {
   const all = Object.keys(PAYMENT_METHODS) as PaymentMethod[];
   if (shippingType !== "none") return ["delivery"];
-  return all.filter((m) => m !== "delivery" && (isAdmin || m !== "credit"));
+  return all.filter((m) => m !== "delivery" && (canUseCredit || m !== "credit"));
 }
 
 /** خيارات سعر البيع المرتبطة بالمتغير. */
@@ -187,6 +187,8 @@ export type SessionUserDTO = {
   username: string;
   name: string;
   role: "admin" | "user";
+  /** الصلاحيات الفعّالة المطبَّقة على هذا الحساب. */
+  permissions: import("@/lib/permissions").Permissions;
 };
 
 export type ProductField = { id?: number; label: string; value: string };

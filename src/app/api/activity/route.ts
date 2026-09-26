@@ -1,7 +1,7 @@
 import { and, desc, eq, gte, ilike, lt, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { activityLogs } from "@/db/schema";
-import { clampInt, errResponse, isErr, num, ok, requireAdmin } from "@/lib/api";
+import { clampInt, errResponse, isErr, num, ok, requirePermission } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,7 @@ const ENTITIES = [
 ];
 
 export async function GET(req: Request) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("activity.view");
   if (isErr(auth)) return auth.res;
 
   const url = new URL(req.url);

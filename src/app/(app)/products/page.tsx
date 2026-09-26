@@ -42,6 +42,7 @@ import {
   type ProductDTO,
   type SessionUserDTO,
 } from "@/lib/shared";
+import { can } from "@/lib/permissions";
 
 type FormVariant = {
   id?: number;
@@ -157,14 +158,14 @@ export default function ProductsPage() {
   }, [items, q, cat, showArchived]);
 
   function openCreate() {
-    if (me && me.role !== "admin") return;
+    if (me && !can(me, "products.create")) return;
     setEditing(null);
     setForm(EMPTY_FORM);
     setFormOpen(true);
   }
 
   function openEdit(p: ProductDTO) {
-    if (me && me.role !== "admin") return;
+    if (me && !can(me, "products.update")) return;
     setEditing(p);
     setForm({
       name: p.name,
@@ -361,7 +362,7 @@ export default function ProductsPage() {
             </option>
           ))}
         </Select>
-        {me?.role === "admin" && (
+        {can(me, "products.update") && (
           <Btn
             variant={showArchived ? "primary" : "ghost"}
             size="sm"
@@ -383,7 +384,7 @@ export default function ProductsPage() {
             </div>
           )}
         <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
-        {me?.role === "admin" && (
+        {can(me, "products.create") && (
           <Btn variant="primary" size="sm" onClick={openCreate}>
             <Plus size={15} /> إضافة منتج
           </Btn>
@@ -404,7 +405,7 @@ export default function ProductsPage() {
             title={showArchived ? "الأرشيف فارغ" : "لا توجد أصناف مطابقة"}
             hint={showArchived ? "لم يتم أرشفة أي منتج بعد" : "أضف أول منتج لبدء البيع وإصدار الفواتير"}
             action={
-              !showArchived && me?.role === "admin" ? (
+              !showArchived && can(me, "products.create") ? (
                 <Btn variant="primary" size="sm" onClick={openCreate}>
                   <Plus size={15} /> إضافة منتج
                 </Btn>
@@ -474,7 +475,7 @@ export default function ProductsPage() {
                         {formatMoneyJOD(p.price, currency, rates)}
                       </div>
                       <div className="num text-[10.5px] font-bold text-[var(--faint)]">
-                        {me?.role === "admin" ? (
+                        {can(me, "finances.view_profit") ? (
                           <>ربح: {formatMoneyJOD(pProfit, currency, rates)}</>
                         ) : (
                           <>المتبقي: {fmtNum(p.stock)}</>
@@ -557,7 +558,7 @@ export default function ProductsPage() {
                       </span>
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
-                      {me?.role === "admin" && (
+                      {can(me, "products.update") && (
                         <button
                           className="icon-btn"
                           title="تعديل المخزون"
@@ -571,12 +572,12 @@ export default function ProductsPage() {
                           <Boxes size={15} />
                         </button>
                       )}
-                      {me?.role === "admin" && (
+                      {can(me, "products.update") && (
                         <button className="icon-btn" title="تعديل" onClick={() => openEdit(p)}>
                           <Pencil size={15} />
                         </button>
                       )}
-                      {me?.role === "admin" &&
+                      {can(me, "products.delete") &&
                         (p.archived ? (
                           <button className="icon-btn" title="استعادة" onClick={() => restoreProduct(p)}>
                             <ArchiveRestore size={15} />

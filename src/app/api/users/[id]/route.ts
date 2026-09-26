@@ -11,8 +11,10 @@ import {
   num,
   ok,
   readBody,
+  requirePermission,
   requireUser,
 } from "@/lib/api";
+import { can } from "@/lib/permissions";
 import { SESSION_COOKIE } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 
@@ -45,8 +47,8 @@ export async function PATCH(req: Request, ctx: Ctx) {
   if (!target) return bad("المستخدم غير موجود", 404);
 
   const isSelf = target.id === user.id;
-  if (!isSelf && user.role !== "admin")
-    return bad("يمكنك تعديل حسابك فقط", 403);
+  if (!isSelf && !can(user, "users.update"))
+    return bad("تعديل المستخدمين للمدير صاحب الصلاحية فقط", 403);
 
   const body = await readBody<Record<string, unknown>>(req);
   if (!body) return bad("طلب غير صالح");
@@ -67,7 +69,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
   }
 
   if (typeof body.role === "string") {
-    if (user.role !== "admin") return bad("تغيير الصلاحية للمدير فقط", 403);
+    if (!can(user, "users.update")) return bad("تغيير الصلاحية للمدير فقط", 403);
     if (isSelf) return bad("لا يمكنك تغيير صلاحيتك بنفسك");
     const role = body.role === "admin" ? "admin" : "user";
     if (target.role === "admin" && role === "user") {
@@ -122,10 +124,9 @@ export async function PATCH(req: Request, ctx: Ctx) {
 }
 
 export async function DELETE(_req: Request, ctx: Ctx) {
-  const auth = await requireUser();
+  const auth = await requirePermission("users.delete");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
-  if (user.role !== "admin") return bad("حذف المستخدمين للمدير فقط", 403);
   const { id: rawId } = await ctx.params;
   const id = Math.trunc(num(rawId));
   if (!id) return bad("معرّف غير صالح");

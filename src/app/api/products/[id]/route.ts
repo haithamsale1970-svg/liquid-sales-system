@@ -8,10 +8,10 @@ import {
   num,
   ok,
   readBody,
-  requireAdmin,
-  requireUser,
+  requirePermission,
   type DbOrTx,
 } from "@/lib/api";
+import { can } from "@/lib/permissions";
 import { f2, getProductDTO, parseProductInput } from "@/lib/products";
 import { logMovement } from "@/lib/inventory";
 
@@ -20,19 +20,21 @@ export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: Request, ctx: Ctx) {
-  const auth = await requireUser();
+  const auth = await requirePermission("products.view");
   if (isErr(auth)) return auth.res;
   const { id } = await ctx.params;
-  const dto = await getProductDTO(num(id), db, { hideCost: auth.user.role !== "admin" });
+  const dto = await getProductDTO(num(id), db, {
+    hideCost: !can(auth.user, "finances.view_cost"),
+  });
   if (!dto) return bad("المنتج غير موجود", 404);
   return ok(dto);
 }
 
 export async function PATCH(req: Request, ctx: Ctx) {
-  const auth = await requireUser();
+  const auth = await requirePermission("products.update");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
-  const isAdmin = user.role === "admin";
+  const hideCost = !can(user, "finances.view_cost");
   const { id: rawId } = await ctx.params;
   const id = Math.trunc(num(rawId));
   if (!id) return bad("معرّف غير صالح");
@@ -43,10 +45,8 @@ export async function PATCH(req: Request, ctx: Ctx) {
   const existing = await getProductDTO(id);
   if (!existing) return bad("المنتج غير موجود", 404);
 
-  // Full-edit mode (all fields sent) vs quick actions
-  // تعديل بيانات/أسعار الأصناف للأدمن فقط — المستخدم العادي لا يملك أي صلاحية إدارة.
+  // وضع التعديل الكامل: يتطلب صلاحية "تعديل الأصناف" فقط.
   if (body.mode === "edit") {
-    if (!isAdmin) return bad("تعديل الأصناف يتطلب صلاحية المدير", 403);
     const parsed = parseProductInput({ ...existing, ...body });
     if ("error" in parsed) return bad(parsed.error);
     const { data } = parsed;
@@ -141,11 +141,10 @@ export async function PATCH(req: Request, ctx: Ctx) {
         details: `تعديل المنتج "${data.name}"`,
       });
     });
-    return ok(await getProductDTO(id, db, { hideCost: !isAdmin }));
+    return ok(await getProductDTO(id, db, { hideCost }));
   }
 
   if (body.mode === "adjustStock") {
-    if (!isAdmin) return bad("تعديل المخزون يتطلب صلاحية المدير", 403);
     const delta = Math.trunc(num(body.delta));
     const note = String(body.note ?? "").slice(0, 160);
     const variantId = body.variantId == null ? null : Math.trunc(num(body.variantId));
@@ -201,11 +200,10 @@ export async function PATCH(req: Request, ctx: Ctx) {
         }`,
       });
     });
-    return ok(await getProductDTO(id, db, { hideCost: !isAdmin }));
+    return ok(await getProductDTO(id, db, { hideCost }));
   }
 
   if (body.mode === "restore") {
-    if (user.role !== "admin") return bad("استعادة المنتجات تتطلب صلاحية المدير", 403);
     await db.update(products).set({ archived: false }).where(eq(products.id, id));
     await logActivity(db, {
       userId: user.id,
@@ -215,14 +213,14 @@ export async function PATCH(req: Request, ctx: Ctx) {
       entityId: id,
       details: `استعادة المنتج "${existing.name}"`,
     });
-    return ok(await getProductDTO(id, db, { hideCost: !isAdmin }));
+    return ok(await getProductDTO(id, db, { hideCost }));
   }
 
   return bad("نوع التعديل غير معروف");
 }
 
 export async function DELETE(_req: Request, ctx: Ctx) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("products.delete");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
   const { id: rawId } = await ctx.params;

@@ -10,8 +10,7 @@ import {
   num,
   ok,
   readBody,
-  requireAdmin,
-  requireUser,
+  requirePermission,
 } from "@/lib/api";
 import { CLIENT_TYPES, invoiceNo, type ClientType } from "@/lib/shared";
 import { ensureSchema } from "@/lib/migrate";
@@ -30,7 +29,7 @@ function cleanPhone(v: unknown): string {
 }
 
 export async function GET(_req: Request, ctx: Ctx) {
-  const auth = await requireUser();
+  const auth = await requirePermission("clients.view");
   if (isErr(auth)) return auth.res;
   const { id: rawId } = await ctx.params;
   const id = Math.trunc(num(rawId));
@@ -163,7 +162,7 @@ export async function GET(_req: Request, ctx: Ctx) {
 }
 
 export async function PATCH(req: Request, ctx: Ctx) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("clients.update");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
   const { id: rawId } = await ctx.params;
@@ -234,7 +233,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
 }
 
 export async function DELETE(_req: Request, ctx: Ctx) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("clients.delete");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
   const { id: rawId } = await ctx.params;

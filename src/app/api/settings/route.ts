@@ -9,7 +9,7 @@ import {
   num,
   ok,
   readBody,
-  requireAdmin,
+  requirePermission,
   requireUser,
 } from "@/lib/api";
 import { getAppSettings } from "@/lib/settings";
@@ -30,9 +30,9 @@ export async function GET() {
   }
 }
 
-// PUT: الأدمن فقط — تعديل كل الأرقام والعملات والخصائص الظاهرة.
+// PUT: يتطلب صلاحية "تعديل الإعدادات".
 export async function PUT(req: Request) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("settings.update");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
   const body = await readBody<Record<string, unknown>>(req);

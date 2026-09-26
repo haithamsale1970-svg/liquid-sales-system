@@ -10,7 +10,7 @@ import {
   num,
   ok,
   readBody,
-  requireAdmin,
+  requirePermission,
   type DbOrTx,
 } from "@/lib/api";
 import { logMovement } from "@/lib/inventory";
@@ -27,9 +27,9 @@ type Line = {
   quantity: number;
 };
 
-// قائمة المرتجعات (الأدمن فقط).
+// قائمة المرتجعات.
 export async function GET() {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("returns.view");
   if (isErr(auth)) return auth.res;
   try {
     const rows = await db
@@ -77,7 +77,7 @@ export async function GET() {
 
 // إنشاء مرتجع/استبدال على فاتورة مكتملة — يعدّل المخزون وحساب العميل تلقائيًا.
 export async function POST(req: Request) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("returns.create");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
 

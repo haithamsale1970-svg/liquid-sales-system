@@ -1,6 +1,6 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { userPermissions, users } from "@/db/schema";
 import {
   bad,
   errResponse,
@@ -8,16 +8,42 @@ import {
   logActivity,
   ok,
   readBody,
-  requireAdmin,
+  requirePermission,
 } from "@/lib/api";
 import { hashPassword } from "@/lib/password";
+import {
+  allPermissions,
+  DEFAULT_USER_PERMISSIONS,
+  permissionsFromList,
+} from "@/lib/permissions";
+import { replaceUserPermissions } from "@/lib/rbac";
+import { ensureSchema } from "@/lib/migrate";
 
 export const dynamic = "force-dynamic";
 
+/** يقرأ خريطة الصلاحيات لكل المستخدمين في استعلام واحد. */
+async function permissionsMap(userIds: number[]) {
+  const map = new Map<number, Record<string, boolean>>();
+  if (!userIds.length) return map;
+  const rows = await db
+    .select({
+      userId: userPermissions.userId,
+      permKey: userPermissions.permKey,
+    })
+    .from(userPermissions)
+    .where(inArray(userPermissions.userId, userIds));
+  for (const r of rows) {
+    if (!map.has(r.userId)) map.set(r.userId, {});
+    map.get(r.userId)![r.permKey] = true;
+  }
+  return map;
+}
+
 export async function GET() {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("users.view");
   if (isErr(auth)) return auth.res;
   try {
+    await ensureSchema();
     const rows = await db
       .select({
         id: users.id,
@@ -29,8 +55,16 @@ export async function GET() {
       })
       .from(users)
       .orderBy(asc(users.id));
+
+    const map = await permissionsMap(rows.map((r) => r.id));
     return ok(
-      rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() })),
+      rows.map((r) => ({
+        ...r,
+        createdAt: r.createdAt.toISOString(),
+        // المدير يملك كل الصلاحيات دائمًا، وغير المدير خريطة المخزّنة.
+        permissions:
+          r.role === "admin" ? allPermissions() : map.get(r.id) ?? {},
+      })),
     );
   } catch (e) {
     return errResponse(e);
@@ -38,7 +72,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("users.create");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
 
@@ -66,6 +100,15 @@ export async function POST(req: Request) {
       .insert(users)
       .values({ username, name: name.slice(0, 80), passwordHash, role })
       .returning({ id: users.id });
+
+    // المدير يملك كل الصلاحيات تلقائيًا، أما غير المدير فيحصل على
+    // الصلاحيات الافتراضية أو ما يرسله الأدمن صراحةً عند الإنشاء.
+    if (role === "user") {
+      const requested = Array.isArray(body.permissions)
+        ? permissionsFromList(body.permissions)
+        : permissionsFromList(DEFAULT_USER_PERMISSIONS);
+      await replaceUserPermissions(rows[0].id, requested);
+    }
 
     await logActivity(db, {
       userId: user.id,

@@ -4,6 +4,8 @@ import { randomUUID } from "crypto";
 import { db } from "@/db";
 import { ensureSchema } from "@/lib/migrate";
 import { sessions, users } from "@/db/schema";
+import { resolvePermissions } from "@/lib/rbac";
+import type { Permissions } from "@/lib/permissions";
 
 export const SESSION_COOKIE = "sohob_session";
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -13,6 +15,8 @@ export type SessionUser = {
   username: string;
   name: string;
   role: "admin" | "user";
+  /** الصلاحيات الفعّالة — المدير يملك الكل، والمستخدم خريطة المخزّنة له. */
+  permissions: Permissions;
 };
 
 export async function createSession(userId: number) {
@@ -56,6 +60,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       username: row.username,
       name: row.name,
       role: row.role,
+      permissions: await resolvePermissions(row.id, row.role),
     };
   } catch {
     return null;

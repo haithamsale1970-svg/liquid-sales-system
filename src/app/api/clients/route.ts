@@ -8,8 +8,7 @@ import {
   logActivity,
   ok,
   readBody,
-  requireAdmin,
-  requireUser,
+  requirePermission,
 } from "@/lib/api";
 import type { ClientDTO } from "@/lib/shared";
 import { CLIENT_TYPES } from "@/lib/shared";
@@ -27,7 +26,7 @@ function cleanPhone(v: unknown): string {
 }
 
 export async function GET(req: Request) {
-  const auth = await requireUser();
+  const auth = await requirePermission("clients.view");
   if (isErr(auth)) return auth.res;
   await ensureSchema();
   const url = new URL(req.url);
@@ -90,7 +89,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("clients.create");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
 

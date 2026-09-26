@@ -33,6 +33,7 @@ import {
   type ActivityDTO,
   type SessionUserDTO,
 } from "@/lib/shared";
+import { can } from "@/lib/permissions";
 
 type DashboardData = {
   kpis: {
@@ -222,7 +223,7 @@ export default function DashboardPage() {
             rates={rates}
             sub={<Badge tone="violet">{data.kpis.monthCount} فاتورة</Badge>}
           />
-          {me?.role === "admin" ? (
+          {can(me, "finances.view_profit") ? (
             <Kpi
               delay="anim-d2"
               tone="amber"
@@ -431,7 +432,7 @@ export default function DashboardPage() {
           )}
         </Card>
 
-        {me?.role === "admin" && (
+        {can(me, "activity.view") && (
           <Card
             className="anim-in anim-d4"
             title="آخر النشاطات"

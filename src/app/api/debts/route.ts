@@ -2,7 +2,7 @@ import { and, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { db } from "@/db";
 import { clients, returns, sales } from "@/db/schema";
 import { ensureSchema } from "@/lib/migrate";
-import { errResponse, isErr, num, ok, requireAdmin } from "@/lib/api";
+import { errResponse, isErr, num, ok, requirePermission } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
  * استعلام فرعي بشكل موثوق في PostgreSQL.
  */
 export async function GET(req: Request) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("debts.view");
   if (isErr(auth)) return auth.res;
   const url = new URL(req.url);
   const q = (url.searchParams.get("q") ?? "").trim();

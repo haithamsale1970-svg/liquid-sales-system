@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { describeDbError } from "@/db/connection";
 import { activityLogs } from "@/db/schema";
 import { getSessionUser, type SessionUser } from "./auth";
+import { can, permissionLabel, type PermissionKey } from "./permissions";
 
 export type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 export type DbOrTx = typeof db | Tx;
@@ -45,6 +46,22 @@ export async function requireAdmin(): Promise<AuthResult> {
   if (!user) return { res: bad("يجب تسجيل الدخول أولاً", 401) };
   if (user.role !== "admin")
     return { res: bad("هذه العملية تتطلب صلاحية المدير (ماستر)", 403) };
+  return { user };
+}
+
+/**
+ * يطلب صلاحية محدّدة بدل "المدير فقط".
+ * المدير يتجاوز كل الصلاحيات، وغير المدير يُمنع إن لم تكن الصلاحية ممنوحة له.
+ */
+export async function requirePermission(
+  key: PermissionKey,
+): Promise<AuthResult> {
+  const user = await getSessionUser();
+  if (!user) return { res: bad("يجب تسجيل الدخول أولاً", 401) };
+  if (!can(user, key))
+    return {
+      res: bad(`ليست لديك صلاحية: ${permissionLabel(key)}`, 403),
+    };
   return { user };
 }
 

@@ -14,7 +14,7 @@ import {
   sales,
   users,
 } from "@/db/schema";
-import { errResponse, isErr, logActivity, requireAdmin } from "@/lib/api";
+import { errResponse, isErr, logActivity, requirePermission } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +25,7 @@ function csvSafe(v: unknown) {
 }
 
 export async function GET() {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("backup.manage");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
 

@@ -1,7 +1,8 @@
 import { and, asc, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { activityLogs, clients, products, saleItems, sales, users } from "@/db/schema";
-import { errResponse, isErr, num, ok, requireUser } from "@/lib/api";
+import { errResponse, isErr, num, ok, requirePermission } from "@/lib/api";
+import { can } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -12,9 +13,10 @@ function ymd(d: Date) {
 }
 
 export async function GET() {
-  const auth = await requireUser();
+  const auth = await requirePermission("dashboard.view");
   if (isErr(auth)) return auth.res;
-  const isAdmin = auth.user.role === "admin";
+  // البيانات المالية تظهر فقط لمن يملك الصلاحية المناسبة.
+  const isAdmin = can(auth.user, "finances.view_profit");
 
   const now = new Date();
   const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());

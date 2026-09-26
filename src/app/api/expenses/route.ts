@@ -1,7 +1,7 @@
 import { and, desc, eq, gte, lt } from "drizzle-orm";
 import { db } from "@/db";
 import { expenses } from "@/db/schema";
-import { bad, errResponse, isErr, logActivity, num, ok, readBody, requireAdmin } from "@/lib/api";
+import { bad, errResponse, isErr, logActivity, num, ok, readBody, requirePermission } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -9,9 +9,9 @@ function dayStart(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-// المصاريف التشغيلية (الأدمن فقط).
+// المصاريف التشغيلية.
 export async function GET(req: Request) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("expenses.view");
   if (isErr(auth)) return auth.res;
   const url = new URL(req.url);
   const from = url.searchParams.get("from") ?? "";
@@ -54,7 +54,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("expenses.create");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
 

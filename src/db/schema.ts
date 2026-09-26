@@ -8,6 +8,7 @@ import {
   boolean,
   timestamp,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const roleEnum = pgEnum("role", ["admin", "user"]);
@@ -34,6 +35,27 @@ export const users = pgTable("users", {
     .notNull()
     .defaultNow(),
 });
+
+// ---------- صلاحيات المستخدمين (Advanced RBAC) ----------
+// جدول واحد لكل صلاحية ممنوحة: أبسط للربط ويقرأ مباشرة مع الجلسة.
+export const userPermissions = pgTable(
+  "user_permissions",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** مفتاح الصلاحية من PERMISSION_GROUPS/EXTRA_PERMISSIONS. */
+    permKey: text("perm_key").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("user_permissions_user_idx").on(t.userId),
+    uniqueIndex("user_permissions_user_key_uq").on(t.userId, t.permKey),
+  ],
+);
 
 export const sessions = pgTable(
   "sessions",

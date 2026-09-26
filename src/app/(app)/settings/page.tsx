@@ -18,6 +18,7 @@ import { useToast } from "@/components/toast";
 import { Btn, Card, Field, Input, Select, Skeleton } from "@/components/ui";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { fmtDateTime, type SessionUserDTO } from "@/lib/shared";
+import { can } from "@/lib/permissions";
 import { CURRENCIES, DEFAULT_SETTINGS, type AppSettings, type CurrencyCode } from "@/lib/currency";
 
 const LAST_BACKUP_KEY = "sohob_last_backup";
@@ -131,7 +132,9 @@ export default function SettingsPage() {
     toast.push("ok", "بدأ تنزيل النسخة الاحتياطية");
   }
 
-  const isAdmin = me?.role === "admin";
+  // إعدادات النظام والنسخ الاحتياطي تتطلب صلاحيات مستقلة يحددها الأدمن.
+  const canEditSettings = can(me, "settings.update");
+  const canBackup = can(me, "backup.manage");
 
   async function saveSettings() {
     if (savingSettings) return;
@@ -219,7 +222,7 @@ export default function SettingsPage() {
       {/* backup */}
       <div className="space-y-4 self-start">
         {/* ===== تحكم الأدمن المطلق: العملات + التوصيل + إظهار الأقسام ===== */}
-        {isAdmin && (
+        {canEditSettings && (
           <Card
             className="anim-in anim-d1"
             title="إعدادات الأدمن: العملات والتوصيل والصلاحيات"
@@ -286,7 +289,7 @@ export default function SettingsPage() {
           </p>
           <CurrencySwitcher defaultCurrency={settings?.defaultCurrency ?? draft.defaultCurrency} />
         </Card>
-        {isAdmin && (
+        {canBackup && (
           <Card
             className="anim-in anim-d1"
             title="النسخ الاحتياطي"

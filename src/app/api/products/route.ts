@@ -1,7 +1,8 @@
 import { and, desc, eq, ilike, or } from "drizzle-orm";
 import { db } from "@/db";
 import { productFields, productVariants, products } from "@/db/schema";
-import { bad, isErr, logActivity, ok, readBody, requireUser, type DbOrTx } from "@/lib/api";
+import { bad, isErr, logActivity, ok, readBody, requirePermission, type DbOrTx } from "@/lib/api";
+import { can } from "@/lib/permissions";
 import { logMovement } from "@/lib/inventory";
 import {
   f2,
@@ -14,9 +15,10 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const auth = await requireUser();
+  const auth = await requirePermission("products.view");
   if (isErr(auth)) return auth.res;
-  const isAdmin = auth.user.role === "admin";
+  // إخفاء الكلف إلا لمن يملك صلاحية الاطلاع على التكاليف.
+  const hideCost = !can(auth.user, "finances.view_cost");
 
   const url = new URL(req.url);
   const q = (url.searchParams.get("q") ?? "").trim();
@@ -41,24 +43,23 @@ export async function GET(req: Request) {
     loadFieldsMap(rows.map((r) => r.id)),
     loadVariantsMap(rows.map((r) => r.id)),
   ]);
-  // المستخدم العادي لا يرى الكلف أبدًا — تُصفَّر قبل الإرسال.
+  // المستخدم الذي لا يملك صلاحية التكاليف لا يرىها — تُصفَّر قبل الإرسال.
   return ok(
     rows.map((r) =>
       mapProduct(
         r,
         fieldsMap.get(r.id) ?? [],
         variantsMap.get(r.id) ?? [],
-        { hideCost: !isAdmin },
+        { hideCost },
       ),
     ),
   );
 }
 
 export async function POST(req: Request) {
-  const auth = await requireUser();
+  const auth = await requirePermission("products.create");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
-  if (user.role !== "admin") return bad("إضافة الأصناف تتطلب صلاحية المدير", 403);
 
   const body = await readBody<Record<string, unknown>>(req);
   if (!body) return bad("طلب غير صالح");

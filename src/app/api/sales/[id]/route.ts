@@ -10,10 +10,10 @@ import {
   num,
   ok,
   readBody,
-  requireAdmin,
-  requireUser,
+  requirePermission,
   type DbOrTx,
 } from "@/lib/api";
+import { can } from "@/lib/permissions";
 import { logMovement } from "@/lib/inventory";
 import { invoiceNo, isPaymentMethod } from "@/lib/shared";
 
@@ -22,9 +22,10 @@ export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: Request, ctx: Ctx) {
-  const auth = await requireUser();
+  const auth = await requirePermission("sales.view");
   if (isErr(auth)) return auth.res;
-  const isAdmin = auth.user.role === "admin";
+  const showProfit = can(auth.user, "finances.view_profit");
+  const showCost = can(auth.user, "finances.view_cost");
   const { id: rawId } = await ctx.params;
   const id = Math.trunc(num(rawId));
   if (!id) return bad("معرّف غير صالح");
@@ -88,7 +89,7 @@ export async function GET(_req: Request, ctx: Ctx) {
       total: num(row.sale.total),
       deliveryReceivable: num(row.sale.deliveryReceivable),
       // الربح للأدمن فقط.
-      profit: isAdmin ? num(row.sale.profit) : 0,
+      profit: showProfit ? num(row.sale.profit) : 0,
       currency: row.sale.currency ?? "JOD",
       rate: num(row.sale.rate) || 1,
       paymentMethod: isPaymentMethod(row.sale.paymentMethod)
@@ -136,8 +137,8 @@ export async function GET(_req: Request, ctx: Ctx) {
         reason: r.reason,
         createdAt: r.createdAt.toISOString(),
       })),
-      // التكلفة مخفية عن المستخدم العادي.
-      ...(isAdmin ? {} : { itemsHiddenCost: true }),
+      // التكلفة مخفية إلا لمن يملك صلاحية الاطلاع على التكاليف.
+      ...(showCost ? {} : { itemsHiddenCost: true }),
     });
   } catch (e) {
     return errResponse(e);
@@ -146,7 +147,7 @@ export async function GET(_req: Request, ctx: Ctx) {
 
 // Cancel an invoice (admin only) — restores stock atomically.
 export async function PATCH(req: Request, ctx: Ctx) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("sales.update");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
   const { id: rawId } = await ctx.params;

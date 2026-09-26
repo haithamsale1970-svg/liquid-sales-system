@@ -1,4 +1,5 @@
 import { config as loadEnv } from "dotenv";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import bcrypt from "bcryptjs";
@@ -17,6 +18,12 @@ import {
   sales,
   users,
 } from "./schema";
+import {
+  allPermissions,
+  DEFAULT_USER_PERMISSIONS,
+  permissionsFromList,
+} from "@/lib/permissions";
+import { replaceUserPermissions } from "@/lib/rbac";
 
 // يقرأ .env.local ثم .env (المتغيّر الموجود في البيئة أولًا له الأولوية).
 loadEnv({ path: [".env.local", ".env"], quiet: true });
@@ -72,8 +79,22 @@ async function main() {
         role: "user" as const,
       },
     ])
-    .returning({ id: users.id, name: users.name });
+    .returning({ id: users.id, name: users.name, role: users.role });
   console.log("✓ users: admin/admin123 — partner/partner123");
+
+  // ---------- صلاحيات: المدير يملك الكل، والشريك يأخذ القالب الافتراضي ----------
+  await replaceUserPermissions(admin.id, allPermissions());
+  const partnerRow = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.username, "partner"))
+    .limit(1);
+  if (partnerRow[0]) {
+    await replaceUserPermissions(
+      partnerRow[0].id,
+      permissionsFromList(DEFAULT_USER_PERMISSIONS),
+    );
+  }
 
   // ---------- products ----------
   const productRows = [

@@ -48,6 +48,7 @@ import {
   type SessionUserDTO,
   type ShippingType,
 } from "@/lib/shared";
+import { can } from "@/lib/permissions";
 
 const TYPE_ICONS: Record<ClientType, typeof Store> = {
   store: Store,
@@ -131,9 +132,10 @@ export default function ClientsPage() {
   const [deleteTarget, setDeleteTarget] = useState<ClientDTO | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const isAdmin = me?.role === "admin";
-  const canEdit = isAdmin;
-  const canDelete = isAdmin;
+  // الصلاحيات يحددها الأدمن: الأزرار المخفية + منع التنفيذ من الـ API.
+  const canCreate = can(me, "clients.create");
+  const canEdit = can(me, "clients.update");
+  const canDelete = can(me, "clients.delete");
   const formIsShop = isShopClient(form.type);
 
   async function load() {

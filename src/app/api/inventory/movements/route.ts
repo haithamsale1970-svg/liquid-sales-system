@@ -1,7 +1,7 @@
 import { and, desc, eq, gte, lt } from "drizzle-orm";
 import { db } from "@/db";
 import { inventoryMovements } from "@/db/schema";
-import { clampInt, errResponse, isErr, num, ok, requireAdmin } from "@/lib/api";
+import { clampInt, errResponse, isErr, num, ok, requirePermission } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
  * فلاتر اختيارية: productId، direction (in/out)، من/إلى تاريخ.
  */
 export async function GET(req: Request) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("inventory.view");
   if (isErr(auth)) return auth.res;
   const url = new URL(req.url);
   const productId = Math.trunc(num(url.searchParams.get("productId")));

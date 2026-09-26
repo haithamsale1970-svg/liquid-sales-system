@@ -1,13 +1,13 @@
-import { bad, errResponse, isErr, logActivity, num, ok, readBody, requireAdmin } from "@/lib/api";
+import { bad, errResponse, isErr, logActivity, num, ok, readBody, requirePermission } from "@/lib/api";
 import { db } from "@/db";
 import { expenses } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
-// حذف مصروف (الأدمن فقط).
+// حذف مصروف.
 export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin();
+  const auth = await requirePermission("expenses.delete");
   if (isErr(auth)) return auth.res;
   const { user } = auth;
   const { id: rawId } = await ctx.params;

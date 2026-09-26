@@ -27,23 +27,32 @@ import CurrencySwitcher from "./CurrencySwitcher";
 import LowStockBanner from "./LowStockBanner";
 import { cls, initials, type SessionUserDTO } from "@/lib/shared";
 import { api } from "@/lib/client";
+import { can, type PermissionKey } from "@/lib/permissions";
 import type { AppSettings } from "@/lib/currency";
 
+/** صلاحية الدخول لكل عنصر في القائمة الجانبية. */
 const NAV = [
-  { href: "/", label: "لوحة التحكم", icon: LayoutDashboard },
-  { href: "/products", label: "الأصناف والمخزون", icon: Package, key: "products" },
-  { href: "/sales", label: "الفواتير", icon: ShoppingCart },
-  { href: "/sales/new", label: "فاتورة جديدة", icon: PlusCircle, accent: true },
-  { href: "/clients", label: "العملاء", icon: Users, key: "clients" },
-  { href: "/debts", label: "الديون والتحصيل", icon: Wallet, admin: true },
-  { href: "/expenses", label: "المصاريف", icon: Banknote, admin: true },
-  { href: "/inventory", label: "حركة المخزون", icon: PackageSearch, admin: true },
-  { href: "/returns", label: "المرتجعات والاستبدال", icon: Undo2, admin: true },
-  { href: "/reports", label: "التقارير", icon: BarChart3, key: "reports" },
-  { href: "/users", label: "المستخدمون", icon: UsersRound, admin: true },
-  { href: "/activity", label: "سجل النشاط", icon: ScrollText, admin: true },
-  { href: "/settings", label: "الإعدادات والنسخ", icon: Settings },
-] as const;
+  { href: "/", label: "لوحة التحكم", icon: LayoutDashboard, perm: "dashboard.view" },
+  { href: "/products", label: "الأصناف والمخزون", icon: Package, perm: "products.view", settingsKey: "products" },
+  { href: "/sales", label: "الفواتير", icon: ShoppingCart, perm: "sales.view" },
+  { href: "/sales/new", label: "فاتورة جديدة", icon: PlusCircle, perm: "sales.create", accent: true },
+  { href: "/clients", label: "العملاء", icon: Users, perm: "clients.view", settingsKey: "clients" },
+  { href: "/debts", label: "الديون والتحصيل", icon: Wallet, perm: "debts.view" },
+  { href: "/expenses", label: "المصاريف", icon: Banknote, perm: "expenses.view" },
+  { href: "/inventory", label: "حركة المخزون", icon: PackageSearch, perm: "inventory.view" },
+  { href: "/returns", label: "المرتجعات والاستبدال", icon: Undo2, perm: "returns.view" },
+  { href: "/reports", label: "التقارير", icon: BarChart3, perm: "reports.view", settingsKey: "reports" },
+  { href: "/users", label: "المستخدمون", icon: UsersRound, perm: "users.view" },
+  { href: "/activity", label: "سجل النشاط", icon: ScrollText, perm: "activity.view" },
+  { href: "/settings", label: "الإعدادات والنسخ", icon: Settings, perm: "settings.view" },
+] as const satisfies readonly {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  perm: PermissionKey;
+  settingsKey?: "products" | "clients" | "reports";
+  accent?: boolean;
+}[];
 
 function bestMatch(pathname: string): string {
   if (pathname === "/") return "/";
@@ -98,31 +107,37 @@ export default function AppShell({
   const active = bestMatch(pathname);
   const title = pageTitle(pathname);
   const isAdmin = user.role === "admin";
-  const isAdminOnlyPath = NAV.some(
-    (n) => "admin" in n && n.admin && (pathname === n.href || pathname.startsWith(`${n.href}/`)),
-  );
+
+  // الأدمن يتحكم بإظهار/إخفاء الأقسام عن باقي المستخدمين من الإعدادات،
+  // ويملك كذلك تحكمًا دقيقًا بصلاحيات كل مستخدم.
+  const visibleNav = NAV.filter((n) => {
+    // 1) صلاحية الدخول: أهم شرط — يخفي القسم كليًا لمن لا يملكها.
+    if (!can(user, n.perm)) return false;
+    // 2) مفتاح إعدادات قديم يربط القسم بإعدادات "إظهار الأقسام".
+    if (!isAdmin && settings && "settingsKey" in n && n.settingsKey) {
+      if (n.settingsKey === "reports" && !settings.showReportsForUsers) return false;
+      if (n.settingsKey === "clients" && !settings.showClientsForUsers) return false;
+      if (n.settingsKey === "products" && !settings.showProductsForUsers) return false;
+    }
+    return true;
+  });
+
+  // الصفحة الحالية مسموحة فقط إن كان للمستخدم صلاحية قسمها.
+  const currentPerm = NAV.find(
+    (n) => pathname === n.href || (n.href !== "/" && pathname.startsWith(`${n.href}/`)),
+  )?.perm;
+  const isForbiddenPath = !!currentPerm && !can(user, currentPerm);
 
   useEffect(() => {
-    if (!isAdmin && isAdminOnlyPath) router.replace("/");
-  }, [isAdmin, isAdminOnlyPath, router]);
+    if (isForbiddenPath) router.replace("/");
+  }, [isForbiddenPath, router]);
 
-  if (!isAdmin && isAdminOnlyPath) return null;
+  if (isForbiddenPath) return null;
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     window.location.href = "/login";
   }
-
-  // الأدمن يتحكم بإظهار/إخفاء الأقسام عن باقي المستخدمين من الإعدادات.
-  const visibleNav = NAV.filter((n) => {
-    if ("admin" in n && n.admin && !isAdmin) return false;
-    if (!isAdmin && settings) {
-      if ("key" in n && n.key === "reports" && !settings.showReportsForUsers) return false;
-      if ("key" in n && n.key === "clients" && !settings.showClientsForUsers) return false;
-      if ("key" in n && n.key === "products" && !settings.showProductsForUsers) return false;
-    }
-    return true;
-  });
 
   return (
     <ToastProvider>
@@ -243,17 +258,21 @@ export default function AppShell({
                   month: "long",
                 })}
               </span>
-              <Link href="/sales/new" className="btn btn-primary btn-sm">
-                <PlusCircle size={15} />
-                <span className="hidden sm:inline">فاتورة جديدة</span>
-              </Link>
+              {can(user, "sales.create") && (
+                <Link href="/sales/new" className="btn btn-primary btn-sm">
+                  <PlusCircle size={15} />
+                  <span className="hidden sm:inline">فاتورة جديدة</span>
+                </Link>
+              )}
             </div>
           </header>
           <main
             data-main
             className="mx-auto w-full max-w-[1240px] flex-1 px-3 py-4 sm:px-6 sm:py-6"
           >
-            {isAdmin || settings?.showProductsForUsers === true ? <LowStockBanner /> : null}
+            {can(user, "products.view") && (
+              <LowStockBanner />
+            )}
             {children}
           </main>
         </div>

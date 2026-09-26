@@ -1,7 +1,8 @@
 import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { clients, clientPayments, expenses, returnItems, returns, saleItems, sales, users } from "@/db/schema";
-import { errResponse, isErr, num, ok, requireUser } from "@/lib/api";
+import { errResponse, isErr, num, ok, requirePermission } from "@/lib/api";
+import { can } from "@/lib/permissions";
 import { isPaymentMethod, type PaymentMethod } from "@/lib/shared";
 import { ensureSchema } from "@/lib/migrate";
 
@@ -18,9 +19,10 @@ function dayStart(d: Date) {
 }
 
 export async function GET(req: Request) {
-  const auth = await requireUser();
+  const auth = await requirePermission("reports.view");
   if (isErr(auth)) return auth.res;
-  const isAdmin = auth.user.role === "admin";
+  // التقارير المالية الكاملة لمن يملك صلاحية الأرباح والتكاليف.
+  const isAdmin = can(auth.user, "finances.view_profit");
   await ensureSchema();
 
   const url = new URL(req.url);

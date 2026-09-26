@@ -45,6 +45,7 @@ import {
   type SessionUserDTO,
   type ShippingType,
 } from "@/lib/shared";
+import { can } from "@/lib/permissions";
 
 export default function NewSalePage() {
   const router = useRouter();
@@ -135,10 +136,12 @@ export default function NewSalePage() {
     (a, x) => a + (x.variant ? (x.priceType === "wholesale" ? x.variant.wholesalePrice : x.variant.retailPrice) : x.product.price) * x.qty,
     0,
   );
-  // المستخدم العادي محجوب عن الكلف/الأرباح — نحسب الربح للأدمن فقط للعرض.
-  const isAdmin = me?.role === "admin";
-  const canManageClients = isAdmin;
-  const profit = isAdmin
+  // الأدمن يحدد من يرى الأرباح ومن يمكنه الخصم والآجل وإدارة العملاء.
+  const showProfit = can(me, "finances.view_profit");
+  const canDiscount = can(me, "sales.discount");
+  const canCredit = can(me, "sales.credit");
+  const canManageClients = can(me, "clients.create") || can(me, "clients.update");
+  const profit = showProfit
     ? cartEntries.reduce(
         (a, x) =>
           a +
@@ -151,9 +154,9 @@ export default function NewSalePage() {
   // التوصيل ثابت من إعدادات الأدمن (داخلي 1.5 / خارجي 2 افتراضيًا).
   const ship =
     shippingType === "none" ? 0 : shippingType === "internal" ? (settings?.shippingInternal ?? 1.5) : (settings?.shippingExternal ?? 2);
-  // خصم الفاتورة (للأدمن فقط): نسبة أو مبلغ ثابت.
+  // خصم الفاتورة (بصلاحية مستقلة): نسبة أو مبلغ ثابت.
   const dv = Math.max(0, Number(discountValue) || 0);
-  const discount = isAdmin
+  const discount = canDiscount
     ? discountType === "percent"
       ? Math.min(subtotal, (subtotal * Math.min(dv, 100)) / 100)
       : discountType === "amount"
@@ -162,11 +165,11 @@ export default function NewSalePage() {
     : 0;
   const total = Math.max(0, Number((subtotal + ship - discount).toFixed(2)));
   const isDeliveryShipping = shippingType !== "none";
-  // الموظف العادي لا يستطيع تفعيل الآجل حتى لو وصلت الحالة من طلب قديم،
+  // من لا يملك صلاحية الآجل لا يستطيع تفعيله حتى لو وصلت الحالة من طلب قديم،
   // و"مستحقات شركة التوصيل" لا تُحفظ إطلاقًا بدون توصيل فعلي.
   const effectivePaymentMethod: PaymentMethod = isDeliveryShipping
     ? "delivery"
-    : paymentMethod === "delivery" || (!isAdmin && paymentMethod === "credit")
+    : paymentMethod === "delivery" || (!canCredit && paymentMethod === "credit")
       ? "cash"
       : paymentMethod;
   const isDeliverySale = isDeliveryShipping && effectivePaymentMethod === "delivery";
@@ -829,7 +832,7 @@ export default function NewSalePage() {
           <div>
             <label className="lbl">طريقة الدفع *</label>
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-              {availablePaymentMethods(shippingType, isAdmin).map((m) => (
+              {availablePaymentMethods(shippingType, canCredit).map((m) => (
                 <button
                   key={m}
                   type="button"
@@ -883,8 +886,8 @@ export default function NewSalePage() {
             </div>
           </div>
 
-          {/* خصم الفاتورة (للأدمن فقط) */}
-          {isAdmin && (
+          {/* خصم الفاتورة (بصلاحية مستقلة) */}
+          {canDiscount && (
             <div>
               <label className="lbl">الخصم على الفاتورة</label>
               <div className="flex gap-2">
@@ -956,7 +959,7 @@ export default function NewSalePage() {
               <span className="text-[14px] font-black">الإجمالي النهائي ({currency})</span>
               <span className="num text-[22px] font-black text-[var(--mint)]">{formatMoneyJOD(total, currency, rates)}</span>
             </div>
-            {isAdmin && (
+            {showProfit && (
               <div className="flex justify-between text-[11.5px] font-bold text-[var(--faint)]">
                 <span>الربح المتوقع</span>
                 <span className="num text-[var(--amber)]">{formatMoneyJOD(Math.max(0, profit - discount), currency, rates)}</span>

@@ -32,6 +32,21 @@ CREATE TABLE IF NOT EXISTS "users" (
   CONSTRAINT "users_username_unique" UNIQUE("username")
 );
 
+CREATE TABLE IF NOT EXISTS "user_permissions" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "user_id" integer NOT NULL,
+  "perm_key" text NOT NULL,
+  "created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+DO $$ BEGIN
+  ALTER TABLE "user_permissions" ADD CONSTRAINT "user_permissions_user_id_users_id_fk"
+    FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE INDEX IF NOT EXISTS "user_permissions_user_idx" ON "user_permissions" ("user_id");
+CREATE UNIQUE INDEX IF NOT EXISTS "user_permissions_user_key_uq" ON "user_permissions" ("user_id", "perm_key");
+
 CREATE TABLE IF NOT EXISTS "sessions" (
   "id" text PRIMARY KEY NOT NULL,
   "user_id" integer NOT NULL,
