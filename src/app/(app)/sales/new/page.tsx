@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PriceType, ProductVariantDTO } from "@/lib/shared";
 import {
+  CalendarClock,
   CheckCircle2,
   History,
   Minus,
@@ -177,6 +178,10 @@ export default function NewSalePage() {
       ? "cash"
       : paymentMethod;
   const isDeliverySale = isDeliveryShipping && effectivePaymentMethod === "delivery";
+
+  // فاتورة تخلق ذمة على العميل: إما "آجل" مباشرة، أو "مستحقات شركة التوصيل"
+  // (فيها يبقى صافي الطلب بذمة شركة التوصيل). الاثنتان تُقسَّمان على دفعات.
+  const createsDebt = isDeliverySale || effectivePaymentMethod === "credit";
   // الصافي بذمة شركة التوصيل = الإجمالي النهائي للطلب − قيمة التوصيل فقط (مثال: 89 − 1.5 = 87.5).
   const deliveryReceivable = isDeliverySale
     ? Math.max(0, Number((total - ship).toFixed(2)))
@@ -192,6 +197,8 @@ export default function NewSalePage() {
   const remaining = isDeliverySale
     ? deliveryReceivable
     : Math.max(0, Number((total - paid).toFixed(2)));
+  // واجهة التقسيط تظهر فقط عند وجود رصيد مُتبقٍ فعلي — ولا تظهر مع النقدي/الحساب.
+  const showInstallments = canInstallments && createsDebt && remaining > 0;
 
   // ===== ماسح الباركود السريع (Keyboard Wedge) =====
   // القارئ يكتب الأرقام ثم Enter: نطابق الباركود أولًا، ثم الاسم النصي،
@@ -329,6 +336,22 @@ export default function NewSalePage() {
     (r: { amount: number; dueDate: string; note: string }[]) => setPlanRows(r),
     [],
   );
+  const planRef = useRef<HTMLDivElement>(null);
+
+  // إظهار واجهة التقسيط فور اختيار طريقة ذمة (تمرير ناعم لها حتى لا يظن المستخدم أنها لا تعمل).
+  useEffect(() => {
+    if (!showInstallments) return;
+    const id = window.setTimeout(
+      () => planRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
+      120,
+    );
+    return () => window.clearTimeout(id);
+  }, [showInstallments]);
+
+  // ترك الذمة (العودة للنقدي) يُفرّغ الخطة حتى لا تُحفظ خطة قديمة على فاتورة نقدية.
+  useEffect(() => {
+    if (!createsDebt) setPlanRows([]);
+  }, [createsDebt]);
 
   async function submit() {
     if (submitting) return;
@@ -362,9 +385,9 @@ export default function NewSalePage() {
         },
       });
 
-      // حفظ خطة التقسيط المُعدّة مسبقًا فور إنشاء الفاتورة (ذمم/آجل فقط).
+      // حفظ خطة التقسيط المُعدّة مسبقًا فور إنشاء الفاتورة (أي طريقة تُنشئ ذمة).
       let planSaved = false;
-      if (canInstallments && effectivePaymentMethod === "credit" && planRows.length) {
+      if (canInstallments && createsDebt && planRows.length) {
         const total = planRows.reduce((a, x) => a + (x.amount || 0), 0);
         const okRows =
           total > 0 &&
@@ -902,6 +925,12 @@ export default function NewSalePage() {
                 )}
               </p>
             )}
+            {createsDebt && remaining > 0 && canInstallments && (
+              <p className="mt-2 flex items-center gap-1.5 rounded-lg border border-[var(--accent-line)] bg-[var(--accent-soft)] px-2.5 py-1.5 text-[11.5px] font-extrabold text-[var(--accent-text)]">
+                <CalendarClock size={13} />
+                {t("يمكنك تقسيم المبلغ المتبقي على دفعات وتواريخ استحقاق بالأسفل.")}
+              </p>
+            )}
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Field
                 label={
@@ -1016,9 +1045,9 @@ export default function NewSalePage() {
             )}
           </div>
 
-          {/* ===== خطة التقسيط والذمم (تظهر مع الدفع الآجل) ===== */}
-          {canInstallments && effectivePaymentMethod === "credit" && remaining > 0 && (
-            <div className="panel anim-in p-4 sm:p-5">
+          {/* ===== خطة التقسيط والذمم (تظهر فورًا مع أي طريقة تُنشئ ذمة) ===== */}
+          {showInstallments && (
+            <div ref={planRef} className="panel anim-in p-4 sm:p-5">
               <InstallmentPlanner
                 saleId={null}
                 owed={remaining}

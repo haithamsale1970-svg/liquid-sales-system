@@ -472,6 +472,8 @@ const EN: Record<string, string> = {
   "ابحث بالاسم أو الهاتف…": "Search by name or phone…",
   "ابحث عن صنف أو نكهة…": "Search for an item or flavor…",
   "ابحث في التفاصيل أو باسم المستخدم…": "Search in details or by username…",
+  "يمكنك تقسيم المبلغ المتبقي على دفعات وتواريخ استحقاق بالأسفل.":
+    "You can split the remaining amount into installments with due dates below.",
   "احفظ الفاتورة لحفظ الخطة وتفعيل تنبيهات الاستحقاق تلقائيًا.": "Save the invoice to store the plan and enable due alerts automatically.",
   "اختر العميل أولاً": "Select a client first",
   "اختر المقاس والنيكوتين أولًا": "Select size and nicotine first",
