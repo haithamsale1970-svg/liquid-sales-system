@@ -412,7 +412,7 @@ export default function DashboardPage() {
             <ul className="divide-y divide-[var(--line-soft)]">
               {data.recentSales.map((s) => (
                 <li key={s.id}>
-                  <Link href={`/sales/${s.id}`} className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-white/[.03]">
+                  <Link href={`/sales/${s.id}`} className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-[var(--overlay-1)]">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="num text-[12.5px] font-extrabold">{invoiceNo(s.id)}</span>

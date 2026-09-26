@@ -239,7 +239,7 @@ export default function ClientsPage() {
   return (
     <div className="space-y-5">
       <div className="anim-in flex flex-wrap items-center gap-2.5">
-        <div className="flex w-full gap-2 rounded-2xl border border-[var(--line-soft)] bg-white/[.02] p-1 sm:w-auto">
+        <div className="flex w-full gap-2 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-1 sm:w-auto">
           {(["individuals", "shops"] as ClientSection[]).map((key) => (
             <button
               key={key}
@@ -248,8 +248,8 @@ export default function ClientsPage() {
               className={cls(
                 "flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-extrabold transition-colors sm:flex-none",
                 section === key
-                  ? "bg-[var(--mint)] text-[#04211a]"
-                  : "text-[var(--muted)] hover:bg-white/[.05]",
+                  ? "bg-[var(--mint)] text-[var(--on-accent)]"
+                  : "text-[var(--muted)] hover:bg-[var(--overlay-2)]",
               )}
             >
               {key === "individuals" ? <User size={15} /> : <Store size={15} />}
@@ -527,21 +527,21 @@ export default function ClientsPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div className="rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-4 text-center">
+              <div className="rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-4 text-center">
                 <div className="num text-[22px] font-black text-[var(--mint)]">{fmtNum(detail.stats.orders)}</div>
                 <div className="text-[11.5px] font-bold text-[var(--muted)]">فاتورة مكتملة</div>
               </div>
-              <div className="rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-4 text-center">
+              <div className="rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-4 text-center">
                 <div className="num text-[22px] font-black text-[var(--mint)]">{formatMoneyJOD(detail.stats.total, currency, rates)}</div>
                 <div className="text-[11.5px] font-bold text-[var(--muted)]">إجمالي المشتريات</div>
               </div>
-              <div className="rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-4 text-center">
+              <div className="rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-4 text-center">
                 <div className="num text-[22px] font-black text-[var(--muted)]">
                   {formatMoneyJOD(detail.stats.avg ?? (detail.stats.orders ? detail.stats.total / detail.stats.orders : 0), currency, rates)}
                 </div>
                 <div className="text-[11.5px] font-bold text-[var(--muted)]">متوسط الفاتورة</div>
               </div>
-              <div className="rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-4 text-center">
+              <div className="rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-4 text-center">
                 <div className={cls("num text-[22px] font-black", (detail.stats.debt ?? 0) > 0 ? "text-[var(--danger)]" : "text-[var(--mint)]")}>
                   {formatMoneyJOD(detail.stats.debt ?? 0, currency, rates)}
                 </div>
@@ -557,7 +557,7 @@ export default function ClientsPage() {
                   <Link
                     key={p.id}
                     href={`/sales/${p.id}`}
-                    className="block rounded-2xl border border-[var(--line-soft)] bg-white/[.02] p-3.5 transition-colors hover:border-[var(--line)] hover:bg-white/[.045]"
+                    className="block rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3.5 transition-colors hover:border-[var(--line)] hover:bg-[var(--overlay-2)]"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
@@ -573,7 +573,7 @@ export default function ClientsPage() {
                     </div>
                     <div className="mt-2.5 flex items-center gap-2 overflow-x-auto">
                       {p.items.map((it, j) => (
-                        <span key={j} className="flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--line-soft)] bg-white/[.03] px-2 py-1 text-[11px] font-bold">
+                        <span key={j} className="flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--line-soft)] bg-[var(--overlay-1)] px-2 py-1 text-[11px] font-bold">
                           <ProductImage src={it.imageUrl} name={it.productName} size={18} radius={5} />
                           {it.productName}
                           <span className="num text-[var(--mint)]">×{it.quantity}</span>

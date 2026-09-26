@@ -133,7 +133,7 @@ export default function ReturnsPage() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat
-          icon={<Undo2 size={17} className="text-white" />}
+          icon={<Undo2 size={17} className="text-[var(--text)]" />}
           tone="violet"
           label="عدد المرتجعات"
           value={fmtNum(stats.count)}
@@ -209,7 +209,7 @@ export default function ReturnsPage() {
           filtered.map((r) => (
             <div
               key={r.id}
-              className="rounded-2xl border border-[var(--line-soft)] bg-white/[.02] p-3.5"
+              className="rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3.5"
             >
               <div className="flex flex-wrap items-center gap-2.5">
                 <Badge tone="violet" className="num">
@@ -240,7 +240,7 @@ export default function ReturnsPage() {
                 </span>
               </div>
 
-              <div className="mt-1.5 rounded-lg border border-[var(--line-soft)] bg-white/[.03] px-2.5 py-1.5 text-[11.5px] font-extrabold text-[var(--muted)]">
+              <div className="mt-1.5 rounded-lg border border-[var(--line-soft)] bg-[var(--overlay-1)] px-2.5 py-1.5 text-[11.5px] font-extrabold text-[var(--muted)]">
                 السبب: {r.reason}
               </div>
 

@@ -37,7 +37,7 @@ function PermToggle({
         disabled && "cursor-not-allowed opacity-40",
         checked
           ? "border-transparent bg-[var(--mint)]"
-          : "border-[var(--line)] bg-white/[.06]",
+          : "border-[var(--line)] bg-[var(--overlay-2)]",
       )}
     >
       <span
@@ -115,7 +115,7 @@ export default function PermissionsMatrix({
   return (
     <div className="space-y-4">
       {locked && (
-        <p className="flex items-center gap-2 rounded-xl border border-[var(--line-soft)] bg-white/[.04] px-3 py-2.5 text-[12.5px] font-bold text-[var(--muted)]">
+        <p className="flex items-center gap-2 rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-2)] px-3 py-2.5 text-[12.5px] font-bold text-[var(--muted)]">
           <ShieldCheck size={15} className="text-[var(--mint)]" />
           {lockedHint ?? "هذا الحساب يملك كل الصلاحيات ولا يمكن تقييده."}
         </p>
@@ -198,7 +198,7 @@ export default function PermissionsMatrix({
           {EXTRA_PERMISSIONS.map((p) => (
             <div
               key={p.key}
-              className="flex items-center justify-between gap-3 rounded-xl border border-[var(--line-soft)] bg-white/[.03] px-3 py-2.5"
+              className="flex items-center justify-between gap-3 rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2.5"
             >
               <div className="min-w-0">
                 <div className="text-[12.5px] font-extrabold">{p.label}</div>

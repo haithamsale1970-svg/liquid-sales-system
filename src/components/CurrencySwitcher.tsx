@@ -29,7 +29,7 @@ export default function CurrencySwitcher({
   }
 
   return (
-    <div className="flex items-center gap-1 rounded-xl border border-[var(--line-soft)] bg-white/[.03] p-1" title="عملة العرض — التحويل فوري">
+    <div className="flex items-center gap-1 rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-1" title="عملة العرض — التحويل فوري">
       {(Object.keys(CURRENCIES) as CurrencyCode[]).map((c) => (
         <button
           key={c}
@@ -37,8 +37,8 @@ export default function CurrencySwitcher({
           className={cls(
             "rounded-lg px-2.5 py-1.5 text-[11.5px] font-black transition-all",
             cur === c
-              ? "bg-[rgba(255,34,34,.15)] text-[var(--mint)] shadow"
-              : "text-[var(--muted)] hover:bg-white/[.06] hover:text-white",
+              ? "bg-[var(--accent-soft-2)] text-[var(--mint)] shadow"
+              : "text-[var(--muted)] hover:bg-[var(--overlay-2)] hover:text-[var(--text)]",
           )}
           title={CURRENCIES[c].label}
         >

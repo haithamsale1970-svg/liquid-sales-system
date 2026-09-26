@@ -186,7 +186,7 @@ export default function ActivityPage() {
                     <span className="num hidden sm:inline">• {fmtDateTime(a.createdAt)}</span>
                   </div>
                 </div>
-                <span className="shrink-0 rounded-lg bg-white/[.04] px-2.5 py-1 text-[11px] font-extrabold text-[var(--muted)]">
+                <span className="shrink-0 rounded-lg bg-[var(--overlay-2)] px-2.5 py-1 text-[11px] font-extrabold text-[var(--muted)]">
                   {a.action}
                 </span>
               </li>

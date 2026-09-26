@@ -174,8 +174,8 @@ export default function ClientPicker({
                   onClick={() => pick(c)}
                   className={cls(
                     "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-start transition-colors",
-                    i === hi ? "bg-white/[.07]" : "hover:bg-white/[.04]",
-                    String(c.id) === value && "bg-[rgba(255,34,34,.1)]",
+                    i === hi ? "bg-[var(--overlay-2)]" : "hover:bg-[var(--overlay-2)]",
+                    String(c.id) === value && "bg-[var(--accent-soft)]",
                   )}
                 >
                   <div className="min-w-0 flex-1">
@@ -183,7 +183,7 @@ export default function ClientPicker({
                       <span className="truncate text-[13px] font-extrabold">
                         {c.name}
                       </span>
-                      <span className="shrink-0 rounded-md bg-white/[.06] px-1.5 py-0.5 text-[10px] font-bold text-[var(--muted)]">
+                      <span className="shrink-0 rounded-md bg-[var(--overlay-2)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--muted)]">
                         {CLIENT_TYPES[c.type]}
                       </span>
                       {String(c.id) === value && (
@@ -223,7 +223,7 @@ export default function ClientPicker({
                 onQuickAdd(q.trim());
                 setOpen(false);
               }}
-              className="flex w-full items-center gap-2 border-t border-[var(--line-soft)] bg-white/[.02] px-3.5 py-3 text-[12.5px] font-extrabold text-[var(--mint)] hover:bg-white/[.05]"
+              className="flex w-full items-center gap-2 border-t border-[var(--line-soft)] bg-[var(--overlay-1)] px-3.5 py-3 text-[12.5px] font-extrabold text-[var(--mint)] hover:bg-[var(--overlay-2)]"
             >
               <UserPlus size={14} />
               {q.trim() ? `إضافة عميل جديد: «${q.trim()}»` : "إضافة عميل جديد"}
@@ -269,7 +269,7 @@ function Chip({
   danger?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-[var(--line-soft)] bg-white/[.03] px-3 py-2">
+    <div className="rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2">
       <div className="text-[10.5px] font-bold text-[var(--faint)]">{label}</div>
       <div
         className={cls(

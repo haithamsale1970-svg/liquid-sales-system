@@ -373,7 +373,7 @@ export default function ReportsPage() {
               "rounded-xl border px-4 py-2.5 text-[12.5px] font-extrabold transition-all",
               preset === p.key
                 ? "border-[rgba(255,34,34,.55)] bg-[rgba(255,34,34,.12)] text-[var(--mint)]"
-                : "border-[var(--line-soft)] bg-white/[.02] text-[var(--muted)] hover:bg-white/[.05]",
+                : "border-[var(--line-soft)] bg-[var(--overlay-1)] text-[var(--muted)] hover:bg-[var(--overlay-2)]",
             )}
           >
             {p.label}

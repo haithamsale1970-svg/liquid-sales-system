@@ -148,7 +148,7 @@ export default function InventoryPage() {
       {/* ===== ملخص ===== */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat
-          icon={<PackageSearch size={17} className="text-white" />}
+          icon={<PackageSearch size={17} className="text-[var(--text)]" />}
           tone="violet"
           label="عدد الحركات المسجلة"
           value={fmtNum(stats.count)}

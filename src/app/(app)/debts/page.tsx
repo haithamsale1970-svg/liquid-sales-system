@@ -407,7 +407,7 @@ export default function DebtsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-3.5">
+            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3.5">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-[14px] font-extrabold">{detail.client.name}</span>
@@ -428,7 +428,7 @@ export default function DebtsPage() {
             </div>
 
             {/* نموذج التحصيل */}
-            <div className="space-y-3 rounded-2xl border border-[var(--line-soft)] bg-white/[.02] p-3.5">
+            <div className="space-y-3 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3.5">
               <div className="flex items-center gap-2 text-[13px] font-extrabold">
                 <HandCoins size={15} className="text-[var(--mint)]" /> تسجيل تحصيل دفعة
               </div>
@@ -468,7 +468,7 @@ export default function DebtsPage() {
                   <button
                     key={b.label}
                     type="button"
-                    className="rounded-lg border border-[var(--line-soft)] bg-white/[.03] px-2.5 py-1 text-[11.5px] font-extrabold text-[var(--muted)] hover:bg-white/[.06]"
+                    className="rounded-lg border border-[var(--line-soft)] bg-[var(--overlay-1)] px-2.5 py-1 text-[11.5px] font-extrabold text-[var(--muted)] hover:bg-[var(--overlay-2)]"
                     onClick={() => setAmount(String(b.value))}
                   >
                     {b.label}
@@ -507,7 +507,7 @@ export default function DebtsPage() {
                 </span>
               </div>
               {detail.unpaidSales.length === 0 ? (
-                <p className="rounded-xl border border-[var(--line-soft)] bg-white/[.02] px-3 py-2 text-[12px] font-bold text-[var(--faint)]">
+                <p className="rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2 text-[12px] font-bold text-[var(--faint)]">
                   لا فواتير مفتوحة — الذمة مصفّرة
                 </p>
               ) : (
@@ -558,7 +558,7 @@ export default function DebtsPage() {
                 </span>
               </div>
               {detail.payments.length === 0 ? (
-                <p className="rounded-xl border border-[var(--line-soft)] bg-white/[.02] px-3 py-2 text-[12px] font-bold text-[var(--faint)]">
+                <p className="rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2 text-[12px] font-bold text-[var(--faint)]">
                   لا دفعات مسجّلة بعد
                 </p>
               ) : (
@@ -566,7 +566,7 @@ export default function DebtsPage() {
                   {detail.payments.map((p) => (
                     <li
                       key={p.id}
-                      className="flex items-center gap-2.5 rounded-xl border border-[var(--line-soft)] bg-white/[.02] px-3 py-2"
+                      className="flex items-center gap-2.5 rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2"
                     >
                       <span className="num shrink-0 text-[13px] font-black text-[var(--mint)]">
                         {formatMoneyJOD(p.amount, currency, rates)}

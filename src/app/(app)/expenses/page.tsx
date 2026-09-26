@@ -254,7 +254,7 @@ export default function ExpensesPage() {
               "rounded-xl border px-3.5 py-2 text-[12.5px] font-extrabold transition-all",
               preset === p.key
                 ? "border-[rgba(255,34,34,.55)] bg-[rgba(255,34,34,.12)] text-[var(--mint)]"
-                : "border-[var(--line-soft)] bg-white/[.02] text-[var(--muted)] hover:bg-white/[.05]",
+                : "border-[var(--line-soft)] bg-[var(--overlay-1)] text-[var(--muted)] hover:bg-[var(--overlay-2)]",
             )}
           >
             {p.label}
@@ -393,12 +393,12 @@ export default function ExpensesPage() {
                       {formatMoneyJOD(c.amount, currency, rates)}
                     </span>
                   </div>
-                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-white/[.05]">
+                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-[var(--overlay-2)]">
                     <div
                       className="h-full rounded-full"
                       style={{
                         width: `${total > 0 ? Math.max(3, (c.amount / total) * 100) : 0}%`,
-                        background: "linear-gradient(90deg,#ff2b2b,#8f0000)",
+                        background: "linear-gradient(90deg,var(--brand-1),var(--brand-2))",
                       }}
                     />
                   </div>

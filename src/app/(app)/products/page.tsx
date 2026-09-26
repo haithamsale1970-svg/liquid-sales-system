@@ -374,7 +374,7 @@ export default function ProductsPage() {
         )}
         {!showArchived &&
           (items ?? []).some((p) => !p.archived && p.stock <= p.lowStockAt) && (
-            <div className="flex items-center gap-2 rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-2.5 text-[12.5px] font-extrabold text-amber-400">
+            <div className="flex items-center gap-2 rounded-2xl border border-[var(--alert-line)] bg-[var(--alert-soft)] px-4 py-2.5 text-[12.5px] font-extrabold text-[var(--alert-text)]">
               <CircleAlert size={16} className="shrink-0" />
               تنبيه نقص المخزون:{" "}
               <span className="num">
@@ -501,7 +501,7 @@ export default function ProductsPage() {
                       {p.variants.slice(0, 2).map((v) => (
                         <span
                           key={v.id}
-                          className="num rounded-lg border border-[var(--line-soft)] bg-white/[.03] px-1.5 py-0.5 text-[10px] font-bold text-[var(--muted)]"
+                          className="num rounded-lg border border-[var(--line-soft)] bg-[var(--overlay-1)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--muted)]"
                         >
                           {v.size} · {v.nicotine}
                         </span>
@@ -519,7 +519,7 @@ export default function ProductsPage() {
                       {p.fields.slice(0, 3).map((f, j) => (
                         <span
                           key={j}
-                          className="rounded-lg border border-[var(--line-soft)] bg-white/[.03] px-2 py-1 text-[10.5px] font-bold text-[var(--muted)]"
+                          className="rounded-lg border border-[var(--line-soft)] bg-[var(--overlay-1)] px-2 py-1 text-[10.5px] font-bold text-[var(--muted)]"
                         >
                           {f.label}: <span className="text-[var(--text)]">{f.value}</span>
                         </span>
@@ -782,7 +782,7 @@ export default function ProductsPage() {
                   return (
                   <div
                     key={variant.id ?? `new-${index}`}
-                    className="rounded-2xl border border-[var(--line-soft)] bg-white/[.02] p-3"
+                    className="rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3"
                   >
                     <div className="mb-3 flex items-center justify-between gap-2">
                       <span className="num text-[11.5px] font-extrabold text-[var(--faint)]">
@@ -946,7 +946,7 @@ export default function ProductsPage() {
                   <button
                     key={p}
                     type="button"
-                    className="rounded-lg border border-[var(--line-soft)] bg-white/[.03] px-2 py-1 text-[10.5px] font-bold text-[var(--muted)] transition-colors hover:text-[var(--mint)]"
+                    className="rounded-lg border border-[var(--line-soft)] bg-[var(--overlay-1)] px-2 py-1 text-[10.5px] font-bold text-[var(--muted)] transition-colors hover:text-[var(--mint)]"
                     onClick={() =>
                       setForm((f) => ({
                         ...f,
@@ -1028,7 +1028,7 @@ export default function ProductsPage() {
         icon={<SlidersHorizontal size={17} />}
       >
         <div className="space-y-4">
-          <div className="flex items-center justify-between rounded-2xl border border-[var(--line-soft)] bg-white/[.03] px-4 py-3">
+          <div className="flex items-center justify-between rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-4 py-3">
             <span className="text-[12.5px] font-bold text-[var(--muted)]">الرصيد الحالي</span>
             <span className="num text-[20px] font-black">{stockTarget?.stock ?? 0}</span>
           </div>

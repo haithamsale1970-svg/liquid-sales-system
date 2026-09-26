@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import {
   Banknote,
   CalendarClock,
+  Check,
   DatabaseBackup,
   Download,
   Eye,
   EyeOff,
   Info,
   KeyRound,
+  Palette,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
@@ -17,7 +19,9 @@ import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
 import { Btn, Card, Field, Input, Select, Skeleton } from "@/components/ui";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
-import { fmtDateTime, type SessionUserDTO } from "@/lib/shared";
+import { useTheme } from "@/components/ThemeProvider";
+import { THEME_LIST } from "@/lib/theme";
+import { cls, fmtDateTime, type SessionUserDTO } from "@/lib/shared";
 import { can } from "@/lib/permissions";
 import { CURRENCIES, DEFAULT_SETTINGS, type AppSettings, type CurrencyCode } from "@/lib/currency";
 
@@ -41,7 +45,7 @@ function Toggle({
   return (
     <button
       onClick={() => onChange(!value)}
-      className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[var(--line-soft)] bg-white/[.02] px-4 py-3 text-start transition-colors hover:bg-white/[.05]"
+      className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-4 py-3 text-start transition-colors hover:bg-[var(--overlay-2)]"
     >
       <span>
         <span className="block text-[13px] font-extrabold">{label}</span>
@@ -135,6 +139,8 @@ export default function SettingsPage() {
   // إعدادات النظام والنسخ الاحتياطي تتطلب صلاحيات مستقلة يحددها الأدمن.
   const canEditSettings = can(me, "settings.update");
   const canBackup = can(me, "backup.manage");
+  // الثيم متاح لكل المستخدمين ولا علاقة له بالصلاحيات.
+  const { theme, setTheme } = useTheme();
 
   async function saveSettings() {
     if (savingSettings) return;
@@ -168,10 +174,10 @@ export default function SettingsPage() {
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-3 rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-4">
+            <div className="flex items-center gap-3 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-4">
               <div
-                className="flex h-11 w-11 items-center justify-center rounded-xl text-white"
-                style={{ background: "linear-gradient(135deg,#ff2b2b,#8f0000)" }}
+                className="flex h-11 w-11 items-center justify-center rounded-xl text-[var(--on-accent)]"
+                style={{ background: "linear-gradient(135deg,var(--brand-1),var(--brand-2))" }}
               >
                 <UserRound size={20} />
               </div>
@@ -192,6 +198,43 @@ export default function SettingsPage() {
                 </Btn>
               </div>
             </Field>
+
+            {/* ===== ثيم النظام: متاح لكل المستخدمين، ولا يمس الصلاحيات ===== */}
+            <div className="mt-5 border-t border-[var(--line-soft)] pt-4">
+              <div className="mb-3 flex items-center gap-2 text-[13px] font-extrabold">
+                <Palette size={15} className="text-[var(--mint)]" />
+                ثيم النظام
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {THEME_LIST.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTheme(t.id)}
+                    className={cls(
+                      "rounded-xl border p-3 text-start transition-colors",
+                      theme === t.id
+                        ? "border-[var(--accent)] bg-[var(--accent-soft)]"
+                        : "border-[var(--line-soft)] bg-[var(--overlay-1)] hover:border-[var(--accent-line)]",
+                    )}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      {t.swatch.map((c) => (
+                        <span
+                          key={c}
+                          className="h-4 w-4 rounded-full border border-[var(--line)]"
+                          style={{ background: c }}
+                        />
+                      ))}
+                      {theme === t.id && (
+                        <Check size={14} className="ms-auto text-[var(--accent)]" />
+                      )}
+                    </div>
+                    <div className="mt-2 text-[12.5px] font-extrabold">{t.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div>
               <div className="mb-3 flex items-center gap-2 text-[13px] font-extrabold">

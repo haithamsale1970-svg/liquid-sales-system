@@ -42,7 +42,7 @@ export default function AppError({
           راجع مدير النظام.
         </p>
         {error.message && (
-          <p className="mx-auto max-w-[520px] break-words rounded-xl border border-[var(--line-soft)] bg-white/[.03] px-3 py-2 text-[11.5px] font-bold text-[var(--faint)]">
+          <p className="mx-auto max-w-[520px] break-words rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2 text-[11.5px] font-bold text-[var(--faint)]">
             {error.message}
           </p>
         )}

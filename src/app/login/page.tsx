@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { Eye, EyeOff, Lock, LogIn, User } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
+import ThemeToggle from "@/components/ThemeToggle";
 import { Spinner } from "@/components/ui";
 
 export default function LoginPage() {
@@ -34,22 +35,22 @@ export default function LoginPage() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-10">
-      {/* خلفية هادئة ونظيفة: تدرّج أسود عميق مع توهّج أحمر خافت جدًا */}
+      {/* خلفية هادئة ونظيفة: تتبع الثيم (توهّج داكن أو فسفوري فاتح) */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(900px 520px at 50% -8%, rgba(196,0,0,.16), transparent 62%)," +
-            "radial-gradient(700px 480px at 50% 112%, rgba(143,0,0,.10), transparent 65%)," +
-            "linear-gradient(180deg, #0a0505 0%, #060303 55%, #050202 100%)",
+            "radial-gradient(900px 520px at 50% -8%, var(--glow-1), transparent 62%)," +
+            "radial-gradient(700px 480px at 50% 112%, var(--glow-2), transparent 65%)," +
+            "var(--bg)",
         }}
       />
       <div
         className="pointer-events-none absolute inset-0 opacity-[.55]"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px)," +
-            "linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px)",
+            "linear-gradient(var(--line-soft) 1px, transparent 1px)," +
+            "linear-gradient(90deg, var(--line-soft) 1px, transparent 1px)",
           backgroundSize: "64px 64px",
           maskImage:
             "radial-gradient(circle at 50% 42%, black 0%, transparent 72%)",
@@ -58,21 +59,25 @@ export default function LoginPage() {
         }}
       />
 
+      {/* زر تبديل الثيم في صفحة الدخول أيضًا */}
+      <div className="absolute end-5 top-5 z-20">
+        <ThemeToggle />
+      </div>
+
       <div className="relative z-10 flex w-full max-w-[420px] flex-col items-center">
-        {/* الشعار الأحمر الأنيق */}
+        {/* إطار الشعار — مربوط بنظام الثيم */}
         <div className="mb-7 flex flex-col items-center text-center">
           <div
             className="relative rounded-[26px] p-[1.5px]"
             style={{
               background:
-                "linear-gradient(160deg, rgba(255,77,77,.95), rgba(143,0,0,.55) 45%, rgba(255,77,77,.25))",
-              boxShadow:
-                "0 28px 70px -26px rgba(196,0,0,.75), inset 0 0 0 1px rgba(255,255,255,.05)",
+                "linear-gradient(160deg, var(--brand-1), var(--brand-2) 45%, var(--brand-3))",
+              boxShadow: "0 28px 70px -26px var(--accent-glow)",
             }}
           >
             <div
               className="rounded-[25px]"
-              style={{ boxShadow: "inset 0 0 40px -14px rgba(0,0,0,.9)" }}
+              style={{ boxShadow: "inset 0 0 40px -14px var(--brand-3)" }}
             >
               <BrandMark size={92} />
             </div>
@@ -89,13 +94,11 @@ export default function LoginPage() {
 
         {/* نموذج تسجيل الدخول */}
         <div
-          className="w-full rounded-[26px] border border-white/[.07] p-6 sm:p-7"
+          className="w-full rounded-[26px] border border-[var(--line)] p-6 sm:p-7"
           style={{
-            background:
-              "linear-gradient(180deg, rgba(22,8,8,.82) 0%, rgba(10,4,4,.88) 100%)",
+            background: "var(--panel)",
             backdropFilter: "blur(18px)",
-            boxShadow:
-              "0 34px 90px -40px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.05)",
+            boxShadow: "var(--shadow-2)",
           }}
         >
           <h2 className="text-center text-[16.5px] font-black">تسجيل الدخول</h2>

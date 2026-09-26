@@ -58,8 +58,8 @@ export default function LowStockBanner() {
           className={cls(
             "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl",
             outCount > 0
-              ? "bg-[rgba(255,43,43,.18)] text-[var(--danger)]"
-              : "bg-[rgba(255,170,0,.16)] text-amber-400",
+              ? "bg-[var(--accent-soft-2)] text-[var(--danger)]"
+              : "bg-[var(--alert-soft)] text-[var(--alert-text)]",
           )}
         >
           <BellRing size={16} />
@@ -115,7 +115,7 @@ export default function LowStockBanner() {
           {(data?.items ?? []).map((p) => (
             <li
               key={p.id}
-              className="flex items-center gap-2.5 rounded-xl border border-[var(--line-soft)] bg-white/[.02] px-2.5 py-2"
+              className="flex items-center gap-2.5 rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-2.5 py-2"
             >
               <ProductImage src={p.imageUrl} name={p.name} size={32} radius={9} />
               <div className="min-w-0 flex-1">
@@ -128,8 +128,8 @@ export default function LowStockBanner() {
                 className={cls(
                   "num shrink-0 rounded-lg px-2 py-1 text-[11.5px] font-black",
                   p.stock <= 0
-                    ? "bg-[rgba(255,43,43,.16)] text-[var(--danger)]"
-                    : "bg-[rgba(255,170,0,.16)] text-amber-400",
+                    ? "bg-[var(--accent-soft)] text-[var(--danger)]"
+                    : "bg-[var(--alert-soft)] text-[var(--alert-text)]",
                 )}
               >
                 {p.stock <= 0 ? "نفد" : `متبقٍ ${p.stock}`}

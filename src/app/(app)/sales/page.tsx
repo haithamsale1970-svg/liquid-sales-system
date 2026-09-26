@@ -94,7 +94,7 @@ export default function SalesPage() {
   return (
     <div className="space-y-5">
       {/* filters */}
-      <div className="anim-in rounded-[20px] border border-[var(--line-soft)] bg-white/[.025] p-3 shadow-[0_16px_36px_-28px_rgba(0,0,0,.8)] sm:p-4">
+      <div className="anim-in rounded-[20px] border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3 shadow-[0_16px_36px_-28px_rgba(0,0,0,.8)] sm:p-4">
         <div className="grid grid-cols-2 items-end gap-2 sm:grid-cols-4 sm:gap-2.5">
           <div className="min-w-0">
             <label className="lbl mb-1.5">من تاريخ</label>
@@ -202,7 +202,7 @@ export default function SalesPage() {
                 <button
                   key={s.id}
                   onClick={() => (window.location.href = `/sales/${s.id}`)}
-                  className="w-full rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-3.5 text-start transition-colors active:border-[rgba(255,34,34,.4)]"
+                  className="w-full rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3.5 text-start transition-colors active:border-[rgba(255,34,34,.4)]"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <span className="num font-black text-[var(--mint)]">{invoiceNo(s.id)}</span>

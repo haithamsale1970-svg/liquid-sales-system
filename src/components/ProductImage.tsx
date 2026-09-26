@@ -65,7 +65,7 @@ export function ProductImage({
   return (
     <div
       className={cls(
-        "flex items-center justify-center font-extrabold text-white/90",
+        "flex items-center justify-center font-extrabold text-[var(--text)]/90",
         fill ? "h-full w-full" : "shrink-0",
         className,
       )}

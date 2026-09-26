@@ -243,10 +243,12 @@ export default function UsersPage() {
                     <td>
                       <div className="flex items-center gap-3">
                         <div
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[12px] font-extrabold"
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[12px] font-extrabold text-[var(--on-accent)]"
                           style={{
-                            background: u.role === "admin" ? "linear-gradient(135deg,#ff2b2b,#8f0000)" : "rgba(255,255,255,.07)",
-                            color: u.role === "admin" ? "#ffffff" : "var(--muted)",
+                            background:
+                              u.role === "admin"
+                                ? "linear-gradient(135deg,var(--brand-1),var(--brand-2))"
+                                : "var(--overlay-2)",
                           }}
                         >
                           {initials(u.name)}
@@ -355,7 +357,7 @@ export default function UsersPage() {
                       key={t.key}
                       type="button"
                       onClick={() => pickCreateTemplate(t.key)}
-                      className="rounded-xl border border-[var(--line-soft)] bg-white/[.03] px-3 py-2 text-start transition-colors hover:border-[var(--mint)]"
+                      className="rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2 text-start transition-colors hover:border-[var(--mint)]"
                     >
                       <div className="text-[12.5px] font-extrabold">{t.label}</div>
                       <div className="text-[11.5px] font-semibold text-[var(--faint)]">
@@ -442,7 +444,7 @@ export default function UsersPage() {
                         "rounded-xl border px-3 py-2 text-start transition-colors",
                         permTemplate === t.key
                           ? "border-[var(--mint)] bg-[var(--mint)]/10"
-                          : "border-[var(--line-soft)] bg-white/[.03] hover:border-[var(--mint)]",
+                          : "border-[var(--line-soft)] bg-[var(--overlay-1)] hover:border-[var(--mint)]",
                       )}
                     >
                       <div className="text-[12.5px] font-extrabold">{t.label}</div>

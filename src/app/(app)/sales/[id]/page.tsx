@@ -263,7 +263,7 @@ export default function InvoicePage({
                 className="flex h-14 w-14 items-center justify-center rounded-2xl"
                 style={{ background: "linear-gradient(135deg,#ff2222,#8f0000)" }}
               >
-                <Droplets size={28} className="text-white" strokeWidth={2.5} />
+                <Droplets size={28} className="text-[var(--text)]" strokeWidth={2.5} />
               </div>
               <div>
                 <div className="text-[22px] font-black tracking-tight text-[#0f1c26]">Cloud Culture</div>
@@ -408,7 +408,7 @@ export default function InvoicePage({
                 </div>
               )}
               <div
-                className="flex items-center justify-between rounded-2xl px-4 py-3 text-[15px] font-black text-white"
+                className="flex items-center justify-between rounded-2xl px-4 py-3 text-[15px] font-black text-[var(--text)]"
                 style={{ background: "linear-gradient(135deg,#c40000,#5c0000)" }}
               >
                 <span>الإجمالي المستحق ({currency})</span>
@@ -531,7 +531,7 @@ export default function InvoicePage({
                   return (
                     <li
                       key={it.id}
-                      className="flex items-center gap-2 rounded-xl border border-[var(--line-soft)] bg-white/[.02] px-3 py-2"
+                      className="flex items-center gap-2 rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2"
                     >
                       <span className="min-w-0 flex-1 truncate text-[12.5px] font-extrabold">
                         {it.productName}
@@ -721,7 +721,7 @@ export default function InvoicePage({
               />
             </Field>
 
-            <p className="rounded-xl border border-[var(--line-soft)] bg-white/[.03] px-3 py-2 text-[11.5px] font-bold text-[var(--muted)]">
+            <p className="rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2 text-[11.5px] font-bold text-[var(--muted)]">
               فرق القيمة (مرتجع − استبدال) يُخصم أو يُضاف على حساب العميل تلقائيًا، وتُسجَّل كل
               حركة في سجل المخزون.
             </p>

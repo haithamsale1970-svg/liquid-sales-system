@@ -421,7 +421,7 @@ export default function NewSalePage() {
                   className={cls(
                     "flex flex-col",
                     expanded &&
-                      "col-span-2 rounded-2xl border border-[rgba(255,34,34,.35)] bg-white/[.04] p-2 md:col-span-3",
+                      "col-span-2 rounded-2xl border border-[rgba(255,34,34,.35)] bg-[var(--overlay-2)] p-2 md:col-span-3",
                   )}
                 >
                   <button
@@ -436,7 +436,7 @@ export default function NewSalePage() {
                           ? "border-[rgba(255,34,34,.5)] bg-[rgba(255,34,34,.06)]"
                           : low
                             ? "border-[rgba(255,170,0,.45)] bg-[rgba(255,170,0,.06)] hover:bg-[rgba(255,170,0,.1)]"
-                            : "border-[var(--line-soft)] bg-white/[.02] hover:border-[rgba(255,34,34,.35)] hover:bg-white/[.05]",
+                            : "border-[var(--line-soft)] bg-[var(--overlay-1)] hover:border-[rgba(255,34,34,.35)] hover:bg-[var(--overlay-2)]",
                     )}
                   >
                     <div className="flex items-start gap-2.5 p-3">
@@ -449,18 +449,18 @@ export default function NewSalePage() {
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-[12.5px] font-extrabold leading-5">{p.name}</div>
                         <div className="num mt-0.5 text-[13px] font-black text-[var(--mint)]">{formatMoneyJOD(p.price, currency, rates)}</div>
-                        <div className={cls("num mt-0.5 text-[10.5px] font-bold", out ? "text-[var(--danger)]" : low ? "text-amber-400" : "text-[var(--faint)]")}>
+                        <div className={cls("num mt-0.5 text-[10.5px] font-bold", out ? "text-[var(--danger)]" : low ? "text-[var(--alert-text)]" : "text-[var(--faint)]")}>
                           {out ? "نفد المخزون" : low ? `مخزون منخفض: ${p.stock}` : `متاح: ${p.stock}`}
                         </div>
                       </div>
                     </div>
                     {low && (
-                      <span className="absolute end-2.5 top-2.5 rounded-md bg-[rgba(255,170,0,.16)] px-1.5 py-0.5 text-[9.5px] font-black text-amber-400">
+                      <span className="absolute end-2.5 top-2.5 rounded-md bg-[var(--alert-soft)] px-1.5 py-0.5 text-[9.5px] font-black text-[var(--alert-text)]">
                         حد التنبيه
                       </span>
                     )}
                     {inCart > 0 && (
-                      <span className="absolute left-2.5 top-2.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--mint)] px-1 text-[12px] font-black text-[#04211a]">
+                      <span className="absolute left-2.5 top-2.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--mint)] px-1 text-[12px] font-black text-[var(--on-accent)]">
                         <span className="num">{inCart}</span>
                       </span>
                     )}
@@ -522,7 +522,7 @@ export default function NewSalePage() {
                                 addToCart(p, v, variantPicker.priceType);
                                 setVariantPicker(null);
                               }}
-                              className="flex items-center justify-between gap-2 rounded-xl border border-[var(--line-soft)] bg-white/[.03] px-3 py-2 text-start transition-colors hover:border-[rgba(255,34,34,.4)] hover:bg-white/[.07]"
+                              className="flex items-center justify-between gap-2 rounded-xl border border-[var(--line-soft)] bg-[var(--overlay-1)] px-3 py-2 text-start transition-colors hover:border-[rgba(255,34,34,.4)] hover:bg-[var(--overlay-2)]"
                             >
                               <span className="num text-[12px] font-extrabold">
                                 {v.size} — {v.nicotine}
@@ -572,7 +572,7 @@ export default function NewSalePage() {
               canQuickAdd={canManageClients}
             />
             {addClientOpen && canManageClients && (
-              <div className="mt-2 space-y-2 rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-3">
+              <div className="mt-2 space-y-2 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3">
                 <Input placeholder="اسم العميل" value={newClient.name} onChange={(e) => setNewClient((n) => ({ ...n, name: e.target.value }))} />
 
                 <div className="flex gap-2">
@@ -635,7 +635,7 @@ export default function NewSalePage() {
 
             {/* ===== تاريخ العميل: عدد مرات الطلب + المفضّلات + آخر الفواتير ===== */}
             {clientId && (
-              <div className="mt-2.5 rounded-2xl border border-[var(--line-soft)] bg-white/[.02] p-3">
+              <div className="mt-2.5 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3">
                 {historyLoading ? (
                   <Skeleton className="h-10" />
                 ) : !history ? (
@@ -693,7 +693,7 @@ export default function NewSalePage() {
                                   "flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors",
                                   !p || p.stock <= 0
                                     ? "cursor-not-allowed border-[var(--line-soft)] opacity-50"
-                                    : "border-[var(--line-soft)] bg-white/[.03] hover:border-[rgba(255,34,34,.4)] hover:bg-white/[.06]",
+                                    : "border-[var(--line-soft)] bg-[var(--overlay-1)] hover:border-[rgba(255,34,34,.4)] hover:bg-[var(--overlay-2)]",
                                 )}
                               >
                                 <ProductImage src={f.imageUrl} name={f.name} size={18} radius={5} />
@@ -716,7 +716,7 @@ export default function NewSalePage() {
                           <Link
                             key={s.id}
                             href={`/sales/${s.id}`}
-                            className="num rounded-lg border border-[var(--line-soft)] bg-white/[.03] px-2 py-1 text-[11px] font-bold text-[var(--muted)] hover:bg-white/[.06]"
+                            className="num rounded-lg border border-[var(--line-soft)] bg-[var(--overlay-1)] px-2 py-1 text-[11px] font-bold text-[var(--muted)] hover:bg-[var(--overlay-2)]"
                           >
                             {invoiceNo(s.id)} • {fmtDate(s.createdAt)}
                           </Link>
@@ -748,7 +748,7 @@ export default function NewSalePage() {
                   const available = variant ? variant.stock : p.stock;
                   const key = lineKey(p, variant, priceType);
                   return (
-                   <li key={key} className="flex items-center gap-2.5 rounded-2xl border border-[var(--line-soft)] bg-white/[.02] p-2.5">
+                   <li key={key} className="flex items-center gap-2.5 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-2.5">
                      <ProductImage
                        src={p.imageUrl}
                        name={p.name}
@@ -812,8 +812,8 @@ export default function NewSalePage() {
                   className={cls(
                     "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border px-2 py-2.5 text-[12px] font-extrabold transition-all",
                     shippingType === t
-                      ? "border-[rgba(255,34,34,.55)] bg-[rgba(255,34,34,.1)] text-[var(--mint)]"
-                      : "border-[var(--line-soft)] bg-white/[.02] text-[var(--muted)] hover:bg-white/[.05]",
+                      ? "border-[rgba(255,34,34,.55)] bg-[var(--accent-soft)] text-[var(--mint)]"
+                      : "border-[var(--line-soft)] bg-[var(--overlay-1)] text-[var(--muted)] hover:bg-[var(--overlay-2)]",
                   )}
                 >
                   <span className="flex items-center gap-1.5">
@@ -840,8 +840,8 @@ export default function NewSalePage() {
                   className={cls(
                     "rounded-xl border px-2 py-2 text-[11.5px] font-extrabold transition-all",
                     paymentMethod === m
-                      ? "border-[rgba(255,34,34,.55)] bg-[rgba(255,34,34,.1)] text-[var(--mint)]"
-                      : "border-[var(--line-soft)] bg-white/[.02] text-[var(--muted)] hover:bg-white/[.05]",
+                      ? "border-[rgba(255,34,34,.55)] bg-[var(--accent-soft)] text-[var(--mint)]"
+                      : "border-[var(--line-soft)] bg-[var(--overlay-1)] text-[var(--muted)] hover:bg-[var(--overlay-2)]",
                   )}
                 >
                   {PAYMENT_METHODS[m]}
@@ -919,7 +919,7 @@ export default function NewSalePage() {
           </Field>
 
           {/* totals */}
-          <div className="space-y-2 rounded-2xl border border-[var(--line-soft)] bg-white/[.03] p-4">
+          <div className="space-y-2 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-4">
             <div className="flex justify-between text-[13px] font-bold text-[var(--muted)]">
               <span>الإجمالي الفرعي ({currency})</span>
               <span className="num">{formatMoneyJOD(subtotal, currency, rates)}</span>

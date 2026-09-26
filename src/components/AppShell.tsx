@@ -26,6 +26,7 @@ import { ToastProvider } from "./toast";
 import CurrencySwitcher from "./CurrencySwitcher";
 import LowStockBanner from "./LowStockBanner";
 import NoAccess from "./NoAccess";
+import ThemeToggle from "./ThemeToggle";
 import { cls, initials, type SessionUserDTO } from "@/lib/shared";
 import { api } from "@/lib/client";
 import { can, hasAnyPermission, type PermissionKey } from "@/lib/permissions";
@@ -168,7 +169,7 @@ export default function AppShell({
           data-sidebar
           data-chrome
           className={cls(
-            "flex w-[252px] max-w-[84vw] shrink-0 flex-col gap-1.5 border-e border-[var(--line-soft)] bg-[#050505]/95 p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:h-screen",
+            "flex w-[252px] max-w-[84vw] shrink-0 flex-col gap-1.5 border-e border-[var(--line-soft)] bg-[var(--bg)]/95 p-4 backdrop-blur-xl lg:sticky lg:top-0 lg:h-screen",
             open && "open",
           )}
         >
@@ -177,11 +178,12 @@ export default function AppShell({
               <div
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl"
                 style={{
-                  background: "linear-gradient(135deg,#ff2b2b 0%,#8f0000 60%,#000000 100%)",
-                  boxShadow: "0 10px 26px -8px rgba(255,34,34,.5)",
+                  // لون اللوجو مربوط بنظام الثيم (أحمر داكن / فسفوري فاتح)
+                  background: "linear-gradient(135deg,var(--brand-1) 0%,var(--brand-2) 60%,var(--brand-3) 100%)",
+                  boxShadow: "0 10px 26px -8px var(--accent-glow)",
                 }}
               >
-                <Droplets size={20} className="text-white" strokeWidth={2.7} />
+                <Droplets size={20} className="text-[var(--on-accent)]" strokeWidth={2.7} />
               </div>
               <div className="leading-tight">
                 <div className="text-[18px] font-black tracking-tight">Cloud Culture</div>
@@ -218,11 +220,11 @@ export default function AppShell({
             })}
           </nav>
 
-          <div className="mt-2 rounded-2xl border border-[var(--line-soft)] bg-[rgba(255,255,255,.03)] p-3.5">
+          <div className="mt-2 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3.5">
             <div className="flex items-center gap-3">
               <div
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[12px] font-extrabold text-white"
-                style={{ background: "linear-gradient(135deg,#ff2b2b,#8f0000)" }}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[12px] font-extrabold text-[var(--on-accent)]"
+                style={{ background: "linear-gradient(135deg,var(--brand-1),var(--brand-2))" }}
               >
                 {initials(user.name)}
               </div>
@@ -255,7 +257,7 @@ export default function AppShell({
         <div className="flex min-w-0 flex-1 flex-col">
           <header
             data-chrome
-            className="sticky top-0 z-40 flex min-w-0 items-center justify-between gap-2 border-b border-[var(--line-soft)] bg-[#050505]/90 px-3 py-2.5 backdrop-blur-xl sm:gap-3 sm:px-6 sm:py-3"
+            className="sticky top-0 z-40 flex min-w-0 items-center justify-between gap-2 border-b border-[var(--line-soft)] bg-[var(--bg)]/90 px-3 py-2.5 backdrop-blur-xl sm:gap-3 sm:px-6 sm:py-3"
           >
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <button
@@ -279,6 +281,7 @@ export default function AppShell({
                   month: "long",
                 })}
               </span>
+              <ThemeToggle compact />
               {can(user, "sales.create") && (
                 <Link href="/sales/new" className="btn btn-primary btn-sm">
                   <PlusCircle size={15} />
