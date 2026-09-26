@@ -93,79 +93,87 @@ export default function LoginPage() {
         </div>
 
         {/* نموذج تسجيل الدخول */}
-        <div
-          className="w-full rounded-[26px] border border-[var(--line)] p-6 sm:p-7"
-          style={{
-            background: "var(--panel)",
-            backdropFilter: "blur(18px)",
-            boxShadow: "var(--shadow-2)",
-          }}
-        >
-          <h2 className="text-center text-[16.5px] font-black">تسجيل الدخول</h2>
-          <p className="mt-1.5 text-center text-[12px] font-semibold text-[var(--faint)]">
-            أدخل بياناتك للمتابعة إلى لوحة التحكم
-          </p>
-          <form onSubmit={submit} className="mt-6 space-y-4">
-            <div>
-              <label className="lbl">اسم المستخدم</label>
-              <div className="relative">
+        <div className="auth-card rounded-[26px] p-6 sm:p-8">
+          <div className="text-center">
+            <h2 className="text-[17px] font-black">تسجيل الدخول</h2>
+            <p className="mt-1.5 text-[12.5px] font-semibold text-[var(--faint)]">
+              أدخل بياناتك للمتابعة إلى لوحة التحكم
+            </p>
+          </div>
+
+          <form onSubmit={submit} className="mt-7 space-y-5">
+            {/* اسم المستخدم — التسمية تصف الحقل، فلا حاجة لتكرارها كـ placeholder */}
+            <div className="auth-field">
+              <label htmlFor="login-user" className="lbl">
+                اسم المستخدم
+              </label>
+              <div className="auth-input-wrap">
                 <input
-                  className="inp pe-11"
-                  placeholder="اسم المستخدم"
+                  id="login-user"
+                  className="auth-input"
+                  placeholder="مثال: admin"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   autoComplete="username"
                   autoFocus
+                  autoCapitalize="none"
+                  spellCheck={false}
                   dir="ltr"
-                  style={{ textAlign: "left" }}
                 />
-                <User
-                  size={17}
-                  className="pointer-events-none absolute end-3.5 top-1/2 -translate-y-1/2 text-[var(--faint)]"
-                />
+                <User size={17} className="auth-icon" aria-hidden />
               </div>
             </div>
-            <div>
-              <label className="lbl">كلمة المرور</label>
-              <div className="relative">
+
+            {/* كلمة المرور — زر الإظهار على اليمين والأيقونة على اليسار */}
+            <div className="auth-field">
+              <label htmlFor="login-pass" className="lbl">
+                كلمة المرور
+              </label>
+              <div className="auth-input-wrap">
                 <input
-                  className="inp pe-11 ps-11"
+                  id="login-pass"
+                  className="auth-input"
                   placeholder="••••••••"
                   type={showPw ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
                   dir="ltr"
-                  style={{ textAlign: "left" }}
                 />
-                <Lock
-                  size={17}
-                  className="pointer-events-none absolute end-3.5 top-1/2 -translate-y-1/2 text-[var(--faint)]"
-                />
+                <Lock size={17} className="auth-icon" aria-hidden />
                 <button
                   type="button"
                   onClick={() => setShowPw((s) => !s)}
-                  className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--faint)] transition-colors hover:text-[var(--text)]"
-                  aria-label="إظهار كلمة المرور"
+                  className="auth-toggle"
+                  aria-label={showPw ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                  aria-pressed={showPw}
+                  title={showPw ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
                 >
-                  {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
+                  {showPw ? (
+                    <EyeOff size={17} aria-hidden />
+                  ) : (
+                    <Eye size={17} aria-hidden />
+                  )}
                 </button>
               </div>
             </div>
 
             {error && (
-              <div className="badge badge-rose w-full !justify-center !py-2.5 !text-[12.5px]">
+              <div
+                role="alert"
+                className="alert-chip alert-chip-critical w-full !justify-center !py-2.5 !text-[12.5px]"
+              >
                 {error}
               </div>
             )}
 
             <button
               type="submit"
-              disabled={loading || !username || !password}
-              className="btn btn-primary w-full !py-3 !text-[14.5px]"
+              disabled={loading || !username.trim() || !password}
+              className="btn btn-primary w-full !py-3.5 !text-[14.5px] !rounded-[14px]"
             >
               {loading ? <Spinner size={16} /> : <LogIn size={16} />}
-              دخول
+              {loading ? "جارٍ الدخول…" : "دخول"}
             </button>
           </form>
         </div>

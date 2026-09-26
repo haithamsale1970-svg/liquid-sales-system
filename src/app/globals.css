@@ -50,6 +50,10 @@
   --overlay-1: rgba(255, 255, 255, 0.045);
   --overlay-2: rgba(255, 255, 255, 0.09);
   --overlay-3: rgba(255, 255, 255, 0.028);
+  /* حقول الإدخال (نموذج الدخول) */
+  --field-bg: rgba(255, 255, 255, 0.045);
+  --field-bg-focus: rgba(255, 255, 255, 0.07);
+  --field-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   --surface: #0a0a0a;
   --surface-2: #0c0c0c;
   --scrim: rgba(3, 5, 8, 0.7);
@@ -131,6 +135,10 @@
   --overlay-1: rgba(8, 45, 30, 0.045);
   --overlay-2: rgba(8, 45, 30, 0.08);
   --overlay-3: rgba(8, 45, 30, 0.03);
+  /* حقول الإدخال — أبيض ناصع مع ظل ناعم */
+  --field-bg: #ffffff;
+  --field-bg-focus: #ffffff;
+  --field-shadow: 0 1px 2px rgba(4, 40, 24, 0.06), 0 6px 16px -8px rgba(4, 40, 24, 0.12);
   --surface: #ffffff;
   --surface-2: #fbfdfc;
   --scrim: rgba(6, 30, 20, 0.42);
@@ -447,6 +455,95 @@ input[type="date"].inp {
   background: var(--critical-strong);
   border: 1px solid var(--critical-line);
   color: var(--critical-text);
+}
+
+/* ---------- auth form (واجهة تسجيل الدخول) ---------- */
+/*
+  الحقول هنا تستخدم إحداثيات فيزيائية (left/right) عمدًا وليس end/start،
+  لأن محتوى الحقل لاتيني (dir="ltr") بينما الصفحة عربية (dir="rtl").
+  الهدف: ضمان عدم تداخل النص مع الأيقونة مهما كانت اتجاه الصفحة.
+*/
+.auth-field {
+  position: static;
+}
+/* حاوية تموضع الحقل نفسه (بدون التسمية) حتى تتمركز الأيقونة على الحقل */
+.auth-input-wrap {
+  position: relative;
+}
+.auth-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--field-bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--field-shadow);
+  /* يمين: مساحة زر إظهار كلمة المرور | يسار: مساحة أيقونة الحقل */
+  padding: 13px 46px 13px 46px;
+  outline: none;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+}
+.auth-input::placeholder {
+  color: var(--faint);
+  font-weight: 500;
+}
+.auth-input:hover:not(:focus) {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+.auth-input:focus {
+  border-color: var(--accent);
+  background: var(--field-bg-focus);
+  box-shadow: 0 0 0 4px var(--accent-soft), var(--field-shadow);
+}
+/* الأيقونة داخل الحقل على يسار الحقل (بداية النص اللاتيني) */
+.auth-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--faint);
+  pointer-events: none;
+  transition: color 0.22s ease;
+}
+.auth-field:focus-within .auth-icon,
+.auth-input-wrap:focus-within .auth-icon {
+  color: var(--accent);
+}
+/* زر إظهار/إخفاء كلمة المرور على يمين الحقل */
+.auth-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  color: var(--faint);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+.auth-toggle:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.auth-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* بطاقة الدخول — لمسة فاخرة */
+.auth-card {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-2);
+  transition: background 0.35s ease, border-color 0.35s ease;
 }
 
 /* ---------- tables ---------- */
