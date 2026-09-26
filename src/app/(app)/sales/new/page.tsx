@@ -46,6 +46,7 @@ import {
   type ShippingType,
 } from "@/lib/shared";
 import { can } from "@/lib/permissions";
+import InstallmentPlanner from "@/components/InstallmentPlanner";
 
 export default function NewSalePage() {
   const router = useRouter();
@@ -140,6 +141,7 @@ export default function NewSalePage() {
   const showProfit = can(me, "finances.view_profit");
   const canDiscount = can(me, "sales.discount");
   const canCredit = can(me, "sales.credit");
+  const canInstallments = can(me, "sales.installments");
   const canManageClients = can(me, "clients.create") || can(me, "clients.update");
   const profit = showProfit
     ? cartEntries.reduce(
@@ -966,6 +968,16 @@ export default function NewSalePage() {
               </div>
             )}
           </div>
+
+          {/* ===== خطة التقسيط والذمم (تظهر مع الدفع الآجل) ===== */}
+          {canInstallments && effectivePaymentMethod === "credit" && remaining > 0 && (
+            <div className="panel anim-in p-4 sm:p-5">
+              <InstallmentPlanner saleId={null} owed={remaining} editable={false} />
+              <p className="mt-3 text-[11.5px] font-semibold text-[var(--faint)]">
+                احفظ الفاتورة أولًا ثم ستتمكن من ضبط التقسيم وتواريخ الاستحقاق.
+              </p>
+            </div>
+          )}
 
           <Btn variant="primary" onClick={submit} loading={submitting} disabled={!clientId || !cartEntries.length} className="w-full !py-3.5 !text-[14.5px]">
             <CheckCircle2 size={17} /> حفظ الفاتورة وخصم المخزون

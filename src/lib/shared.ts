@@ -309,6 +309,27 @@ export type LowStockAlertDTO = {
   imageUrl: string;
 };
 
+// ---------- DTO: خطة التقسيط والدفعات ----------
+export type InstallmentDTO = {
+  id: number;
+  saleId: number;
+  seq: number;
+  amount: number;
+  /** تاريخ الاستحقاق (ISO) */
+  dueDate: string;
+  status: "pending" | "paid";
+  paidAt: string | null;
+  note: string;
+  /** اسم العميل (يأتي مع تنبيهات الاستحقاق) */
+  clientName?: string;
+};
+
+export type InstallmentPlanDTO = {
+  amount: number;
+  dueDate: string;
+  note: string;
+};
+
 export type SaleListDTO = {
   id: number;
   clientId: number;

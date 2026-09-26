@@ -4,12 +4,15 @@ import { useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, Eye, EyeOff, Lock, LogIn, Sparkles, User } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import ThemeToggle from "@/components/ThemeToggle";
+import LanguageToggle from "@/components/LanguageToggle";
+import { useLang } from "@/components/LanguageProvider";
 import { Spinner } from "@/components/ui";
 
 /** سجل يثبت أن المستخدم شاهد شاشة الترحيب، فلا تُعرض مرة أخرى في هذه الجلسة. */
 const WELCOMED_KEY = "cc_welcomed";
 
 export default function LoginPage() {
+  const { t } = useLang();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -100,7 +103,8 @@ export default function LoginPage() {
       />
 
       {/* زر تبديل الثيم في صفحة الدخول أيضًا */}
-      <div className="absolute end-5 top-5 z-20">
+      <div className="absolute end-5 top-5 z-20 flex items-center gap-2">
+        <LanguageToggle />
         <ThemeToggle />
       </div>
 
@@ -187,7 +191,7 @@ export default function LoginPage() {
           <>
             <div className="auth-card rounded-[26px] p-6 sm:p-8">
               <div className="text-center">
-                <h2 className="text-[17px] font-black">تسجيل الدخول</h2>
+                <h2 className="text-[17px] font-black">{t("تسجيل الدخول")}</h2>
                 <p className="mt-1.5 text-[12.5px] font-semibold text-[var(--faint)]">
                   أدخل بياناتك للمتابعة إلى لوحة التحكم
                 </p>
@@ -196,9 +200,9 @@ export default function LoginPage() {
               <form onSubmit={submit} className="mt-7 space-y-5">
             {/* اسم المستخدم — التسمية تصف الحقل، فلا حاجة لتكرارها كـ placeholder */}
             <div className="auth-field">
-              <label htmlFor="login-user" className="lbl">
-                اسم المستخدم
-              </label>
+                <label htmlFor="login-user" className="lbl">
+                  {t("اسم المستخدم")}
+                </label>
               <div className="auth-input-wrap">
                 <input
                   id="login-user"
@@ -218,9 +222,9 @@ export default function LoginPage() {
 
             {/* كلمة المرور — زر الإظهار على اليمين والأيقونة على اليسار */}
             <div className="auth-field">
-              <label htmlFor="login-pass" className="lbl">
-                كلمة المرور
-              </label>
+                <label htmlFor="login-pass" className="lbl">
+                  {t("كلمة المرور")}
+                </label>
               <div className="auth-input-wrap">
                 <input
                   id="login-pass"
@@ -265,7 +269,7 @@ export default function LoginPage() {
               className="btn btn-primary w-full !py-3.5 !text-[14.5px] !rounded-[14px]"
             >
               {loading ? <Spinner size={16} /> : <LogIn size={16} />}
-              {loading ? "جارٍ الدخول…" : "دخول"}
+              {loading ? "جارٍ الدخول…" : t("دخول")}
             </button>
           </form>
             </div>

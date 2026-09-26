@@ -11,6 +11,7 @@ import {
   EyeOff,
   Info,
   KeyRound,
+  Languages,
   Palette,
   ShieldCheck,
   UserRound,
@@ -20,7 +21,9 @@ import { useToast } from "@/components/toast";
 import { Btn, Card, Field, Input, Select, Skeleton } from "@/components/ui";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { useTheme } from "@/components/ThemeProvider";
+import { useLang } from "@/components/LanguageProvider";
 import { THEME_LIST } from "@/lib/theme";
+import { LANGS } from "@/lib/i18n";
 import { cls, fmtDateTime, type SessionUserDTO } from "@/lib/shared";
 import { can } from "@/lib/permissions";
 import { CURRENCIES, DEFAULT_SETTINGS, type AppSettings, type CurrencyCode } from "@/lib/currency";
@@ -141,6 +144,7 @@ export default function SettingsPage() {
   const canBackup = can(me, "backup.manage");
   // الثيم متاح لكل المستخدمين ولا علاقة له بالصلاحيات.
   const { theme, setTheme } = useTheme();
+  const { lang, setLang } = useLang();
 
   async function saveSettings() {
     if (savingSettings) return;
@@ -231,6 +235,35 @@ export default function SettingsPage() {
                       )}
                     </div>
                     <div className="mt-2 text-[12.5px] font-extrabold">{t.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-5 border-t border-[var(--line-soft)] pt-4">
+              <div className="mb-3 flex items-center gap-2 text-[13px] font-extrabold">
+                <Languages size={15} className="text-[var(--mint)]" />
+                لغة النظام
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(LANGS) as (keyof typeof LANGS)[]).map((code) => (
+                  <button
+                    key={code}
+                    type="button"
+                    onClick={() => setLang(code)}
+                    className={cls(
+                      "rounded-xl border p-3 text-start transition-colors",
+                      lang === code
+                        ? "border-[var(--accent)] bg-[var(--accent-soft)]"
+                        : "border-[var(--line-soft)] bg-[var(--overlay-1)] hover:border-[var(--accent-line)]",
+                    )}
+                  >
+                    <div className="text-[12.5px] font-extrabold">
+                      {LANGS[code].label}
+                    </div>
+                    <div className="text-[11.5px] font-semibold text-[var(--faint)]">
+                      {code === "ar" ? "من اليمين إلى اليسار" : "Left to right"}
+                    </div>
                   </button>
                 ))}
               </div>

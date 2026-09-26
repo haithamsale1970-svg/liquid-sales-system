@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { cls, initials } from "@/lib/shared";
 
+// بدائل الصورة عند غيابها: ألوان مستمدة من الثيم (لا قيم ثابتة).
 const GRADS = [
-  "linear-gradient(135deg,#1a0000,#ff2222)",
-  "linear-gradient(135deg,#2b2b2b,#000000)",
-  "linear-gradient(135deg,#4d0000,#ff4d4d)",
-  "linear-gradient(135deg,#0a0a0a,#8f0000)",
-  "linear-gradient(135deg,#330000,#d6d6d6)",
+  "var(--img-fb-1)",
+  "var(--img-fb-2)",
+  "var(--img-fb-3)",
+  "var(--img-fb-4)",
+  "var(--img-fb-5)",
 ];
 
 function pick(name: string) {
@@ -56,7 +57,8 @@ export function ProductImage({
         style={{
           ...box,
           border: fill ? undefined : "1px solid var(--line-soft)",
-          background: "#0b0f13",
+          // خلفية بيضاء نظيفة بدل الشريط الأسود في الثيم الفاتح
+          background: "var(--img-bg)",
           borderRadius: fill ? undefined : radius,
         }}
       />

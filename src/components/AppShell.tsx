@@ -26,7 +26,10 @@ import { ToastProvider } from "./toast";
 import CurrencySwitcher from "./CurrencySwitcher";
 import LowStockBanner from "./LowStockBanner";
 import NoAccess from "./NoAccess";
+import InstallmentsDueBanner from "./InstallmentsDueBanner";
+import LanguageToggle from "./LanguageToggle";
 import ThemeToggle from "./ThemeToggle";
+import { useLang } from "./LanguageProvider";
 import { cls, initials, type SessionUserDTO } from "@/lib/shared";
 import { api } from "@/lib/client";
 import { can, hasAnyPermission, type PermissionKey } from "@/lib/permissions";
@@ -83,6 +86,7 @@ export default function AppShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useLang();
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   useEffect(() => {
@@ -107,7 +111,7 @@ export default function AppShell({
   }, []);
 
   const active = bestMatch(pathname);
-  const title = pageTitle(pathname);
+  const title = t(pageTitle(pathname));
   const isAdmin = user.role === "admin";
 
   // الأدمن يتحكم بإظهار/إخفاء الأقسام عن باقي المستخدمين من الإعدادات،
@@ -214,7 +218,7 @@ export default function AppShell({
                   className={cls("navlink", isActive && "active")}
                 >
                   <Icon size={17} strokeWidth={2.3} />
-                  <span>{n.label}</span>
+                  <span>{t(n.label)}</span>
                 </Link>
               );
             })}
@@ -273,7 +277,9 @@ export default function AppShell({
               <div className="glow-dot hidden sm:block" />
             </div>
             <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
-              <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
+              {can(user, "settings.currency") && (
+                <CurrencySwitcher defaultCurrency={settings?.defaultCurrency} compact />
+              )}
               <span className="badge badge-slate hidden md:inline-flex">
                 {new Date().toLocaleDateString("ar-EG-u-nu-latn", {
                   weekday: "long",
@@ -282,6 +288,7 @@ export default function AppShell({
                 })}
               </span>
               <ThemeToggle compact />
+              <LanguageToggle />
               {can(user, "sales.create") && (
                 <Link href="/sales/new" className="btn btn-primary btn-sm">
                   <PlusCircle size={15} />
@@ -295,6 +302,7 @@ export default function AppShell({
             className="mx-auto w-full max-w-[1240px] flex-1 px-3 py-4 sm:px-6 sm:py-6"
           >
             {can(user, "products.view") && <LowStockBanner />}
+            {can(user, "sales.installments") && <InstallmentsDueBanner />}
             {guard}
           </main>
         </div>

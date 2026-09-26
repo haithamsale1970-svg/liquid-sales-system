@@ -65,7 +65,9 @@ export type ExtraPermissionKey =
   | "sales.credit"
   | "finances.view_profit"
   | "finances.view_cost"
-  | "backup.manage";
+  | "backup.manage"
+  | "settings.currency"
+  | "sales.installments";
 
 export type PermissionKey = GroupPermissionKey | ExtraPermissionKey;
 
@@ -81,6 +83,8 @@ export const EXTRA_PERMISSIONS: readonly ExtraPermission[] = [
   { key: "finances.view_profit", label: "الاطلاع على الأرباح", hint: "إظهار هامش الربح في الفواتير والتقارير" },
   { key: "finances.view_cost", label: "الاطلاع على التكاليف", hint: "إظهار سعر التكلفة وبيانات الكلفة" },
   { key: "backup.manage", label: "النسخ الاحتياطي والاستعادة", hint: "تنزيل نسخة احتياطية أو استعادتها" },
+  { key: "settings.currency", label: "زر اختيار العملة", hint: "إظهار مبدّل العملات (EGP / USD / JOD) في الهيدر" },
+  { key: "sales.installments", label: "نظام التقسيط والذمم", hint: "تقسيم المبلغ الآجل على دفعات وتواريخ مستحقة" },
 ];
 
 // ---------- القائمة الكاملة للمفاتيح ----------

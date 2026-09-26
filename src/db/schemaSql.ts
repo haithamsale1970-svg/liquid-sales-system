@@ -317,6 +317,27 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 CREATE INDEX IF NOT EXISTS "return_items_return_idx" ON "return_items" ("return_id");
 ALTER TABLE "return_items" ADD COLUMN IF NOT EXISTS "cost" numeric(12, 2) DEFAULT '0' NOT NULL;
 
+CREATE TABLE IF NOT EXISTS "sale_installments" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "sale_id" integer NOT NULL,
+  "seq" integer DEFAULT 1 NOT NULL,
+  "amount" numeric(12, 2) DEFAULT '0' NOT NULL,
+  "due_date" timestamp with time zone NOT NULL,
+  "status" text DEFAULT 'pending' NOT NULL,
+  "paid_at" timestamp with time zone,
+  "note" text DEFAULT '' NOT NULL,
+  "created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+DO $$ BEGIN
+  ALTER TABLE "sale_installments" ADD CONSTRAINT "sale_installments_sale_id_sales_id_fk"
+    FOREIGN KEY ("sale_id") REFERENCES "sales"("id") ON DELETE cascade;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE INDEX IF NOT EXISTS "sale_installments_sale_idx" ON "sale_installments" ("sale_id");
+CREATE INDEX IF NOT EXISTS "sale_installments_due_idx" ON "sale_installments" ("due_date");
+CREATE INDEX IF NOT EXISTS "sale_installments_status_idx" ON "sale_installments" ("status");
+
 CREATE TABLE IF NOT EXISTS "inventory_movements" (
   "id" serial PRIMARY KEY NOT NULL,
   "product_id" integer NOT NULL,

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import "@fontsource-variable/cairo";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { LanguageProvider } from "@/components/LanguageProvider";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 
 export const metadata: Metadata = {
@@ -42,14 +43,20 @@ export const viewport: Viewport = {
  */
 const THEME_BOOT = `(function(){try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(t==="dark"||t==="phosphor"){if(t!=="dark"){document.documentElement.setAttribute("data-theme",t);}else{document.documentElement.removeAttribute("data-theme");}}}catch(e){}})();`;
 
+/** يمنع وميض اللغة/الاتجاه الخاطئ قبل أول رسم. */
+const LANG_BOOT = `(function(){try{var l=localStorage.getItem("cc-lang");if(l==="en"){var d=document.documentElement;d.setAttribute("lang","en");d.setAttribute("dir","ltr");}}catch(e){}})();`;
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: LANG_BOOT }} />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
       </head>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <LanguageProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

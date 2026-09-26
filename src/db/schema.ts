@@ -366,6 +366,33 @@ export const returnItems = pgTable(
   (t) => [index("return_items_return_idx").on(t.returnId)],
 );
 
+// ---------- خطة التقسيط والدفعات (Installments) ----------
+// يربط كل دفعة مستحقة بفاتورة، مع تاريخ استحقاق لحساب التذكيرات.
+export const saleInstallments = pgTable(
+  "sale_installments",
+  {
+    id: serial("id").primaryKey(),
+    saleId: integer("sale_id")
+      .notNull()
+      .references(() => sales.id, { onDelete: "cascade" }),
+    /** رقم الدفعة داخل الخطة (1، 2، 3...) */
+    seq: integer("seq").notNull().default(1),
+    amount: numeric("amount", { precision: 12, scale: 2 }).notNull().default("0"),
+    dueDate: timestamp("due_date", { withTimezone: true }).notNull(),
+    status: text("status").notNull().default("pending"), // pending | paid
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    note: text("note").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("sale_installments_sale_idx").on(t.saleId),
+    index("sale_installments_due_idx").on(t.dueDate),
+    index("sale_installments_status_idx").on(t.status),
+  ],
+);
+
 // ---------- سجل حركات المخزون ----------
 export const inventoryMovements = pgTable(
   "inventory_movements",

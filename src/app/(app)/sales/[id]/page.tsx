@@ -7,6 +7,7 @@ import { api } from "@/lib/client";
 import { useToast } from "@/components/toast";
 import { Badge, Btn, ConfirmDialog, Field, Input, Modal, Select, Skeleton } from "@/components/ui";
 import { ProductImage } from "@/components/ProductImage";
+import InstallmentPlanner from "@/components/InstallmentPlanner";
 import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { useCurrency } from "@/components/useCurrency";
 import { formatMoneyJOD, isCurrencyCode, type CurrencyCode } from "@/lib/currency";
@@ -239,6 +240,17 @@ export default function InvoicePage({
           )}
         </div>
       </div>
+
+      {/* ===== خطة التقسيط والذمم (قابلة للتحرير بعد حفظ الفاتورة) ===== */}
+      {can(me, "sales.installments") && !cancelled && sale.remaining > 0 && (
+        <div className="anim-in anim-d2 panel mt-4 p-4 sm:p-5">
+          <InstallmentPlanner
+            saleId={sale.id}
+            owed={sale.remaining}
+            editable={!cancelled}
+          />
+        </div>
+      )}
 
       {/* paper */}
       <div className="anim-in anim-d1 overflow-x-auto">

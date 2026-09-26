@@ -77,6 +77,15 @@
   --grain: 0.035;
   --tap: rgba(255, 34, 34, 0.18);
   --select-bg: #101014;
+  /* خلفية صور المنتجات (حرب الأشرطة السوداء) */
+  --img-bg: #0b0f13;
+  --img-fb-1: linear-gradient(135deg, #1a0000, #ff2222);
+  --img-fb-2: linear-gradient(135deg, #2b2b2b, #000000);
+  --img-fb-3: linear-gradient(135deg, #4d0000, #ff4d4d);
+  --img-fb-4: linear-gradient(135deg, #0a0a0a, #8f0000);
+  --img-fb-5: linear-gradient(135deg, #330000, #d6d6d6);
+  --img-stage-1: rgba(255, 34, 34, 0.1);
+  --img-stage-2: rgba(255, 255, 255, 0.02);
 }
 
 /* =======================================================================
@@ -162,6 +171,15 @@
   --grain: 0.02;
   --tap: rgba(0, 201, 75, 0.18);
   --select-bg: #ffffff;
+  /* صور المنتجات — أبيض ناصع بلا أشرطة سوداء */
+  --img-bg: #ffffff;
+  --img-fb-1: linear-gradient(135deg, #e6fff0, #00c94b);
+  --img-fb-2: linear-gradient(135deg, #f2f6f4, #cfd9d3);
+  --img-fb-3: linear-gradient(135deg, #e8f6ee, #00a844);
+  --img-fb-4: linear-gradient(135deg, #f6faf8, #9fc9b1);
+  --img-fb-5: linear-gradient(135deg, #eafaf0, #7fd4a2);
+  --img-stage-1: rgba(0, 201, 75, 0.12);
+  --img-stage-2: rgba(255, 255, 255, 0.9);
 }
 
 * {
