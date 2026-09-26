@@ -223,7 +223,107 @@ export default function UsersPage() {
         ) : rows.length === 0 ? (
           <Empty icon={<UsersRound size={22} />} title="لا يوجد مستخدمون" />
         ) : (
-          <table className="tbl min-w-[760px]">
+          <>
+            {/* ===== الجوال: كروت مرنة بدل جدول ضيّق (منع الازدحام) ===== */}
+            <ul className="space-y-2.5 p-3 md:hidden">
+              {rows.map((u) => {
+                const isSelf = me?.id === u.id;
+                return (
+                  <li
+                    key={u.id}
+                    className="flex flex-col gap-3 rounded-2xl border border-[var(--line-soft)] bg-[var(--overlay-1)] p-3.5"
+                  >
+                    {/* الصف العلوي: الصورة + الاسم + @اسم الدخول */}
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[13px] font-extrabold text-[var(--on-accent)]"
+                        style={{
+                          background:
+                            u.role === "admin"
+                              ? "linear-gradient(135deg,var(--brand-1),var(--brand-2))"
+                              : "var(--overlay-2)",
+                        }}
+                      >
+                        {initials(u.name)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span className="truncate text-[13.5px] font-extrabold">
+                            {u.name}
+                          </span>
+                          {isSelf && <Badge tone="mint">أنت</Badge>}
+                        </div>
+                        <div className="num truncate text-[12px] font-bold text-[var(--muted)]">
+                          @{u.username}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* الصف الأوسط: الصلاحية + عدد الصلاحيات + الفواتير + التاريخ */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Select
+                        value={u.role}
+                        disabled={isSelf}
+                        onChange={(e) => changeRole(u, e.target.value)}
+                        aria-label={`صلاحية ${u.name}`}
+                        className="!w-auto !py-1.5 !text-[12px]"
+                      >
+                        <option value="admin">مدير (ماستر)</option>
+                        <option value="user">مستخدم (شريك)</option>
+                      </Select>
+                      {u.role === "admin" ? (
+                        <Badge tone="rose">كل الصلاحيات</Badge>
+                      ) : (
+                        <Badge tone={permCount(u) > 0 ? "violet" : "slate"}>
+                          {permCount(u)} صلاحية
+                        </Badge>
+                      )}
+                      <span className="ms-auto text-[11.5px] font-bold text-[var(--faint)]">
+                        <span className="num font-black text-[var(--text)]">
+                          {fmtNum(u.salesCount)}
+                        </span>{" "}
+                        فاتورة · {fmtDate(u.createdAt)}
+                      </span>
+                    </div>
+
+                    {/* الصف السفلي: الأزرار بعرض كامل متساوية */}
+                    <div className="flex items-center gap-2 border-t border-[var(--line-soft)] pt-3">
+                      <Btn
+                        size="sm"
+                        className="!flex-1"
+                        onClick={() => openPermissions(u)}
+                      >
+                        <ShieldCheck size={14} /> الصلاحيات
+                      </Btn>
+                      <button
+                        className="icon-btn"
+                        title="تعيين كلمة مرور"
+                        aria-label={`تعيين كلمة مرور ${u.name}`}
+                        onClick={() => {
+                          setPwTarget(u);
+                          setNewPw("");
+                        }}
+                      >
+                        <KeyRound size={14} />
+                      </button>
+                      {!isSelf && (
+                        <button
+                          className="icon-btn danger"
+                          title="حذف"
+                          aria-label={`حذف ${u.name}`}
+                          onClick={() => setDeleteTarget(u)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {/* ===== الحاسب: الجدول الكامل ===== */}
+            <table className="tbl hidden min-w-[760px] md:table">
             <thead>
               <tr>
                 <th>المستخدم</th>
@@ -313,14 +413,15 @@ export default function UsersPage() {
                 );
               })}
             </tbody>
-          </table>
+            </table>
+          </>
         )}
       </Card>
 
       {/* create modal */}
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="إنشاء مستخدم جديد" icon={<UserCog size={17} />}>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="اسم الدخول *" hint="إنجليزي/أرقام بدون مسافات">
               <Input dir="ltr" className="num" value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} placeholder="partner1" />
             </Field>

@@ -103,10 +103,11 @@
   --mint: #00c94b;
   --mint-deep: #007a33;
   --violet: #07130d;
-  --amber: #b05600;
-  --rose: #d92b2b;
+  /* لا أحمر في الثيم الفاتح: السالب/التحذير يتجسّد بالبرتقالي والكهرماني */
+  --amber: #b45309;
+  --rose: #c2410c;
   --sky: #0f6d8a;
-  --danger: #d92b2b;
+  --danger: #d97706;
 
   /* اللون الأساسي */
   --accent: #00c94b;
@@ -124,12 +125,12 @@
   --alert-soft: rgba(255, 204, 0, 0.22);
   --alert-line: rgba(255, 190, 0, 0.6);
 
-  /* تنبيه حرج — أحمر داكن مقروء على الأبيض */
-  --critical: #d92b2b;
-  --critical-text: #b42318;
-  --critical-soft: rgba(217, 43, 43, 0.1);
-  --critical-line: rgba(217, 43, 43, 0.42);
-  --critical-strong: rgba(217, 43, 43, 0.2);
+  /* تنبيه حرج — برتقالي داكن (لا أحمر) ليبقى معبّرًا ومقروءًا على الأبيض */
+  --critical: #ea580c;
+  --critical-text: #9a3412;
+  --critical-soft: rgba(234, 88, 12, 0.1);
+  --critical-line: rgba(234, 88, 12, 0.42);
+  --critical-strong: rgba(234, 88, 12, 0.2);
 
   /* أسطح */
   --overlay-1: rgba(8, 45, 30, 0.045);
