@@ -2,7 +2,7 @@
 
 import { t } from "@/lib/i18n";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PriceType, ProductVariantDTO } from "@/lib/shared";
 import {
@@ -321,6 +321,15 @@ export default function NewSalePage() {
     }
   }
 
+  // خطة التقسيط المُعدّة قبل الحفظ (تُحفظ تلقائيًا بعد إنشاء الفاتورة).
+  const [planRows, setPlanRows] = useState<
+    { amount: number; dueDate: string; note: string }[]
+  >([]);
+  const handlePlanChange = useCallback(
+    (r: { amount: number; dueDate: string; note: string }[]) => setPlanRows(r),
+    [],
+  );
+
   async function submit() {
     if (submitting) return;
     if (!clientId) {
@@ -352,7 +361,42 @@ export default function NewSalePage() {
           discountValue: dv,
         },
       });
-      toast.push("ok", "تم إنشاء الفاتورة وخصم الكميات من المخزون");
+
+      // حفظ خطة التقسيط المُعدّة مسبقًا فور إنشاء الفاتورة (ذمم/آجل فقط).
+      let planSaved = false;
+      if (canInstallments && effectivePaymentMethod === "credit" && planRows.length) {
+        const total = planRows.reduce((a, x) => a + (x.amount || 0), 0);
+        const okRows =
+          total > 0 &&
+          total <= remaining + 0.01 &&
+          planRows.every((x) => x.amount > 0 && x.dueDate);
+        if (okRows) {
+          try {
+            await api(`/api/sales/${r.id}/installments`, {
+              method: "PUT",
+              body: {
+                installments: planRows.map((x) => ({
+                  amount: Number(x.amount.toFixed(2)),
+                  dueDate: new Date(`${x.dueDate}T12:00:00`).toISOString(),
+                  note: x.note,
+                })),
+              },
+            });
+            planSaved = true;
+          } catch {
+            planSaved = false;
+          }
+        }
+      }
+
+      toast.push(
+        "ok",
+        t(
+          planSaved
+            ? "تم إنشاء الفاتورة وحفظ خطة التقسيط وتفعيل التنبيهات"
+            : "تم إنشاء الفاتورة وخصم الكميات من المخزون",
+        ),
+      );
       router.push(`/sales/${r.id}`);
     } catch (e) {
       toast.push("err", e instanceof Error ? e.message : "تعذر إنشاء الفاتورة");
@@ -854,7 +898,9 @@ export default function NewSalePage() {
             </div>
             {!isDeliveryShipping && (
               <p className="mt-2 text-[11px] font-semibold text-[var(--faint)]">
-                "مستحقات شركة التوصيل" تظهر فقط عند اختيار توصيل داخلي أو خارجي.
+                {t(
+                  "”مستحقات شركة التوصيل“ تظهر فقط عند اختيار توصيل داخلي أو خارجي.",
+                )}
               </p>
             )}
             <div className="mt-2 grid grid-cols-2 gap-2">
@@ -974,9 +1020,14 @@ export default function NewSalePage() {
           {/* ===== خطة التقسيط والذمم (تظهر مع الدفع الآجل) ===== */}
           {canInstallments && effectivePaymentMethod === "credit" && remaining > 0 && (
             <div className="panel anim-in p-4 sm:p-5">
-              <InstallmentPlanner saleId={null} owed={remaining} editable={false} />
+              <InstallmentPlanner
+                saleId={null}
+                owed={remaining}
+                editable
+                onPlanChange={handlePlanChange}
+              />
               <p className="mt-3 text-[11.5px] font-semibold text-[var(--faint)]">
-                احفظ الفاتورة أولًا ثم ستتمكن من ضبط التقسيم وتواريخ الاستحقاق.
+                {t("احفظ الفاتورة لحفظ الخطة وتفعيل تنبيهات الاستحقاق تلقائيًا.")}
               </p>
             </div>
           )}

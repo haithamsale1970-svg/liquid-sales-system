@@ -35,11 +35,14 @@ export default function InstallmentPlanner({
   saleId,
   owed,
   editable,
+  onPlanChange,
 }: {
   /** null = فاتورة جديدة (لا حفظ بعد) */
   saleId: number | null;
   owed: number;
   editable: boolean;
+  /** يُبلَّغ بالplan الحالي ليحفظه الأب فور إنشاء الفاتورة. */
+  onPlanChange?: (rows: { amount: number; dueDate: string; note: string }[]) => void;
 }) {
   const toast = useToast();
   const { t } = useLang();
@@ -87,6 +90,17 @@ export default function InstallmentPlanner({
   function setRow(i: number, patch: Partial<Row>) {
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
   }
+
+  // إخطار الأب بالتغييرات (يُستخدم لحفظ الخطة فور إنشاء الفاتورة).
+  useEffect(() => {
+    onPlanChange?.(
+      rows.map((r) => ({
+        amount: Number(Number(r.amount || 0).toFixed(2)),
+        dueDate: r.dueDate,
+        note: r.note,
+      })),
+    );
+  }, [rows, onPlanChange]);
 
   /** تقسيم متساوٍ على n دفعات بفارق 30 يومًا. */
   function splitEvenly(n: number) {
@@ -147,11 +161,11 @@ export default function InstallmentPlanner({
           <CalendarClock size={15} className="text-[var(--mint)]" />
           {t("خطة التقسيط والذمم")}
         </div>
-        {editable && saleId && (
+        {editable && (
           <div className="flex flex-wrap items-center gap-1.5">
             {[2, 3, 4, 6].map((n) => (
               <Btn key={n} size="xs" onClick={() => splitEvenly(n)}>
-                {n} دفعات
+                {n} {t("دفعات")}
               </Btn>
             ))}
           </div>

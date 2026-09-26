@@ -258,6 +258,11 @@ const EN: Record<string, string> = {
   "مستحقة اليوم": "Due today",
   "غدًا": "Tomorrow",
   "متأخرة": "Overdue",
+  "دفعات": "installments",
+  "”مستحقات شركة التوصيل“ تظهر فقط عند اختيار توصيل داخلي أو خارجي.":
+    "“Courier dues” appear only when you select local or outside delivery.",
+  "تم إنشاء الفاتورة وحفظ خطة التقسيط وتفعيل التنبيهات":
+    "Invoice created, installment plan saved and due alerts enabled",
 
   // ================= المخزون والمصاريف والمرتجعات =================
   "إجمالي الكميات الداخلة": "Total items in",
