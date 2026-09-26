@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PriceType, ProductVariantDTO } from "@/lib/shared";
@@ -916,7 +918,7 @@ export default function NewSalePage() {
             </div>
           )}
 
-          <Field label="ملاحظات الفاتورة">
+          <Field label={t("ملاحظات الفاتورة")}>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="اختياري — تظهر أسفل الفاتورة" />
           </Field>
 

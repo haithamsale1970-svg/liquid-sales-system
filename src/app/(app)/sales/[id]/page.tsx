@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { ArrowRight, Ban, Droplets, Printer, Trash2, Undo2 } from "lucide-react";
@@ -333,10 +335,10 @@ export default function InvoicePage({
           <table className="inv-table">
             <thead>
               <tr>
-                <th style={{ width: "42%" }}>الصنف</th>
-                <th>السعر</th>
-                <th>الكمية</th>
-                <th style={{ textAlign: "left" }}>الإجمالي</th>
+                <th style={{ width: "42%" }}>{t("الصنف")}</th>
+                <th>{t("السعر")}</th>
+                <th>{t("الكمية")}</th>
+                <th style={{ textAlign: "left" }}>{t("الإجمالي")}</th>
               </tr>
             </thead>
             <tbody>
@@ -692,7 +694,7 @@ export default function InvoicePage({
               )}
             </div>
 
-             <Field label="سبب الإرجاع أو الاستبدال *">
+             <Field label={t("سبب الإرجاع أو الاستبدال *")}>
                <Select value={retReason} onChange={(e) => setRetReason(e.target.value)}>
                  <option value="">— اختر السبب —</option>
                  {RETURN_REASONS.map((reason) => (
@@ -701,7 +703,7 @@ export default function InvoicePage({
                </Select>
              </Field>
              {retReason === "أخرى" && (
-               <Field label="سبب مخصص *">
+               <Field label={t("سبب مخصص *")}>
                  <Input
                    value={retCustomReason}
                    onChange={(e) => setRetCustomReason(e.target.value)}
@@ -709,7 +711,7 @@ export default function InvoicePage({
                  />
                </Field>
              )}
-            <Field label="طريقة الاسترداد / فرق الاستبدال">
+            <Field label={t("طريقة الاسترداد / فرق الاستبدال")}>
               <Select
                 value={retMethod}
                 onChange={(e) => setRetMethod(e.target.value as PaymentMethod)}
@@ -725,7 +727,7 @@ export default function InvoicePage({
               </Select>
             </Field>
 
-            <Field label="ملاحظة (اختياري)">
+            <Field label={t("ملاحظة (اختياري)")}>
               <Input
                 value={retNote}
                 onChange={(e) => setRetNote(e.target.value)}

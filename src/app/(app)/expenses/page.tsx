@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 // إدارة المصاريف التشغيلية — تُخصم من إجمالي الربح لتظهر في «صافي الأرباح».
 // - إضافة مصروف (تصنيف + مبلغ + ملاحظة) باسم المستخدم الذي أضافه.
 // - فلترة بالفترة (اليوم / 7 أيام / الشهر / مخصص) + توزيع المصاريف على التصنيفات.
@@ -305,7 +307,7 @@ export default function ExpensesPage() {
         <Stat
           icon={<Receipt size={17} />}
           tone="violet"
-          label="عدد المصاريف"
+          label={t("عدد المصاريف")}
           value={fmtNum((rows ?? []).length)}
         />
       </div>
@@ -318,7 +320,7 @@ export default function ExpensesPage() {
           icon={<Plus size={16} />}
           bodyClass="space-y-4 p-5"
         >
-          <Field label="التصنيف">
+          <Field label={t("التصنيف")}>
             <Select value={category} onChange={(e) => setCategory(e.target.value)}>
               {EXPENSE_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
@@ -329,7 +331,7 @@ export default function ExpensesPage() {
             </Select>
           </Field>
           {category === "__custom__" && (
-            <Field label="اسم التصنيف المخصص">
+            <Field label={t("اسم التصنيف المخصص")}>
               <Input
                 value={customCategory}
                 onChange={(e) => setCustomCategory(e.target.value)}
@@ -349,7 +351,7 @@ export default function ExpensesPage() {
               placeholder="0.00"
             />
           </Field>
-          <Field label="ملاحظة (اختياري)">
+          <Field label={t("ملاحظة (اختياري)")}>
             <Textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
@@ -439,11 +441,11 @@ export default function ExpensesPage() {
               <table className="tbl min-w-[640px]">
                 <thead>
                   <tr>
-                    <th>التاريخ</th>
-                    <th>التصنيف</th>
-                    <th>المبلغ</th>
-                    <th>أضافه</th>
-                    <th>ملاحظة</th>
+                    <th>{t("التاريخ")}</th>
+                    <th>{t("التصنيف")}</th>
+                    <th>{t("المبلغ")}</th>
+                    <th>{t("أضافه")}</th>
+                    <th>{t("ملاحظة")}</th>
                     <th></th>
                   </tr>
                 </thead>

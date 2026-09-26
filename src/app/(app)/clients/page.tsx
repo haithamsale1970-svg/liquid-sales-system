@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -298,12 +300,12 @@ export default function ClientsPage() {
           <table className="tbl min-w-[720px]">
             <thead>
               <tr>
-                <th>العميل</th>
-                <th>النوع</th>
-                <th>الهاتف</th>
-                <th>عدد الفواتير</th>
-                <th>إجمالي المشتريات</th>
-                <th>منذ</th>
+                <th>{t("العميل")}</th>
+                <th>{t("النوع")}</th>
+                <th>{t("الهاتف")}</th>
+                <th>{t("عدد الفواتير")}</th>
+                <th>{t("إجمالي المشتريات")}</th>
+                <th>{t("منذ")}</th>
                 <th></th>
               </tr>
             </thead>
@@ -378,14 +380,14 @@ export default function ClientsPage() {
       >
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="الاسم *">
+            <Field label={t("الاسم *")}>
               <Input
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 placeholder={formIsShop ? "اسم المحل أو المتجر" : "اسم العميل"}
               />
             </Field>
-            <Field label="القسم">
+            <Field label={t("القسم")}>
               <Select
                 value={formIsShop ? "shops" : "individuals"}
                 onChange={(e) => {
@@ -404,10 +406,10 @@ export default function ClientsPage() {
             </Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="رقم الهاتف">
+            <Field label={t("رقم الهاتف")}>
               <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="01xxxxxxxxx" dir="ltr" className="num" />
             </Field>
-            <Field label="رقم هاتف ثانٍ (اختياري)">
+            <Field label={t("رقم هاتف ثانٍ (اختياري)")}>
               <Input
                 value={form.phone2}
                 onChange={(e) => setForm((f) => ({ ...f, phone2: e.target.value }))}
@@ -419,11 +421,11 @@ export default function ClientsPage() {
           </div>
           {formIsShop && (
             <>
-              <Field label="العنوان" hint="العنوان التفصيلي للمحل">
+              <Field label={t("العنوان")} hint="العنوان التفصيلي للمحل">
                 <Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder="المحافظة — المنطقة — الشارع" />
               </Field>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Google Maps Location" hint="رابط موقع المحل على الخريطة">
+                <Field label={t("Google Maps Location")} hint="رابط موقع المحل على الخريطة">
                   <Input
                     type="url"
                     value={form.googleMapsUrl}
@@ -432,7 +434,7 @@ export default function ClientsPage() {
                     dir="ltr"
                   />
                 </Field>
-                <Field label="Distribution Map" hint="رابط خريطة التوزيع الكبرى">
+                <Field label={t("Distribution Map")} hint="رابط خريطة التوزيع الكبرى">
                   <Input
                     type="url"
                     value={form.distributionMapUrl}
@@ -444,7 +446,7 @@ export default function ClientsPage() {
               </div>
             </>
           )}
-          <Field label="ملاحظات">
+          <Field label={t("ملاحظات")}>
             <Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="شروط تعامل، أسعار خاصة…" />
           </Field>
           <div className="flex justify-end gap-2 border-t border-[var(--line-soft)] pt-4">

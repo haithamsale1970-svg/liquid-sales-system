@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArchiveRestore,
@@ -609,21 +611,21 @@ export default function ProductsPage() {
         wide
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="اسم المنتج *">
+          <Field label={t("اسم المنتج *")}>
             <Input
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="مثال: مانجو آيس 60مل"
             />
           </Field>
-          <Field label="التصنيف">
+          <Field label={t("التصنيف")}>
             <Input
               value={form.category}
               onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
               placeholder="سولت نيكوتين / فري بيز / بود…"
             />
           </Field>
-          <Field label="سعر البيع *">
+          <Field label={t("سعر البيع *")}>
             <Input
               type="number"
               min="0"
@@ -635,7 +637,7 @@ export default function ProductsPage() {
               placeholder="0.00"
             />
           </Field>
-          <Field label="سعر التكلفة (لحساب الربح)">
+          <Field label={t("سعر التكلفة (لحساب الربح)")}>
             <Input
               type="number"
               min="0"
@@ -647,7 +649,7 @@ export default function ProductsPage() {
               placeholder="0.00"
             />
           </Field>
-          <Field label="الكمية بالمخزون">
+          <Field label={t("الكمية بالمخزون")}>
             <Input
               type="number"
               min="0"
@@ -659,7 +661,7 @@ export default function ProductsPage() {
               placeholder="0"
             />
           </Field>
-          <Field label="حد تنبيه نقص المخزون">
+          <Field label={t("حد تنبيه نقص المخزون")}>
             <Input
               type="number"
               min="0"
@@ -671,7 +673,7 @@ export default function ProductsPage() {
               placeholder="5"
             />
           </Field>
-          <Field label="الباركود" hint="رقم باركود للمسح السريع في فاتورة جديدة (اختياري)">
+          <Field label={t("الباركود")} hint="رقم باركود للمسح السريع في فاتورة جديدة (اختياري)">
             <Input
               dir="ltr"
               className="num"
@@ -681,7 +683,7 @@ export default function ProductsPage() {
             />
           </Field>
           <div className="md:col-span-2">
-            <Field label="الوصف">
+            <Field label={t("الوصف")}>
               <Textarea
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -860,7 +862,7 @@ export default function ProductsPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
-                      <Field label="سعر الأفراد *">
+                      <Field label={t("سعر الأفراد *")}>
                         <Input
                           type="number"
                           min="0"
@@ -871,7 +873,7 @@ export default function ProductsPage() {
                           onChange={(e) => setVariant({ retailPrice: e.target.value })}
                         />
                       </Field>
-                      <Field label="سعر الجملة (اختياري)">
+                      <Field label={t("سعر الجملة (اختياري)")}>
                         <Input
                           type="number"
                           min="0"
@@ -882,7 +884,7 @@ export default function ProductsPage() {
                           onChange={(e) => setVariant({ wholesalePrice: e.target.value })}
                         />
                       </Field>
-                      <Field label="تكلفة الخيار">
+                      <Field label={t("تكلفة الخيار")}>
                         <Input
                           type="number"
                           min="0"
@@ -893,7 +895,7 @@ export default function ProductsPage() {
                           onChange={(e) => setVariant({ cost: e.target.value })}
                         />
                       </Field>
-                      <Field label="المخزون (اختياري)">
+                      <Field label={t("المخزون (اختياري)")}>
                         <Input
                           type="number"
                           min="0"
@@ -904,7 +906,7 @@ export default function ProductsPage() {
                           onChange={(e) => setVariant({ stock: e.target.value })}
                         />
                       </Field>
-                      <Field label="تنبيه نقص (اختياري)">
+                      <Field label={t("تنبيه نقص (اختياري)")}>
                         <Input
                           type="number"
                           min="0"
@@ -1033,7 +1035,7 @@ export default function ProductsPage() {
             <span className="num text-[20px] font-black">{stockTarget?.stock ?? 0}</span>
           </div>
            {stockTarget && stockTarget.variants.length > 0 && (
-             <Field label="الحجم والنيكوتين *">
+             <Field label={t("الحجم والنيكوتين *")}>
                <Select
                  value={stockVariantId}
                  onChange={(e) => setStockVariantId(e.target.value)}
@@ -1046,7 +1048,7 @@ export default function ProductsPage() {
                </Select>
              </Field>
            )}
-           <Field label="قيمة التعديل (+ إضافة / − خصم)" hint="مثال: 24+ لاستلام شحنة، أو 3- لتالف">
+           <Field label={t("قيمة التعديل (+ إضافة / − خصم)")} hint="مثال: 24+ لاستلام شحنة، أو 3- لتالف">
             <Input
               type="number"
               step="1"
@@ -1058,7 +1060,7 @@ export default function ProductsPage() {
               autoFocus
             />
           </Field>
-          <Field label="ملاحظة (اختياري)">
+          <Field label={t("ملاحظة (اختياري)")}>
             <Input
               value={stockNote}
               onChange={(e) => setStockNote(e.target.value)}

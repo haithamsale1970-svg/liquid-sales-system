@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, Eye, EyeOff, Lock, LogIn, Sparkles, User } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";

@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 // بحث ذكي عن العميل (Autocomplete) داخل الفاتورة:
 // - نتائج مطابقة فورية أثناء الكتابة (الاسم / الهاتف / الهاتف الثاني).
 // - تنقّل بالكيبورد (↑ ↓ Enter Esc) — يعمل مع الماوس ولوحة المفاتيح.
@@ -235,13 +237,13 @@ export default function ClientPicker({
 
       {selected && (
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Chip label="عدد الطلبات" value={fmtNum(selected.ordersCount)} />
+          <Chip label={t("عدد الطلبات")} value={fmtNum(selected.ordersCount)} />
           <Chip
-            label="إجمالي مشترياته"
+            label={t("إجمالي مشترياته")}
             value={formatMoneyJOD(selected.totalSpent, currency, rates)}
           />
           <Chip
-            label="الرصيد (دين)"
+            label={t("الرصيد (دين)")}
             value={
               selected.debt > 0
                 ? formatMoneyJOD(selected.debt, currency, rates)
@@ -250,7 +252,7 @@ export default function ClientPicker({
             danger={selected.debt > 0}
           />
           <Chip
-            label="آخر طلب"
+            label={t("آخر طلب")}
             value={selected.lastSaleAt ? fmtDate(selected.lastSaleAt) : "—"}
           />
         </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import { useEffect, useMemo, useState } from "react";
 import {
   KeyRound,
@@ -326,12 +328,12 @@ export default function UsersPage() {
             <table className="tbl hidden min-w-[760px] md:table">
             <thead>
               <tr>
-                <th>المستخدم</th>
-                <th>اسم الدخول</th>
-                <th>الصلاحية</th>
-                <th>الصلاحيات</th>
-                <th>الفواتير</th>
-                <th>تاريخ الإنشاء</th>
+                <th>{t("المستخدم")}</th>
+                <th>{t("اسم الدخول")}</th>
+                <th>{t("الصلاحية")}</th>
+                <th>{t("الصلاحيات")}</th>
+                <th>{t("الفواتير")}</th>
+                <th>{t("تاريخ الإنشاء")}</th>
                 <th></th>
               </tr>
             </thead>
@@ -422,18 +424,18 @@ export default function UsersPage() {
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="إنشاء مستخدم جديد" icon={<UserCog size={17} />}>
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="اسم الدخول *" hint="إنجليزي/أرقام بدون مسافات">
+            <Field label={t("اسم الدخول *")} hint="إنجليزي/أرقام بدون مسافات">
               <Input dir="ltr" className="num" value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} placeholder="partner1" />
             </Field>
-            <Field label="الاسم المعروض *">
+            <Field label={t("الاسم المعروض *")}>
               <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="أحمد محمد" />
             </Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="كلمة المرور *" hint="6 أحرف على الأقل — تُخزّن مشفّرة">
+            <Field label={t("كلمة المرور *")} hint="6 أحرف على الأقل — تُخزّن مشفّرة">
               <Input dir="ltr" type="password" className="num" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} placeholder="••••••••" />
             </Field>
-            <Field label="الصلاحية">
+            <Field label={t("الصلاحية")}>
               <Select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
                 <option value="user">مستخدم (شريك)</option>
                 <option value="admin">مدير (ماستر)</option>
@@ -498,7 +500,7 @@ export default function UsersPage() {
           <p className="text-[12.5px] font-semibold leading-6 text-[var(--muted)]">
             سيتم إنهاء جميع جلسات هذا المستخدم الحالية وسيُطلب منه الدخول بكلمة المرور الجديدة.
           </p>
-          <Field label="كلمة المرور الجديدة">
+          <Field label={t("كلمة المرور الجديدة")}>
             <Input dir="ltr" type="text" className="num" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="6 أحرف على الأقل" autoFocus />
           </Field>
           <div className="flex justify-end gap-2 border-t border-[var(--line-soft)] pt-4">

@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 // إدارة ديون العملاء (الذمم) وسجل الحركات:
 // - قائمة العملاء المدينين مع المتبقي وعدد الفواتير المفتوحة.
 // - تفاصيل كل عميل: الفواتير غير المسدّدة + سجل كل دفعة (الطريقة، المنفّذ، التاريخ).
@@ -256,7 +258,7 @@ export default function DebtsPage() {
         <Stat
           icon={<Users size={17} className="text-[var(--violet)]" />}
           tone="violet"
-          label="عملاء مدينون"
+          label={t("عملاء مدينون")}
           value={fmtNum(totals.clients)}
         />
         <Stat
@@ -268,7 +270,7 @@ export default function DebtsPage() {
         <Stat
           icon={<Wallet size={17} className="text-[var(--amber)]" />}
           tone="amber"
-          label="أقدم رصيد مفتوح"
+          label={t("أقدم رصيد مفتوح")}
           value={totals.oldest ? fmtDate(totals.oldest) : "—"}
         />
       </div>
@@ -323,12 +325,12 @@ export default function DebtsPage() {
           <table className="tbl min-w-[760px]">
             <thead>
               <tr>
-                <th>العميل</th>
-                <th>النوع</th>
-                <th>الهاتف</th>
-                <th>فواتير مفتوحة</th>
-                <th>المتبقي (دين)</th>
-                <th>آخر فاتورة</th>
+                <th>{t("العميل")}</th>
+                <th>{t("النوع")}</th>
+                <th>{t("الهاتف")}</th>
+                <th>{t("فواتير مفتوحة")}</th>
+                <th>{t("المتبقي (دين)")}</th>
+                <th>{t("آخر فاتورة")}</th>
                 <th></th>
               </tr>
             </thead>
@@ -445,7 +447,7 @@ export default function DebtsPage() {
                     placeholder="0.00"
                   />
                 </Field>
-                <Field label="طريقة الدفع">
+                <Field label={t("طريقة الدفع")}>
                   <Select
                     value={method}
                     onChange={(e) => setMethod(e.target.value as PaymentMethod)}
@@ -475,7 +477,7 @@ export default function DebtsPage() {
                   </button>
                 ))}
               </div>
-              <Field label="ملاحظة (اختياري)">
+              <Field label={t("ملاحظة (اختياري)")}>
                 <Input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
@@ -515,12 +517,12 @@ export default function DebtsPage() {
                   <table className="tbl min-w-[520px]">
                     <thead>
                       <tr>
-                        <th>الفاتورة</th>
-                        <th>التاريخ</th>
-                        <th>الإجمالي</th>
-                        <th>المدفوع</th>
-                        <th>المتبقي</th>
-                        <th>الدفع</th>
+                        <th>{t("الفاتورة")}</th>
+                        <th>{t("التاريخ")}</th>
+                        <th>{t("الإجمالي")}</th>
+                        <th>{t("المدفوع")}</th>
+                        <th>{t("المتبقي")}</th>
+                        <th>{t("الدفع")}</th>
                       </tr>
                     </thead>
                     <tbody>

@@ -23,7 +23,7 @@ import CurrencySwitcher from "@/components/CurrencySwitcher";
 import { useTheme } from "@/components/ThemeProvider";
 import { useLang } from "@/components/LanguageProvider";
 import { THEME_LIST } from "@/lib/theme";
-import { LANGS } from "@/lib/i18n";
+import { LANGS, t } from "@/lib/i18n";
 import { cls, fmtDateTime, type SessionUserDTO } from "@/lib/shared";
 import { can } from "@/lib/permissions";
 import { CURRENCIES, DEFAULT_SETTINGS, type AppSettings, type CurrencyCode } from "@/lib/currency";
@@ -194,7 +194,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <Field label="الاسم المعروض">
+            <Field label={t("الاسم المعروض")}>
               <div className="flex gap-2">
                 <Input value={name} onChange={(e) => setName(e.target.value)} />
                 <Btn variant="primary" size="sm" onClick={saveProfile} loading={savingProfile} disabled={name.trim().length < 2 || name === me.name}>
@@ -275,14 +275,14 @@ export default function SettingsPage() {
                 تغيير كلمة المرور
               </div>
               <div className="space-y-3">
-                <Field label="كلمة المرور الحالية">
+                <Field label={t("كلمة المرور الحالية")}>
                   <Input dir="ltr" type="password" className="num" value={cur} onChange={(e) => setCur(e.target.value)} placeholder="••••••••" />
                 </Field>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="الجديدة (6 أحرف+)">
+                  <Field label={t("الجديدة (6 أحرف+)")}>
                     <Input dir="ltr" type="password" className="num" value={next} onChange={(e) => setNext(e.target.value)} placeholder="••••••••" />
                   </Field>
-                  <Field label="تأكيد الجديدة">
+                  <Field label={t("تأكيد الجديدة")}>
                     <Input dir="ltr" type="password" className="num" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••" />
                   </Field>
                 </div>
@@ -312,7 +312,7 @@ export default function SettingsPage() {
               </div>
             ) : (
               <>
-                <Field label="العملة الافتراضية للنظام" hint="تُستخدم عند إنشاء الفواتير الجديدة">
+                <Field label={t("العملة الافتراضية للنظام")} hint="تُستخدم عند إنشاء الفواتير الجديدة">
                   <Select value={draft.defaultCurrency} onChange={(e) => setDraft((d) => ({ ...d, defaultCurrency: e.target.value as CurrencyCode }))}>
                     {(Object.keys(CURRENCIES) as CurrencyCode[]).map((c) => (
                       <option key={c} value={c}>{c} — {CURRENCIES[c].label}</option>
@@ -320,26 +320,26 @@ export default function SettingsPage() {
                   </Select>
                 </Field>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="سعر الصرف: دولار لكل دينار (USD)" hint="افتراضي 1.41">
+                  <Field label={t("سعر الصرف: دولار لكل دينار (USD)")} hint="افتراضي 1.41">
                     <Input dir="ltr" type="number" step="any" min="0" className="num" value={String(draft.rateUSD)} onChange={(e) => setDraft((d) => ({ ...d, rateUSD: Number(e.target.value) }))} />
                   </Field>
-                  <Field label="سعر الصرف: جنيه لكل دينار (EGP)" hint="افتراضي 67.5">
+                  <Field label={t("سعر الصرف: جنيه لكل دينار (EGP)")} hint="افتراضي 67.5">
                     <Input dir="ltr" type="number" step="any" min="0" className="num" value={String(draft.rateEGP)} onChange={(e) => setDraft((d) => ({ ...d, rateEGP: Number(e.target.value) }))} />
                   </Field>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="التوصيل الداخلي (ثابت بالدينار)" hint="افتراضي 1.5">
+                  <Field label={t("التوصيل الداخلي (ثابت بالدينار)")} hint="افتراضي 1.5">
                     <Input dir="ltr" type="number" step="any" min="0" className="num" value={String(draft.shippingInternal)} onChange={(e) => setDraft((d) => ({ ...d, shippingInternal: Number(e.target.value) }))} />
                   </Field>
-                  <Field label="التوصيل الخارجي (ثابت بالدينار)" hint="افتراضي 2">
+                  <Field label={t("التوصيل الخارجي (ثابت بالدينار)")} hint="افتراضي 2">
                     <Input dir="ltr" type="number" step="any" min="0" className="num" value={String(draft.shippingExternal)} onChange={(e) => setDraft((d) => ({ ...d, shippingExternal: Number(e.target.value) }))} />
                   </Field>
                 </div>
                 <div className="space-y-2">
                   <p className="text-[12px] font-extrabold text-[var(--muted)]">إظهار / إخفاء الأقسام عن المستخدمين العاديين (abood / hasan…)</p>
-                  <Toggle value={draft.showProductsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showProductsForUsers: v }))} label="الأصناف والمخزون" hint="إخفاؤها يمنع المستخدم من فتح الصفحة" />
-                  <Toggle value={draft.showClientsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showClientsForUsers: v }))} label="العملاء" hint="إخفاؤها يمنع المستخدم من فتح الصفحة" />
-                  <Toggle value={draft.showReportsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showReportsForUsers: v }))} label="التقارير" hint="إخفاؤها يمنع المستخدم من فتح الصفحة" />
+                  <Toggle value={draft.showProductsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showProductsForUsers: v }))} label={t("الأصناف والمخزون")} hint="إخفاؤها يمنع المستخدم من فتح الصفحة" />
+                  <Toggle value={draft.showClientsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showClientsForUsers: v }))} label={t("العملاء")} hint="إخفاؤها يمنع المستخدم من فتح الصفحة" />
+                  <Toggle value={draft.showReportsForUsers} onChange={(v) => setDraft((d) => ({ ...d, showReportsForUsers: v }))} label={t("التقارير")} hint="إخفاؤها يمنع المستخدم من فتح الصفحة" />
                   <p className="pt-1.5 text-[12px] font-extrabold text-[var(--muted)]">
                     إدارة العملاء والأسعار والحذف محصورة بحساب المدير
                   </p>

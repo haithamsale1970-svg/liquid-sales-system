@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import { useEffect, useMemo, useState } from "react";
 import { CalendarClock, Plus, Trash2, Wallet } from "lucide-react";
 import { api } from "@/lib/client";

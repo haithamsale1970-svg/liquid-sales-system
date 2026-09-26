@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 // سجل حركات المخزون — تتبع دخول وخروج كل قطعة:
 // بيع / إلغاء فاتورة / مرتجع / استبدال / تسوية يدوية، مع الرصيد بعد كل حركة
 // واسم الموظف المنفّذ ورقم المرجع (الفاتورة أو المرتجع) + تصدير Excel.
@@ -150,32 +152,32 @@ export default function InventoryPage() {
         <Stat
           icon={<PackageSearch size={17} className="text-[var(--text)]" />}
           tone="violet"
-          label="عدد الحركات المسجلة"
+          label={t("عدد الحركات المسجلة")}
           value={fmtNum(stats.count)}
         />
         <Stat
           icon={<ArrowDownToLine size={17} className="text-[var(--mint)]" />}
           tone="mint"
-          label="إجمالي الكميات الداخلة"
+          label={t("إجمالي الكميات الداخلة")}
           value={fmtNum(stats.inQty)}
         />
         <Stat
           icon={<ArrowUpFromLine size={17} className="text-[var(--danger)]" />}
           tone="rose"
-          label="إجمالي الكميات الخارجة"
+          label={t("إجمالي الكميات الخارجة")}
           value={fmtNum(stats.outQty)}
         />
         <Stat
           icon={<Scale size={17} className="text-[var(--amber)]" />}
           tone="amber"
-          label="صافي الحركة"
+          label={t("صافي الحركة")}
           value={fmtNum(stats.net)}
         />
       </div>
 
       {/* ===== الفلاتر ===== */}
       <Card className="anim-in anim-d1" bodyClass="flex flex-wrap items-end gap-3 p-4">
-        <Field label="الصنف">
+        <Field label={t("الصنف")}>
           <Select
             value={productId}
             onChange={(e) => {
@@ -192,7 +194,7 @@ export default function InventoryPage() {
             ))}
           </Select>
         </Field>
-        <Field label="نوع الحركة">
+        <Field label={t("نوع الحركة")}>
           <Select
             value={direction}
             onChange={(e) => {
@@ -206,7 +208,7 @@ export default function InventoryPage() {
             <option value="out">خروج</option>
           </Select>
         </Field>
-        <Field label="من تاريخ">
+        <Field label={t("من تاريخ")}>
           <Input
             type="date"
             value={from}
@@ -214,7 +216,7 @@ export default function InventoryPage() {
             className="!w-auto"
           />
         </Field>
-        <Field label="إلى تاريخ">
+        <Field label={t("إلى تاريخ")}>
           <Input
             type="date"
             value={to}
@@ -254,16 +256,16 @@ export default function InventoryPage() {
           <table className="tbl min-w-[860px]">
             <thead>
               <tr>
-                <th>التاريخ</th>
-                <th>الصنف</th>
-                <th>المقاس / النيكوتين</th>
-                <th>النوع</th>
-                <th>الكمية</th>
-                <th>الرصيد بعد</th>
-                <th>السبب</th>
-                <th>المرجع</th>
-                <th>المنفّذ</th>
-                <th>ملاحظة</th>
+                <th>{t("التاريخ")}</th>
+                <th>{t("الصنف")}</th>
+                <th>{t("المقاس / النيكوتين")}</th>
+                <th>{t("النوع")}</th>
+                <th>{t("الكمية")}</th>
+                <th>{t("الرصيد بعد")}</th>
+                <th>{t("السبب")}</th>
+                <th>{t("المرجع")}</th>
+                <th>{t("المنفّذ")}</th>
+                <th>{t("ملاحظة")}</th>
               </tr>
             </thead>
             <tbody>

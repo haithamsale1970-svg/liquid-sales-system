@@ -72,12 +72,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const t = useCallback((text: string) => translate(lang, text), [lang]);
+  const tFn = useCallback((text: string) => translate(lang, text), [lang]);
 
   const value = useMemo(
-    () => ({ lang, setLang, toggle, t }),
-    [lang, setLang, toggle, t],
+    () => ({ lang, setLang, toggle, t: tFn }),
+    [lang, setLang, toggle, tFn],
   );
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  // إعادة التركيب عند تغيير اللغة تضمن تحديث كل نصوص t() في الشجرة كلها،
+  // بما فيها النصوص داخل الصفحات التي لا تستهلك سياق React.
+  return <Ctx.Provider value={value}><div key={lang} className="contents">{children}</div></Ctx.Provider>;
 }

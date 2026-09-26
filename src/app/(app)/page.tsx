@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import {
@@ -244,7 +246,7 @@ export default function DashboardPage() {
               delay="anim-d2"
               tone="amber"
               icon={<ReceiptText size={21} />}
-              label="فواتير الشهر"
+              label={t("فواتير الشهر")}
               value={data.kpis.monthCount}
               sub={
                 <Badge tone="amber">
@@ -257,7 +259,7 @@ export default function DashboardPage() {
             delay="anim-d3"
             tone="sky"
             icon={<Package size={21} />}
-            label="وحدات بالمخزون"
+            label={t("وحدات بالمخزون")}
             value={data.kpis.totalUnits}
             sub={
               <Badge tone={data.kpis.lowCount > 0 ? "rose" : "sky"}>

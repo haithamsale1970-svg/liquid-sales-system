@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Banknote,
@@ -409,10 +411,10 @@ export default function ReportsPage() {
           {can(me, "finances.view_profit") && (
             <Stat icon={<TrendingUp size={18} className="text-[var(--amber)]" />} tone="var(--alert-soft)" label={`صافي الربح (هامش ${margin.toFixed(0)}%)`} value={formatMoneyJOD(data.totals.profit, currency, rates)} />
           )}
-          <Stat icon={<ReceiptText size={18} className="text-[var(--violet)]" />} tone="var(--overlay-2)" label="عدد الفواتير" value={fmtNum(data.totals.count)} />
+          <Stat icon={<ReceiptText size={18} className="text-[var(--violet)]" />} tone="var(--overlay-2)" label={t("عدد الفواتير")} value={fmtNum(data.totals.count)} />
           <Stat icon={<Scale size={18} className="text-[var(--sky)]" />} tone="var(--overlay-2)" label={`متوسط الفاتورة (${currency})`} value={formatMoneyJOD(data.totals.avg, currency, rates)} />
           <Stat icon={<Truck size={18} className="text-[var(--rose)]" />} tone="var(--critical-soft)" label={`إجمالي التوصيل (${currency})`} value={formatMoneyJOD(data.totals.shipping, currency, rates)} />
-          <Stat icon={<BarChart3 size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label="وحدات مباعة" value={fmtNum(data.totals.units)} />
+          <Stat icon={<BarChart3 size={18} className="text-[var(--mint)]" />} tone="var(--accent-soft)" label={t("وحدات مباعة")} value={fmtNum(data.totals.units)} />
           {can(me, "finances.view_profit") && (
             <>
               <Stat icon={<Banknote size={18} className="text-[var(--rose)]" />} tone="var(--critical-soft)" label={`المصاريف (${currency})`} value={formatMoneyJOD(data.totals.expenses, currency, rates)} />
@@ -473,10 +475,10 @@ export default function ReportsPage() {
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>الصنف</th>
-                  <th>الكمية</th>
-                  <th>الإيراد</th>
-                  {can(me, "finances.view_profit") && <th>الربح</th>}
+                  <th>{t("الصنف")}</th>
+                  <th>{t("الكمية")}</th>
+                  <th>{t("الإيراد")}</th>
+                  {can(me, "finances.view_profit") && <th>{t("الربح")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -523,10 +525,10 @@ export default function ReportsPage() {
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>العميل</th>
-                  <th>النوع</th>
-                  <th>الفواتير</th>
-                  <th>إجمالي المشتريات</th>
+                  <th>{t("العميل")}</th>
+                  <th>{t("النوع")}</th>
+                  <th>{t("الفواتير")}</th>
+                  <th>{t("إجمالي المشتريات")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -570,10 +572,10 @@ export default function ReportsPage() {
             <table className="tbl min-w-[430px]">
               <thead>
                 <tr>
-                  <th>الطريقة</th>
-                  <th>الفواتير</th>
+                  <th>{t("الطريقة")}</th>
+                  <th>{t("الفواتير")}</th>
                   <th>الإجمالي ({currency})</th>
-                  <th>المتبقي</th>
+                  <th>{t("المتبقي")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -614,10 +616,10 @@ export default function ReportsPage() {
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>الموظف</th>
-                    <th>الفواتير</th>
+                    <th>{t("الموظف")}</th>
+                    <th>{t("الفواتير")}</th>
                     <th>المبيعات ({currency})</th>
-                    <th>الربح</th>
+                    <th>{t("الربح")}</th>
                   </tr>
                 </thead>
                 <tbody>

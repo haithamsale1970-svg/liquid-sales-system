@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 // إدارة المرتجعات واستبدال البضائع:
 // كل مرتجع مرتبط بفاتورة، ويُظهر الأصناف العائدة للمخزون (دخول) والأصناف البديلة
 // التي خرجت (استبدال) مع الفرق المالي — والمخزون يُعدَّل تلقائيًا وقت التسجيل.
@@ -135,19 +137,19 @@ export default function ReturnsPage() {
         <Stat
           icon={<Undo2 size={17} className="text-[var(--text)]" />}
           tone="violet"
-          label="عدد المرتجعات"
+          label={t("عدد المرتجعات")}
           value={fmtNum(stats.count)}
         />
         <Stat
           icon={<ArrowDownToLine size={17} className="text-[var(--mint)]" />}
           tone="mint"
-          label="قطع عادت للمخزون"
+          label={t("قطع عادت للمخزون")}
           value={fmtNum(stats.returnedQty)}
         />
         <Stat
           icon={<ArrowUpFromLine size={17} className="text-[var(--danger)]" />}
           tone="rose"
-          label="قطع بديلة خرجت"
+          label={t("قطع بديلة خرجت")}
           value={fmtNum(stats.exchangeQty)}
         />
         <Stat
@@ -159,7 +161,7 @@ export default function ReturnsPage() {
       </div>
 
       <div className="anim-in flex flex-wrap items-end gap-2.5">
-        <Field label="من تاريخ">
+        <Field label={t("من تاريخ")}>
           <Input
             type="date"
             value={from}
@@ -167,7 +169,7 @@ export default function ReturnsPage() {
             className="!w-auto"
           />
         </Field>
-        <Field label="إلى تاريخ">
+        <Field label={t("إلى تاريخ")}>
           <Input
             type="date"
             value={to}

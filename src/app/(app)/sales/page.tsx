@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -240,15 +242,15 @@ export default function SalesPage() {
             <table className="tbl min-w-[860px]">
             <thead>
               <tr>
-                <th>رقم الفاتورة</th>
-                <th>العميل</th>
-                <th>الأصناف</th>
-                <th>التوصيل</th>
+                <th>{t("رقم الفاتورة")}</th>
+                <th>{t("العميل")}</th>
+                <th>{t("الأصناف")}</th>
+                <th>{t("التوصيل")}</th>
                 <th>الإجمالي ({currency})</th>
-                {can(me, "finances.view_profit") && <th>الربح</th>}
-                <th>البائع</th>
-                <th>الحالة</th>
-                <th>التاريخ</th>
+                {can(me, "finances.view_profit") && <th>{t("الربح")}</th>}
+                <th>{t("البائع")}</th>
+                <th>{t("الحالة")}</th>
+                <th>{t("التاريخ")}</th>
               </tr>
             </thead>
             <tbody className={cls(loading && "opacity-50 transition-opacity")}>

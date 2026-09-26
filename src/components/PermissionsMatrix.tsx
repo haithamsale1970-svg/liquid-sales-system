@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/i18n";
+
 import { Check, Minus, ShieldCheck } from "lucide-react";
 import { cls } from "@/lib/shared";
 import {
@@ -142,13 +144,13 @@ export default function PermissionsMatrix({
         <table className="tbl min-w-[620px]">
           <thead>
             <tr>
-              <th>القسم / الصفحة</th>
+              <th>{t("القسم / الصفحة")}</th>
               {(Object.keys(PERMISSION_ACTIONS) as PermissionAction[]).map((a) => (
                 <th key={a} className="text-center">
                   {PERMISSION_ACTIONS[a]}
                 </th>
               ))}
-              <th className="text-center">الكامل</th>
+              <th className="text-center">{t("الكامل")}</th>
             </tr>
           </thead>
           <tbody>
